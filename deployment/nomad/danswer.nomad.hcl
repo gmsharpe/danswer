@@ -594,35 +594,31 @@ job "danswer" {
     volume "db_volume" {
       type      = "host"
       read_only = false
-      source    = "local_deploy/db_volume"
+      source    = "/var/nomad/volumes/danswer/db_volume"
     }
 
     volume "vespa_volume" {
       type      = "host"
       read_only = false
-      source    = "local_deploy/vespa_volume"
+      source    = "/var/nomad/volumes/danswer/vespa_volume"
     }
 
     volume "model_cache_huggingface" {
       type      = "host"
       read_only = false
-      source    = "local_deploy/model_cache_huggingface"
+      source    = "/var/nomad/volumes/danswer/model_cache_huggingface"
     }
 
     volume "indexing_huggingface_model_cache" {
       type      = "host"
       read_only = false
-      source    = "local_deploy/indexing_huggingface_model_cache"
+      source    = "/var/nomad/volumes/danswer/indexing_huggingface_model_cache"
     }
 
     volume "nginx_config" {
       type      = "host"
       read_only = false
-      source    = "data/nginx"
+      source    = "/var/nomad/volumes/danswer/nginx"
     }
-
-
   }
-
-
 }
