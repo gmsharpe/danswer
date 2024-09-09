@@ -548,7 +548,7 @@ job "danswer" {
         args    = ["-c", "dos2unix /etc/nginx/conf.d/run-nginx.sh && /etc/nginx/conf.d/run-nginx.sh app.conf.template.dev"]
 
         # Mount volume for Nginx configuration
-        volumes = ["nginx_config:/etc/nginx/conf.d"]
+        volumes = ["nginx:/etc/nginx/conf.d"]
 
         # Environment variables
         env {
@@ -583,7 +583,7 @@ job "danswer" {
 
       # Volume mount for Nginx configuration
       volume_mount {
-        volume      = "nginx_config"
+        volume      = "nginx"
         destination = "/etc/nginx/conf.d"
       }
 
