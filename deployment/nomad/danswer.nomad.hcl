@@ -532,7 +532,7 @@ job "danswer" {
 
       # Volume mount for Vespa data
       volume_mount {
-        volume      = "vespa_volume"
+        volume      = "vespa"
         destination = "/opt/vespa/var"
       }
     }
