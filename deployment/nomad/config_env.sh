@@ -5,7 +5,7 @@
 
 # create the directories for the nomad volumes
 sudo mkdir -p /var/nomad/volumes/danswer
-cd /var/nomad/volumes/danswer && sudo mkdir -p db_volume vespa_volume
+cd /var/nomad/volumes/danswer && sudo mkdir -p db vespa nginx indexing_model_cache_huggingface model_cache_huggingface
 
 # copy the ngnix files
 sudo cp -r /home/ec2-user/danswer/data/nginx /var/nomad/volumes/danswer/nginx
