@@ -85,26 +85,18 @@ sudo systemctl enable nomad
 sudo systemctl start nomad
 
 
-# Conditionally install and configure Consul based on $INSTALL_CONSUL
+# Install and configure Consul if required
 if [ "$INSTALL_CONSUL" == "true" ]; then
-  echo "Installing and configuring Consul..."
+  sudo yum -y install consul
 
-  sudo yum -y install nomad consul
-
-  # Backup the existing Consul configuration file, if it exists
-  if [ -f /etc/consul.d/consul.hcl ]; then
-      sudo mv /etc/consul.d/consul.hcl /etc/consul.d/consul.hcl.bak
-      echo "Backed up existing consul.hcl to consul.hcl.bak"
-  fi
-
-  # Create the new Consul configuration file
+  # Configure Consul
   cat <<EOT > /etc/consul.d/consul.hcl
 data_dir = "/opt/consul"
 bind_addr = "$PRIVATE_IP"
 retry_join = ["${server_ip}"]
 EOT
 
-  # If this instance is a server, add the server-specific configuration for Consul
+  # Add server configuration if needed
   if [ "$IS_SERVER" == "true" ]; then
     cat <<EOT >> /etc/consul.d/consul.hcl
 server = true
@@ -113,7 +105,7 @@ ui = true
 EOT
   fi
 
-  # Create a systemd service file for Consul
+  # Create Consul systemd service
   cat <<EOT > /etc/systemd/system/consul.service
 [Unit]
 Description=Consul Agent
@@ -121,7 +113,7 @@ Documentation=https://www.consul.io/docs/
 After=network.target
 [Service]
 ExecStart=/usr/bin/consul agent -config-dir=/etc/consul.d
-ExecReload=/bin/kill -HUP $MAINPID
+ExecReload=/bin/kill -HUP \$MAINPID
 KillMode=process
 Restart=on-failure
 LimitNOFILE=65536
@@ -129,35 +121,25 @@ LimitNOFILE=65536
 WantedBy=multi-user.target
 EOT
 
-  # Enable and start the Consul service
   sudo systemctl enable consul
   sudo systemctl start consul
-
-else
-   echo "Skipping Consul installation and configuration as INSTALL_CONSUL is set to false."
 fi
 
+# Install Danswer if required
 if [ "$INSTALL_DANSWER" == "true" ]; then
-  echo "Installing and configuring Danswer..."
-
   sudo mkdir -p /opt/danswer
   sudo chown -R nobody:nobody /opt/danswer
   sudo chmod -R 755 /opt/danswer
 
-  # Install git
   sudo yum install -y git
-
-  # Install Danswer
   cd /opt/danswer && sudo git clone https://github.com/gmsharpe/danswer.git .
 
-  # create the directories for the nomad volumes
-  sudo mkdir -p /var/nomad/volumes/danswer \
-    && cd /var/nomad/volumes/danswer \
-    && sudo mkdir -p db vespa nginx indexing_model_cache_huggingface model_cache_huggingface \
+  # Create the directories for the Nomad volumes
+  sudo mkdir -p /var/nomad/volumes/danswer/{db,vespa,nginx,indexing_model_cache_huggingface,model_cache_huggingface}
   
   cd /opt/danswer/deployment/nomad
-  
   sudo nomad run danswer.nomad.hcl
 
-  # copy the ngnix files
+  # Copy nginx files
   sudo cp -r /home/ec2-user/danswer/deployment/data/nginx /var/nomad/volumes/danswer/nginx
+fi
