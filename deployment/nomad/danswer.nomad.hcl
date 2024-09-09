@@ -425,7 +425,7 @@ job "danswer" {
         args    = ["-c", "if [ \"${DISABLE_MODEL_SERVER}\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000; fi"]
 
         # Mount the Huggingface cache as a volume
-        volumes = [ "indexing_huggingface_model_cache:/root/.cache/huggingface/" ]
+        volumes = [ "indexing_model_cache_huggingface:/root/.cache/huggingface/" ]
       }
 
       # Environment Variables
@@ -456,7 +456,7 @@ job "danswer" {
 
       # Volume mounts
       volume_mount {
-        volume      = "indexing_huggingface_model_cache"
+        volume      = "indexing_model_cache_huggingface"
         destination = "/root/.cache/huggingface/"
       }
     }
@@ -489,7 +489,7 @@ job "danswer" {
       }
 
       volume_mount {
-        volume      = "db_volume"
+        volume      = "db"
         destination = "/var/lib/postgresql/data"
       }
     }
@@ -502,7 +502,7 @@ job "danswer" {
         image = "vespaengine/vespa:8.277.17"
 
         # Mount volume for Vespa data
-        volumes = ["vespa_volume:/opt/vespa/var"]
+        volumes = ["vespa:/opt/vespa/var"]
 
         # Set the container to run in the background with the appropriate ports
         ports = ["19071", "8081"]
@@ -591,16 +591,16 @@ job "danswer" {
 
     # Volumes definition at the group level
     # 'source' is the host path where the volume is located
-    volume "db_volume" {
+    volume "db" {
       type      = "host"
       read_only = false
-      source    = "/var/nomad/volumes/danswer/db_volume"
+      source    = "/var/nomad/volumes/danswer/db"
     }
 
-    volume "vespa_volume" {
+    volume "vespa" {
       type      = "host"
       read_only = false
-      source    = "/var/nomad/volumes/danswer/vespa_volume"
+      source    = "/var/nomad/volumes/danswer/vespa"
     }
 
     volume "model_cache_huggingface" {
@@ -609,10 +609,10 @@ job "danswer" {
       source    = "/var/nomad/volumes/danswer/model_cache_huggingface"
     }
 
-    volume "indexing_huggingface_model_cache" {
+    volume "indexing_model_cache_huggingface" {
       type      = "host"
       read_only = false
-      source    = "/var/nomad/volumes/danswer/indexing_huggingface_model_cache"
+      source    = "/var/nomad/volumes/danswer/indexing_model_cache_huggingface"
     }
 
     volume "nginx_config" {
