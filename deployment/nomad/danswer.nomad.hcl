@@ -615,7 +615,7 @@ job "danswer" {
       source    = "/var/nomad/volumes/danswer/indexing_model_cache_huggingface"
     }
 
-    volume "nginx_config" {
+    volume "nginx" {
       type      = "host"
       read_only = false
       source    = "/var/nomad/volumes/danswer/nginx"
