@@ -41,7 +41,7 @@ server {
   enabled = true
   bootstrap_expect = 1
 }
-bind_addr = "$PRIVATE_IP"
+bind_addr = "0.0.0.0"
 ui {
   enabled = true
 }
@@ -118,6 +118,9 @@ LimitNOFILE=65536
 WantedBy=multi-user.target
 EOT
 
+# Create the directories for the Nomad volumes
+sudo mkdir -p /var/nomad/volumes/danswer/{db,vespa,nginx,indexing_model_cache_huggingface,model_cache_huggingface}
+
 # Enable the service so it starts on boot
 sudo systemctl enable nomad
 sudo systemctl start nomad
@@ -172,12 +175,9 @@ if [ "$INSTALL_DANSWER" == "true" ]; then
   sudo yum install -y git
   cd /opt/danswer && sudo git clone https://github.com/gmsharpe/danswer.git .
 
-  # Create the directories for the Nomad volumes
-  sudo mkdir -p /var/nomad/volumes/danswer/{db,vespa,nginx,indexing_model_cache_huggingface,model_cache_huggingface}
+  # Copy nginx files
+  sudo cp -r /home/ec2-user/danswer/deployment/data/nginx /var/nomad/volumes/danswer/nginx
   
   cd /opt/danswer/deployment/nomad
   sudo nomad run danswer.nomad.hcl
-
-  # Copy nginx files
-  sudo cp -r /home/ec2-user/danswer/deployment/data/nginx /var/nomad/volumes/danswer/nginx
 fi
