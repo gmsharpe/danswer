@@ -41,18 +41,56 @@ server {
   enabled = true
   bootstrap_expect = 1
 }
-bind_addr = "0.0.0.0"
+bind_addr = "$PRIVATE_IP"
 ui {
   enabled = true
 }
 EOT
 fi
+# used to have bind_addr = "0.0.0.0" in the client configuration
 
 # Append the rest of the configuration
 cat <<EOT >> /etc/nomad.d/nomad.hcl
 client {
   enabled = true
   servers = ["${server_ip}"]
+
+  options {
+    "driver.raw_exec.enable" = "true"
+    "driver.exec.enable" = "true"
+    "driver.docker.enable" = "true"
+  }
+
+  # Register the DB volume
+  host_volume "db" {
+    path      = "/var/nomad/volumes/danswer/db"  # Path on the host machine
+    read_only = false                           # Allow read-write access
+  }
+
+  # Register the Vespa volume
+  host_volume "vespa" {
+    path      = "/var/nomad/volumes/danswer/vespa"
+    read_only = false
+  }
+
+  # Register the Huggingface model cache volume
+  host_volume "model_cache_huggingface" {
+    path      = "/var/nomad/volumes/danswer/model_cache_huggingface"
+    read_only = false
+  }
+
+  # Register the indexing model cache volume
+  host_volume "indexing_model_cache_huggingface" {
+    path      = "/var/nomad/volumes/danswer/indexing_model_cache_huggingface"
+    read_only = false
+  }
+
+  # Register the Nginx configuration volume
+  host_volume "nginx" {
+    path      = "/var/nomad/volumes/danswer/nginx"
+    read_only = false
+  }
+
 }
 data_dir = "/opt/nomad"
 advertise {
