@@ -99,11 +99,11 @@ advertise {
   serf = "$PRIVATE_IP"
 }
 EOT
-if [ "$IS_SERVER" == "true" ]; then
-    sudo nomad agent -config=/etc/nomad.d/nomad.hcl -server &
-else
-    sudo nomad agent -config=/etc/nomad.d/nomad.hcl &
-fi
+# if [ "$IS_SERVER" == "true" ]; then
+#     sudo nomad agent -config=/etc/nomad.d/nomad.hcl -server &
+# else
+#     sudo nomad agent -config=/etc/nomad.d/nomad.hcl &
+# fi
 
 # Create a systemd service file for Nomad
 cat <<EOT > /etc/systemd/system/nomad.service
@@ -133,16 +133,18 @@ if [ "$INSTALL_CONSUL" == "true" ]; then
   # Configure Consul
   cat <<EOT > /etc/consul.d/consul.hcl
 data_dir = "/opt/consul"
-bind_addr = "$PRIVATE_IP"
+bind_addr = "0.0.0.0"
+advertise_addr = "$PRIVATE_IP"
 retry_join = ["${server_ip}"]
+datacenter = "dc1"
 EOT
 
-  # Add server configuration if needed
-  if [ "$IS_SERVER" == "true" ]; then
-    cat <<EOT >> /etc/consul.d/consul.hcl
+  cat <<EOT >> /etc/consul.d/consul.hcl
 server = true
-bootstrap_expect = 1
-ui = true
+bootstrap_expect = 3
+ui_config {
+  enabled = true
+}
 EOT
   fi
 
@@ -179,5 +181,5 @@ if [ "$INSTALL_DANSWER" == "true" ]; then
   sudo cp -r /home/ec2-user/danswer/deployment/data/nginx /var/nomad/volumes/danswer/nginx
   
   cd /opt/danswer/deployment/nomad
-  sudo nomad run danswer.nomad.hcl
+  sudo nomad run danswer.nomad.hcl > /dev/null 2>&1 &
 fi

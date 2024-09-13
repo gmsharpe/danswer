@@ -89,25 +89,66 @@ resource "aws_security_group" "nomad_sg" {
     self        = true
   }
 
+  # This is used for communication between Consul agents (clients and servers) on the same LAN for 
+  #  gossip protocol and agent coordination. (TCP and UDP)
+  ingress {
+    from_port   = 8301
+    to_port     = 8301
+    protocol    = "tcp"
+    self        = true
+  }
+
+  ingress {
+    from_port   = 8301
+    to_port     = 8301
+    protocol    = "udp"
+    self        = true
+  }
+
+
+  # This is used for communication between Consul servers to maintain the cluster state (Raft protocol).
+  ingress {
+    from_port   = 8300
+    to_port     = 8300
+    protocol    = "tcp"
+    self        = true
+  }
+
+  # This is used for the DNS interface that allows services registered with Consul to be queried via DNS.
+  ingress {
+    from_port   = 8600
+    to_port     = 8600
+    protocol    = "tcp"
+    self        = true
+  }
+
+  # This is used for HTTP access to the Consul API and the Web UI (if enabled).
+  ingress {
+    from_port   = 8500
+    to_port     = 8500
+    protocol    = "tcp"
+    self        = true
+    security_groups = [aws_security_group.bastion_sg.id]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
 }
+
 resource "aws_security_group" "bastion_sg" {
   name        = "bastion_sg"
   description = "Security group for SSH access to bastion"
   vpc_id      = aws_vpc.nomad_vpc.id
 
-
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Consider restricting this to your IP for security
+    cidr_blocks = ["0.0.0.0/0"] # aws_eip.bastion_eip.address] # Consider restricting this to your IP for security
   }
 
   egress {
@@ -148,9 +189,42 @@ resource "aws_instance" "bastion_host" {
   key_name      = var.key_name
   security_groups = [aws_security_group.bastion_sg.id]
 
+  lifecycle {
+  ignore_changes = [
+      #security_groups
+    ]
+  }
+
   tags = {
     Name = "bastion-host"
   }
+  depends_on = [aws_eip.bastion_eip]
+
+}
+
+resource "aws_eip" "bastion_eip" {
+
+  tags = {
+    Name = "bastion-eip"
+  }
+  lifecycle {
+    ignore_changes = [
+      tags,        
+      allocation_id
+    ]
+  }
+}
+
+# Associate the Elastic IP with the EC2 instance
+resource "aws_eip_association" "bastion_eip_assoc" {
+  instance_id   = aws_instance.bastion_host.id
+  allocation_id = aws_eip.bastion_eip.id
+  lifecycle {
+    ignore_changes = [    
+      allocation_id
+    ]
+  }
+  depends_on = [aws_instance.bastion_host, aws_eip.bastion_eip]
 }
 
 resource "aws_instance" "nomad_instance" {
