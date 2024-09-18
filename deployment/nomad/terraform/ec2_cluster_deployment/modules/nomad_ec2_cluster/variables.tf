@@ -20,3 +20,6 @@ variable "install_consul" {
 variable "install_danswer" {
   default = "true"
 }
+variable "install_vault" {
+  default = "true"
+}
