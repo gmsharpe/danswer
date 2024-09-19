@@ -57,7 +57,6 @@ resource "aws_security_group" "nomad_sg" {
     security_groups = [aws_security_group.bastion_sg.id]
   }
 
-
   # Allow Nomad HTTP API communication
   ingress {
     from_port = 4646
@@ -132,6 +131,14 @@ resource "aws_security_group" "nomad_sg" {
     security_groups = [aws_security_group.bastion_sg.id]
   }
 
+  ingress {
+    from_port = 8200
+    to_port   = 8200
+    protocol  = "tcp"
+    self      = true
+    security_groups = [aws_security_group.bastion_sg.id]
+  }
+
   egress {
     from_port = 0
     to_port   = 0
@@ -192,7 +199,8 @@ resource "aws_instance" "bastion_host" {
 
   lifecycle {
     ignore_changes = [
-      security_groups
+      security_groups,
+      user_data
     ]
   }
 
@@ -244,6 +252,7 @@ resource "aws_instance" "nomad_instance" {
     install_consul  = var.install_consul
     install_danswer = var.install_danswer
     install_vault   = var.install_vault
+    run_user_data_script = "true"
   })
 
   tags = {
@@ -252,63 +261,63 @@ resource "aws_instance" "nomad_instance" {
 
   lifecycle {
     ignore_changes = [
-      security_groups
+      security_groups, user_data
     ]
   }
 
 }
 
-variable "local_port1" {
-  default = 14646
-}
-
-variable "local_port2" {
-  default = 18500
-}
-
-variable "remote_host" {
-  default = "10.0.1.10"
-}
-
-variable "ec2_host" {
-  default = "ec2-54-151-43-228.us-west-1.compute.amazonaws.com"
-}
-
-variable "user" {
-  default = "ec2-user"
-}
-
-# Generate the PowerShell SSH tunnel script
-data "template_file" "ssh_script" {
-  template = <<EOF
-# PowerShell SSH tunnel script
-Start-Process "ssh" -ArgumentList "-L $${local_port1}:$${remote_host}:$${local_port1} -L $${local_port2}:$${remote_host}:$${local_port2} $${user}@$${ec2_host} -N" -NoNewWindow
-EOF
-
-  vars = {
-    local_port1   = var.local_port1
-    local_port2   = var.local_port2
-    remote_host   = var.remote_host
-    ec2_host      = var.ec2_host
-    user          = var.user
-  }
-}
-
-
-# Write the PowerShell script to a file
-resource "local_file" "ssh_script" {
-  filename = "${path.module}/ssh-tunnel.ps1"
-  content  = data.template_file.ssh_script.rendered
-}
-
-# Execute the PowerShell script
-resource "null_resource" "run_ssh_tunnel" {
-  provisioner "local-exec" {
-    command = "powershell.exe -ExecutionPolicy Bypass -File ${local_file.ssh_script.filename}"
-  }
-
-  triggers = {
-    always_run = "${timestamp()}"
-  }
-  depends_on = [aws_instance.bastion_host, aws_instance.nomad_instance, local_file.ssh_script]
-}
+# variable "local_port1" {
+#   default = 14646
+# }
+#
+# variable "local_port2" {
+#   default = 18500
+# }
+#
+# variable "remote_host" {
+#   default = "10.0.1.10"
+# }
+#
+# variable "ec2_host" {
+#   default = "ec2-54-151-43-228.us-west-1.compute.amazonaws.com"
+# }
+#
+# variable "user" {
+#   default = "ec2-user"
+# }
+#
+# # Generate the PowerShell SSH tunnel script
+# data "template_file" "ssh_script" {
+#   template = <<EOF
+# # PowerShell SSH tunnel script
+# Start-Process "ssh" -ArgumentList "-L $${local_port1}:$${remote_host}:$${local_port1} -L $${local_port2}:$${remote_host}:$${local_port2} $${user}@$${ec2_host} -N" -NoNewWindow
+# EOF
+#
+#   vars = {
+#     local_port1   = var.local_port1
+#     local_port2   = var.local_port2
+#     remote_host   = var.remote_host
+#     ec2_host      = var.ec2_host
+#     user          = var.user
+#   }
+# }
+#
+#
+# # Write the PowerShell script to a file
+# resource "local_file" "ssh_script" {
+#   filename = "${path.module}/ssh-tunnel.ps1"
+#   content  = data.template_file.ssh_script.rendered
+# }
+#
+# # Execute the PowerShell script
+# resource "null_resource" "run_ssh_tunnel" {
+#   provisioner "local-exec" {
+#     command = "powershell.exe -ExecutionPolicy Bypass -File ${local_file.ssh_script.filename}"
+#   }
+#
+#   triggers = {
+#     always_run = "${timestamp()}"
+#   }
+#   depends_on = [aws_instance.bastion_host, aws_instance.nomad_instance, local_file.ssh_script]
+# }

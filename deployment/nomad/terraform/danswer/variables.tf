@@ -8,6 +8,10 @@ variable "vault_root_token" {
   sensitive = true
 }
 
+variable "nomad_token" {
+  sensitive = true
+}
+
 # Misc Variables
 
 variable "image_tag" {

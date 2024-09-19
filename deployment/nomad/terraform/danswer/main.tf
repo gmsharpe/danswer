@@ -32,23 +32,6 @@ path "secret/data/danswer" {
 EOF
 }
 
-variable "vault_server_address" {
-  default = "127.0.0.1"
-}
-resource "null_resource" "register_vault_with_nomad" {
-  provisioner "local-exec" {
-    command = <<EOT
-      nomad operator raft configuration apply -config='{
-        "Vault": {
-          "Enabled": true,
-          "Address": "http://${var.vault_server_address}:18200",
-          "Token": "${var.vault_root_token}"
-        }
-      }'
-    EOT
-  }
-}
-
 # resource "nomad_acl_policy" "danswer_namespace_read" {
 #   name        = "danswer-namespace-read"
 #   rules_hcl = <<EOR
