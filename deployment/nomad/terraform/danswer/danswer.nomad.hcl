@@ -27,7 +27,7 @@ job "danswer" {
         max_file_size = 10
       }
       config {
-        image   = "danswer/danswer-backend:${NOMAD_META.IMAGE_TAG}"
+        image   = "danswer/danswer-backend:${env.IMAGE_TAG}"
         command = "/usr/bin/supervisord"
         args = ["-c", "/etc/supervisor/conf.d/supervisord.conf"]
       }
@@ -38,89 +38,90 @@ job "danswer" {
       }
 
       env {
-        ENCRYPTION_KEY_SECRET = "${NOMAD_META.ENCRYPTION_KEY_SECRET}"
+        ENCRYPTION_KEY_SECRET = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.ENCRYPTION_KEY_SECRET }}"
 
         # Gen AI Settings (Needed by DanswerBot)
-        GEN_AI_MAX_TOKENS                  = "${NOMAD_META.GEN_AI_MAX_TOKENS}"
-        QA_TIMEOUT                         = "${NOMAD_META.QA_TIMEOUT}"
-        MAX_CHUNKS_FED_TO_CHAT             = "${NOMAD_META.MAX_CHUNKS_FED_TO_CHAT}"
-        DISABLE_LLM_CHOOSE_SEARCH          = "${NOMAD_META.DISABLE_LLM_CHOOSE_SEARCH}"
-        DISABLE_LLM_QUERY_REPHRASE         = "${NOMAD_META.DISABLE_LLM_QUERY_REPHRASE}"
-        DISABLE_GENERATIVE_AI              = "${NOMAD_META.DISABLE_GENERATIVE_AI}"
-        GENERATIVE_MODEL_ACCESS_CHECK_FREQ = "${NOMAD_META.GENERATIVE_MODEL_ACCESS_CHECK_FREQ}"
-        DISABLE_LITELLM_STREAMING          = "${NOMAD_META.DISABLE_LITELLM_STREAMING}"
-        LITELLM_EXTRA_HEADERS              = "${NOMAD_META.LITELLM_EXTRA_HEADERS}"
-        BING_API_KEY = "${NOMAD_META.BING_API_KEY}"
+        GEN_AI_MAX_TOKENS                  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.GEN_AI_MAX_TOKENS }}"
+        QA_TIMEOUT                         = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.QA_TIMEOUT }}"
+        MAX_CHUNKS_FED_TO_CHAT             = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.MAX_CHUNKS_FED_TO_CHAT }}"
+        DISABLE_LLM_CHOOSE_SEARCH          = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_LLM_CHOOSE_SEARCH }}"
+        DISABLE_LLM_QUERY_REPHRASE         = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_LLM_QUERY_REPHRASE }}"
+        DISABLE_GENERATIVE_AI              = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_GENERATIVE_AI }}"
+        GENERATIVE_MODEL_ACCESS_CHECK_FREQ = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.GENERATIVE_MODEL_ACCESS_CHECK_FREQ }}"
+        DISABLE_LITELLM_STREAMING          = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_LITELLM_STREAMING }}"
+        LITELLM_EXTRA_HEADERS              = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LITELLM_EXTRA_HEADERS }}"
+        BING_API_KEY                       = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.BING_API_KEY }}"
 
         # Query Options
-        DOC_TIME_DECAY = "${NOMAD_META.DOC_TIME_DECAY}"
+        DOC_TIME_DECAY = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DOC_TIME_DECAY }}"
         # Recency Bias for search results, decay at 1 / (1 + DOC_TIME_DECAY * x years)
-        HYBRID_ALPHA = "${NOMAD_META.HYBRID_ALPHA}"
+        HYBRID_ALPHA = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.HYBRID_ALPHA }}"
         # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)
-        EDIT_KEYWORD_QUERY           = "${NOMAD_META.EDIT_KEYWORD_QUERY}"
-        MULTILINGUAL_QUERY_EXPANSION = "${NOMAD_META.MULTILINGUAL_QUERY_EXPANSION}"
-        LANGUAGE_HINT                = "${NOMAD_META.LANGUAGE_HINT}"
-        LANGUAGE_CHAT_NAMING_HINT    = "${NOMAD_META.LANGUAGE_CHAT_NAMING_HINT}"
-        QA_PROMPT_OVERRIDE = "${NOMAD_META.QA_PROMPT_OVERRIDE}"
+        EDIT_KEYWORD_QUERY           = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.EDIT_KEYWORD_QUERY }}"
+        MULTILINGUAL_QUERY_EXPANSION = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.MULTILINGUAL_QUERY_EXPANSION }}"
+        LANGUAGE_HINT                = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LANGUAGE_HINT }}"
+        LANGUAGE_CHAT_NAMING_HINT    = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LANGUAGE_CHAT_NAMING_HINT }}"
+        QA_PROMPT_OVERRIDE           = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.QA_PROMPT_OVERRIDE }}"
 
         # Other Services
         POSTGRES_HOST     = "relational_db"
-        POSTGRES_USER     = "${NOMAD_META.POSTGRES_USER}"
-        POSTGRES_PASSWORD = "${NOMAD_META.POSTGRES_PASSWORD}"
-        POSTGRES_DB       = "${NOMAD_META.POSTGRES_DB}"
+        POSTGRES_USER     = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.POSTGRES_USER }}"
+        POSTGRES_PASSWORD = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.POSTGRES_PASSWORD }}"
+        POSTGRES_DB       = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.POSTGRES_DB }}"
         VESPA_HOST        = "index"
-        WEB_DOMAIN        = "${NOMAD_META.WEB_DOMAIN}"  # For frontend redirect auth purpose for OAuth2 connectors
+        WEB_DOMAIN        = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.WEB_DOMAIN }}"  # For frontend redirect auth purpose for OAuth2 connectors
 
         # Don't change the NLP model configs unless you know what you're doing
-        DOCUMENT_ENCODER_MODEL = "${NOMAD_META.DOCUMENT_ENCODER_MODEL}"
-        DOC_EMBEDDING_DIM      = "${NOMAD_META.DOC_EMBEDDING_DIM}"
-        NORMALIZE_EMBEDDINGS   = "${NOMAD_META.NORMALIZE_EMBEDDINGS}"
-        ASYM_QUERY_PREFIX = "${NOMAD_META.ASYM_QUERY_PREFIX}"  # Needed by DanswerBot
-        ASYM_PASSAGE_PREFIX    = "${NOMAD_META.ASYM_PASSAGE_PREFIX}"
-        MODEL_SERVER_HOST      = "${NOMAD_META.MODEL_SERVER_HOST}"
-        MODEL_SERVER_PORT      = "${NOMAD_META.MODEL_SERVER_PORT}"
-        INDEXING_MODEL_SERVER_HOST = "${NOMAD_META.INDEXING_MODEL_SERVER_HOST}"
+        DOCUMENT_ENCODER_MODEL = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DOCUMENT_ENCODER_MODEL }}"
+        DOC_EMBEDDING_DIM      = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DOC_EMBEDDING_DIM }}"
+        NORMALIZE_EMBEDDINGS   = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NORMALIZE_EMBEDDINGS }}"
+        ASYM_QUERY_PREFIX      = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.ASYM_QUERY_PREFIX }}"  # Needed by DanswerBot
+        ASYM_PASSAGE_PREFIX    = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.ASYM_PASSAGE_PREFIX }}"
+        MODEL_SERVER_HOST      = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.MODEL_SERVER_HOST }}"
+        MODEL_SERVER_PORT      = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.MODEL_SERVER_PORT }}"
+        INDEXING_MODEL_SERVER_HOST = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.INDEXING_MODEL_SERVER_HOST }}"
 
         # Indexing Configs
-        NUM_INDEXING_WORKERS                          = "${NOMAD_META.NUM_INDEXING_WORKERS}"
-        ENABLED_CONNECTOR_TYPES                       = "${NOMAD_META.ENABLED_CONNECTOR_TYPES}"
-        DISABLE_INDEX_UPDATE_ON_SWAP                  = "${NOMAD_META.DISABLE_INDEX_UPDATE_ON_SWAP}"
-        DASK_JOB_CLIENT_ENABLED                       = "${NOMAD_META.DASK_JOB_CLIENT_ENABLED}"
-        CONTINUE_ON_CONNECTOR_FAILURE                 = "${NOMAD_META.CONTINUE_ON_CONNECTOR_FAILURE}"
-        EXPERIMENTAL_CHECKPOINTING_ENABLED            = "${NOMAD_META.EXPERIMENTAL_CHECKPOINTING_ENABLED}"
-        CONFLUENCE_CONNECTOR_LABELS_TO_SKIP           = "${NOMAD_META.CONFLUENCE_CONNECTOR_LABELS_TO_SKIP}"
-        JIRA_CONNECTOR_LABELS_TO_SKIP                 = "${NOMAD_META.JIRA_CONNECTOR_LABELS_TO_SKIP}"
-        WEB_CONNECTOR_VALIDATE_URLS                   = "${NOMAD_META.WEB_CONNECTOR_VALIDATE_URLS}"
-        JIRA_API_VERSION                              = "${NOMAD_META.JIRA_API_VERSION}"
-        GONG_CONNECTOR_START_TIME                     = "${NOMAD_META.GONG_CONNECTOR_START_TIME}"
-        NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP = "${NOMAD_META.NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP}"
-        GITHUB_CONNECTOR_BASE_URL = "${NOMAD_META.GITHUB_CONNECTOR_BASE_URL}"
+        NUM_INDEXING_WORKERS                          = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NUM_INDEXING_WORKERS }}"
+        ENABLED_CONNECTOR_TYPES                       = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.ENABLED_CONNECTOR_TYPES }}"
+        DISABLE_INDEX_UPDATE_ON_SWAP                  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_INDEX_UPDATE_ON_SWAP }}"
+        DASK_JOB_CLIENT_ENABLED                       = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DASK_JOB_CLIENT_ENABLED }}"
+        CONTINUE_ON_CONNECTOR_FAILURE                 = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.CONTINUE_ON_CONNECTOR_FAILURE }}"
+        EXPERIMENTAL_CHECKPOINTING_ENABLED            = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.EXPERIMENTAL_CHECKPOINTING_ENABLED }}"
+        CONFLUENCE_CONNECTOR_LABELS_TO_SKIP           = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.CONFLUENCE_CONNECTOR_LABELS_TO_SKIP }}"
+        JIRA_CONNECTOR_LABELS_TO_SKIP                 = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.JIRA_CONNECTOR_LABELS_TO_SKIP }}"
+        WEB_CONNECTOR_VALIDATE_URLS                   = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.WEB_CONNECTOR_VALIDATE_URLS }}"
+        JIRA_API_VERSION                              = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.JIRA_API_VERSION }}"
+        GONG_CONNECTOR_START_TIME                     = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.GONG_CONNECTOR_START_TIME }}"
+        NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP }}"
+        GITHUB_CONNECTOR_BASE_URL                     = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.GITHUB_CONNECTOR_BASE_URL }}"
 
         # Danswer SlackBot Configs
-        DANSWER_BOT_SLACK_APP_TOKEN          = "${NOMAD_META.DANSWER_BOT_SLACK_APP_TOKEN}"
-        DANSWER_BOT_SLACK_BOT_TOKEN          = "${NOMAD_META.DANSWER_BOT_SLACK_BOT_TOKEN}"
-        DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = "${NOMAD_META.DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER}"
-        DANSWER_BOT_FEEDBACK_VISIBILITY      = "${NOMAD_META.DANSWER_BOT_FEEDBACK_VISIBILITY}"
-        DANSWER_BOT_DISPLAY_ERROR_MSGS       = "${NOMAD_META.DANSWER_BOT_DISPLAY_ERROR_MSGS}"
-        DANSWER_BOT_RESPOND_EVERY_CHANNEL    = "${NOMAD_META.DANSWER_BOT_RESPOND_EVERY_CHANNEL}"
-        DANSWER_BOT_DISABLE_COT = "${NOMAD_META.DANSWER_BOT_DISABLE_COT}"  # Currently unused
-        NOTIFY_SLACKBOT_NO_ANSWER            = "${NOMAD_META.NOTIFY_SLACKBOT_NO_ANSWER}"
-        DANSWER_BOT_MAX_QPM                  = "${NOMAD_META.DANSWER_BOT_MAX_QPM}"
-        DANSWER_BOT_MAX_WAIT_TIME            = "${NOMAD_META.DANSWER_BOT_MAX_WAIT_TIME}"
+        DANSWER_BOT_SLACK_APP_TOKEN          = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DANSWER_BOT_SLACK_APP_TOKEN }}"
+        DANSWER_BOT_SLACK_BOT_TOKEN          = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DANSWER_BOT_SLACK_BOT_TOKEN }}"
+        DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER }}"
+        DANSWER_BOT_FEEDBACK_VISIBILITY      = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DANSWER_BOT_FEEDBACK_VISIBILITY }}"
+        DANSWER_BOT_DISPLAY_ERROR_MSGS       = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DANSWER_BOT_DISPLAY_ERROR_MSGS }}"
+        DANSWER_BOT_RESPOND_EVERY_CHANNEL    = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DANSWER_BOT_RESPOND_EVERY_CHANNEL }}"
+        DANSWER_BOT_DISABLE_COT              = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DANSWER_BOT_DISABLE_COT }}"  # Currently unused
+        NOTIFY_SLACKBOT_NO_ANSWER            = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NOTIFY_SLACKBOT_NO_ANSWER }}"
+        DANSWER_BOT_MAX_QPM                  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DANSWER_BOT_MAX_QPM }}"
+        DANSWER_BOT_MAX_WAIT_TIME            = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DANSWER_BOT_MAX_WAIT_TIME }}"
 
         # Logging
         # Leave this on pretty please? Nothing sensitive is collected!
         # https://docs.danswer.dev/more/telemetry
-        DISABLE_TELEMETRY              = "${NOMAD_META.DISABLE_TELEMETRY}"
-        LOG_LEVEL = "${NOMAD_META.LOG_LEVEL}"  # Set to debug to get more fine-grained logs
-        LOG_ALL_MODEL_INTERACTIONS     = "${NOMAD_META.LOG_ALL_MODEL_INTERACTIONS}"  # LiteLLM Verbose Logging
+        DISABLE_TELEMETRY              = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_TELEMETRY }}"
+        LOG_LEVEL                      = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_LEVEL }}"  # Set to debug to get more fine-grained logs
         # Log all of Danswer prompts and interactions with the LLM
-        LOG_DANSWER_MODEL_INTERACTIONS = "${NOMAD_META.LOG_DANSWER_MODEL_INTERACTIONS}"
-        LOG_VESPA_TIMING_INFORMATION = "${NOMAD_META.LOG_VESPA_TIMING_INFORMATION}"
+        LOG_ALL_MODEL_INTERACTIONS     = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_ALL_MODEL_INTERACTIONS }}"  # LiteLLM Verbose Logging
+        LOG_DANSWER_MODEL_INTERACTIONS = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_DANSWER_MODEL_INTERACTIONS }}"
+        LOG_VESPA_TIMING_INFORMATION   = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_VESPA_TIMING_INFORMATION }}"
 
         # Enterprise Edition stuff
-        ENABLE_PAID_ENTERPRISE_EDITION_FEATURES = "${NOMAD_META.ENABLE_PAID_ENTERPRISE_EDITION_FEATURES}"
+        ENABLE_PAID_ENTERPRISE_EDITION_FEATURES = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.ENABLE_PAID_ENTERPRISE_EDITION_FEATURES }}"
       }
+
 
       restart {
         attempts = 2

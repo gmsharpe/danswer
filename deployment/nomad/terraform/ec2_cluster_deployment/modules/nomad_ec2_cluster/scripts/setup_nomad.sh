@@ -120,8 +120,8 @@ EOT
   sed -i "s/YOUR_VAULT_TOKEN/$NOMAD_VAULT_TOKEN/" /etc/nomad.d/nomad.hcl
 
   cat <<EOT >> /var/vault/keys/keys.txt
-  nomad_vault_token=$NOMAD_VAULT_TOKEN
-  EOT
+nomad_vault_token=$NOMAD_VAULT_TOKEN
+EOT
 fi
 
 # Create a systemd service file for Nomad
