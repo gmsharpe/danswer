@@ -47,7 +47,6 @@ EOT
   sudo systemctl start vault
 
   export VAULT_ADDR="http://$SERVER_IP:8200"
-  export PATH="$PATH"
 
   # Wait for Vault to be fully started by checking the API
   echo "Waiting for Vault to start..."
@@ -97,7 +96,6 @@ EOT
 
   # Set the VAULT_TOKEN environment variable for remainder of this session
   export VAULT_TOKEN="$root_token"
-  export PATH="$PATH"
 
   vault secrets enable -path=secret kv-v2
 
