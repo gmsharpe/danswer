@@ -4,6 +4,9 @@ PRIVATE_IP=$1
 SERVER_IP=$2
 IS_SERVER=$3
 
+VAULT_POLICY_NAME="nomad-server"
+VAULT_ROLE_NAME="nomad-agent"
+
 # remove for non-dev environments
 export VAULT_ADDR="http://$SERVER_IP:8200"
 # just in case export wasn't retained
@@ -68,6 +71,7 @@ vault {
   enabled = true
   address = "http://$SERVER_IP:8200"  # Vault server address
   token   = "YOUR_VAULT_TOKEN"         # Token with access to Vault policies
+  role = "nomad-agent"
 }
 client {
   enabled = true
@@ -105,6 +109,15 @@ path "auth/token/roles/nomad-cluster" {
 path "auth/token/lookup-self" {
   capabilities = ["read"]
 }
+path "auth/token/roles/nomad-agent" {
+  capabilities = ["read"]
+}
+path  "auth/token/create/nomad-agent" {
+  capabilities = ["update"]
+}
+path "auth/token/revoke-accessor" {
+  capabilities = ["update"]
+}
 path "sys/capabilities-self" {
   capabilities = ["read"]
 }
@@ -114,10 +127,16 @@ path "sys/leases/renew" {
 path "sys/leases/revoke" {
   capabilities = ["update"]
 }
+path "secret/data/danswer" {
+  capabilities = ["read"]
+}
 EOT
 
+vault write auth/token/roles/$VAULT_ROLE_NAME policy=nomad-server period=2h
+
+
 # Create a token with the Nomad policy
-NOMAD_VAULT_TOKEN=$(vault token create -policy="nomad-server" -field token)
+NOMAD_VAULT_TOKEN=$(vault token create -policy="nomad-server" -role "nomad-agent" -field token -period "2h")
 
 if [ -z "$NOMAD_VAULT_TOKEN" ]; then
   echo "Error creating Vault token."

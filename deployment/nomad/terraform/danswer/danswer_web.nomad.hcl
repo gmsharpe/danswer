@@ -31,9 +31,8 @@ job "danswer_web" {
       }
       config {
         image = "danswer/danswer-backend:${env.IMAGE_TAG}"
-        port_map {
-          api_port = 8080
-        }
+        ports = ["api_port"]
+
         command = "/bin/sh"
         args = [
           "-c",
@@ -50,90 +49,105 @@ job "danswer_web" {
         memory = 1024
       }
 
+      # Template to fetch Vault secrets
+      template {
+        data = <<EOH
+        {{ with secret "secret/data/danswer" }}
+        IMAGE_TAG={{ .Data.data.IMAGE_TAG }}
+        NOMAD_VAR_MIN_THREADS_ML_MODELS={{ .Data.data.MIN_THREADS_ML_MODELS }}
+        NOMAD_VAR_LOG_LEVEL={{ .Data.data.LOG_LEVEL }}
+        NOMAD_VAR_DISABLE_MODEL_SERVER={{ .Data.data.DISABLE_MODEL_SERVER }}
+        {{ end }}
+        EOH
+
+        destination = "local/env.sh"
+        env         = true
+      }
+
       env {
 
         # Auth Settings
-        AUTH_TYPE                   = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.AUTH_TYPE }}"
-        SESSION_EXPIRE_TIME_SECONDS = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.SESSION_EXPIRE_TIME_SECONDS }}"
-        ENCRYPTION_KEY_SECRET       = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.ENCRYPTION_KEY_SECRET }}"
-        VALID_EMAIL_DOMAINS         = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.VALID_EMAIL_DOMAINS }}"
-        GOOGLE_OAUTH_CLIENT_ID      = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.GOOGLE_OAUTH_CLIENT_ID }}"
-        GOOGLE_OAUTH_CLIENT_SECRET  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.GOOGLE_OAUTH_CLIENT_SECRET }}"
-        REQUIRE_EMAIL_VERIFICATION  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.REQUIRE_EMAIL_VERIFICATION }}"
-        SMTP_SERVER = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.SMTP_SERVER }}"  # Default is 'smtp.gmail.com'
-        SMTP_PORT = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.SMTP_PORT }}"  # Default is '587'
-        SMTP_USER                   = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.SMTP_USER }}"
-        SMTP_PASS                   = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.SMTP_PASS }}"
-        EMAIL_FROM                  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.EMAIL_FROM }}"
-        OAUTH_CLIENT_ID             = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.OAUTH_CLIENT_ID }}"
-        OAUTH_CLIENT_SECRET         = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.OAUTH_CLIENT_SECRET }}"
-        OPENID_CONFIG_URL           = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.OPENID_CONFIG_URL }}"
-        TRACK_EXTERNAL_IDP_EXPIRY   = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.TRACK_EXTERNAL_IDP_EXPIRY }}"
+        AUTH_TYPE                   = "${NOMAD_VAR_AUTH_TYPE}"
+        SESSION_EXPIRE_TIME_SECONDS  = "${NOMAD_VAR_SESSION_EXPIRE_TIME_SECONDS}"
+        ENCRYPTION_KEY_SECRET        = "${NOMAD_VAR_ENCRYPTION_KEY_SECRET}"
+        VALID_EMAIL_DOMAINS          = "${NOMAD_VAR_VALID_EMAIL_DOMAINS}"
+        GOOGLE_OAUTH_CLIENT_ID       = "${NOMAD_VAR_GOOGLE_OAUTH_CLIENT_ID}"
+        GOOGLE_OAUTH_CLIENT_SECRET   = "${NOMAD_VAR_GOOGLE_OAUTH_CLIENT_SECRET}"
+        REQUIRE_EMAIL_VERIFICATION   = "${NOMAD_VAR_REQUIRE_EMAIL_VERIFICATION}"
+        SMTP_SERVER                  = "${NOMAD_VAR_SMTP_SERVER}"
+        SMTP_PORT                    = "${NOMAD_VAR_SMTP_PORT}"
+        SMTP_USER                    = "${NOMAD_VAR_SMTP_USER}"
+        SMTP_PASS                    = "${NOMAD_VAR_SMTP_PASS}"
+        EMAIL_FROM                   = "${NOMAD_VAR_EMAIL_FROM}"
+        OAUTH_CLIENT_ID              = "${NOMAD_VAR_OAUTH_CLIENT_ID}"
+        OAUTH_CLIENT_SECRET          = "${NOMAD_VAR_OAUTH_CLIENT_SECRET}"
+        OPENID_CONFIG_URL            = "${NOMAD_VAR_OPENID_CONFIG_URL}"
+        TRACK_EXTERNAL_IDP_EXPIRY    = "${NOMAD_VAR_TRACK_EXTERNAL_IDP_EXPIRY}"
 
         # Gen AI Settings
-        GEN_AI_MAX_TOKENS          = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.GEN_AI_MAX_TOKENS }}"
-        QA_TIMEOUT                 = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.QA_TIMEOUT }}"
-        MAX_CHUNKS_FED_TO_CHAT     = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.MAX_CHUNKS_FED_TO_CHAT }}"
-        DISABLE_LLM_CHOOSE_SEARCH  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_LLM_CHOOSE_SEARCH }}"
-        DISABLE_LLM_QUERY_REPHRASE = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_LLM_QUERY_REPHRASE }}"
-        DISABLE_GENERATIVE_AI      = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_GENERATIVE_AI }}"
-        DISABLE_LITELLM_STREAMING  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_LITELLM_STREAMING }}"
-        LITELLM_EXTRA_HEADERS      = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LITELLM_EXTRA_HEADERS }}"
-        BING_API_KEY               = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.BING_API_KEY }}"
-        DISABLE_LLM_DOC_RELEVANCE  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_LLM_DOC_RELEVANCE }}"
-        # if set, allows for the use of the token budget system
-        TOKEN_BUDGET_GLOBALLY_ENABLED = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.TOKEN_BUDGET_GLOBALLY_ENABLED }}"
-        # Enables the use of bedrock models
-        AWS_ACCESS_KEY_ID          = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.AWS_ACCESS_KEY_ID }}"
-        AWS_SECRET_ACCESS_KEY      = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.AWS_SECRET_ACCESS_KEY }}"
-        AWS_REGION_NAME            = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.AWS_REGION_NAME }}"
+        GEN_AI_MAX_TOKENS            = "${NOMAD_VAR_GEN_AI_MAX_TOKENS}"
+        QA_TIMEOUT                   = "${NOMAD_VAR_QA_TIMEOUT}"
+        MAX_CHUNKS_FED_TO_CHAT       = "${NOMAD_VAR_MAX_CHUNKS_FED_TO_CHAT}"
+        DISABLE_LLM_CHOOSE_SEARCH    = "${NOMAD_VAR_DISABLE_LLM_CHOOSE_SEARCH}"
+        DISABLE_LLM_QUERY_REPHRASE   = "${NOMAD_VAR_DISABLE_LLM_QUERY_REPHRASE}"
+        DISABLE_GENERATIVE_AI        = "${NOMAD_VAR_DISABLE_GENERATIVE_AI}"
+        DISABLE_LITELLM_STREAMING    = "${NOMAD_VAR_DISABLE_LITELLM_STREAMING}"
+        LITELLM_EXTRA_HEADERS        = "${NOMAD_VAR_LITELLM_EXTRA_HEADERS}"
+        BING_API_KEY                 = "${NOMAD_VAR_BING_API_KEY}"
+        DISABLE_LLM_DOC_RELEVANCE    = "${NOMAD_VAR_DISABLE_LLM_DOC_RELEVANCE}"
+        TOKEN_BUDGET_GLOBALLY_ENABLED = "${NOMAD_VAR_TOKEN_BUDGET_GLOBALLY_ENABLED}"
+
+        AWS_ACCESS_KEY_ID            = "${NOMAD_VAR_AWS_ACCESS_KEY_ID}"
+        AWS_SECRET_ACCESS_KEY        = "${NOMAD_VAR_AWS_SECRET_ACCESS_KEY}"
+        AWS_REGION_NAME              = "${NOMAD_VAR_AWS_REGION_NAME}"
 
         # Query Options
-        DOC_TIME_DECAY = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DOC_TIME_DECAY }}"
+        DOC_TIME_DECAY               = "${NOMAD_VAR_DOC_TIME_DECAY}"
         # Recency Bias for search results, decay at 1 / (1 + DOC_TIME_DECAY * x years)
-        HYBRID_ALPHA = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.HYBRID_ALPHA }}"
+        HYBRID_ALPHA                 = "${NOMAD_VAR_HYBRID_ALPHA}"
         # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)
-        EDIT_KEYWORD_QUERY           = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.EDIT_KEYWORD_QUERY }}"
-        MULTILINGUAL_QUERY_EXPANSION = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.MULTILINGUAL_QUERY_EXPANSION }}"
-        LANGUAGE_HINT                = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LANGUAGE_HINT }}"
-        LANGUAGE_CHAT_NAMING_HINT    = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LANGUAGE_CHAT_NAMING_HINT }}"
-        QA_PROMPT_OVERRIDE           = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.QA_PROMPT_OVERRIDE }}"
+        EDIT_KEYWORD_QUERY           = "${NOMAD_VAR_EDIT_KEYWORD_QUERY}"
+        MULTILINGUAL_QUERY_EXPANSION = "${NOMAD_VAR_MULTILINGUAL_QUERY_EXPANSION}"
+        LANGUAGE_HINT                = "${NOMAD_VAR_LANGUAGE_HINT}"
+        LANGUAGE_CHAT_NAMING_HINT    = "${NOMAD_VAR_LANGUAGE_CHAT_NAMING_HINT}"
+        QA_PROMPT_OVERRIDE           = "${NOMAD_VAR_QA_PROMPT_OVERRIDE}"
 
         # Other Services
         POSTGRES_HOST                = "relational_db"
         VESPA_HOST                   = "index"
-        WEB_DOMAIN                   = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.WEB_DOMAIN }}" # For frontend redirect auth purpose
+        WEB_DOMAIN                   = "${NOMAD_VAR_WEB_DOMAIN}"
         # Don't change the NLP model configs unless you know what you're doing
-        DOCUMENT_ENCODER_MODEL       = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DOCUMENT_ENCODER_MODEL }}"
-        DOC_EMBEDDING_DIM            = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DOC_EMBEDDING_DIM }}"
-        NORMALIZE_EMBEDDINGS         = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NORMALIZE_EMBEDDINGS }}"
-        ASYM_QUERY_PREFIX            = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.ASYM_QUERY_PREFIX }}"
-        DISABLE_RERANK_FOR_STREAMING = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_RERANK_FOR_STREAMING }}"
-        MODEL_SERVER_HOST            = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.MODEL_SERVER_HOST }}"
-        MODEL_SERVER_PORT            = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.MODEL_SERVER_PORT }}"
+        DOCUMENT_ENCODER_MODEL       = "${NOMAD_VAR_DOCUMENT_ENCODER_MODEL}"
+        DOC_EMBEDDING_DIM            = "${NOMAD_VAR_DOC_EMBEDDING_DIM}"
+        NORMALIZE_EMBEDDINGS         = "${NOMAD_VAR_NORMALIZE_EMBEDDINGS}"
+        ASYM_QUERY_PREFIX            = "${NOMAD_VAR_ASYM_QUERY_PREFIX}"
+        DISABLE_RERANK_FOR_STREAMING = "${NOMAD_VAR_DISABLE_RERANK_FOR_STREAMING}"
+        MODEL_SERVER_HOST            = "${NOMAD_VAR_MODEL_SERVER_HOST}"
+        MODEL_SERVER_PORT            = "${NOMAD_VAR_MODEL_SERVER_PORT}"
 
         # Leave this on pretty please? Nothing sensitive is collected!
         # https://docs.danswer.dev/more/telemetry
-        DISABLE_TELEMETRY              = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_TELEMETRY }}"
-        LOG_LEVEL                      = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_LEVEL }}" # Set to debug to get more fine-grained logs
-        LOG_ALL_MODEL_INTERACTIONS     = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_ALL_MODEL_INTERACTIONS }}" # LiteLLM Verbose Logging
+        DISABLE_TELEMETRY            = "${NOMAD_VAR_DISABLE_TELEMETRY}"
+        LOG_LEVEL                    = "${NOMAD_VAR_LOG_LEVEL}"
+        LOG_ALL_MODEL_INTERACTIONS   = "${NOMAD_VAR_LOG_ALL_MODEL_INTERACTIONS}"
         # Log all of Danswer prompts and interactions with the LLM
-        LOG_DANSWER_MODEL_INTERACTIONS = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_DANSWER_MODEL_INTERACTIONS }}"
+        LOG_DANSWER_MODEL_INTERACTIONS = "${NOMAD_VAR_LOG_DANSWER_MODEL_INTERACTIONS}"
         # If set to `true` will enable additional logs about Vespa query performance
         # (time spent on finding the right docs + time spent fetching summaries from disk)
-        LOG_VESPA_TIMING_INFORMATION   = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_VESPA_TIMING_INFORMATION }}"
-        LOG_ENDPOINT_LATENCY           = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_ENDPOINT_LATENCY }}"
-        LOG_POSTGRES_LATENCY           = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_POSTGRES_LATENCY }}"
-        LOG_POSTGRES_CONN_COUNTS       = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_POSTGRES_CONN_COUNTS }}"
+        LOG_VESPA_TIMING_INFORMATION = "${NOMAD_VAR_LOG_VESPA_TIMING_INFORMATION}"
+        LOG_ENDPOINT_LATENCY         = "${NOMAD_VAR_LOG_ENDPOINT_LATENCY}"
+        LOG_POSTGRES_LATENCY         = "${NOMAD_VAR_LOG_POSTGRES_LATENCY}"
+        LOG_POSTGRES_CONN_COUNTS     = "${NOMAD_VAR_LOG_POSTGRES_CONN_COUNTS}"
 
         # Enterprise Edition only
-        ENABLE_PAID_ENTERPRISE_EDITION_FEATURES = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.ENABLE_PAID_ENTERPRISE_EDITION_FEATURES }}"
-        API_KEY_HASH_ROUNDS                     = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.API_KEY_HASH_ROUNDS }}"
+        ENABLE_PAID_ENTERPRISE_EDITION_FEATURES = "${NOMAD_VAR_ENABLE_PAID_ENTERPRISE_EDITION_FEATURES}"
+        API_KEY_HASH_ROUNDS                     = "${NOMAD_VAR_API_KEY_HASH_ROUNDS}"
         # Seeding configuration
-        ENV_SEED_CONFIGURATION                  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.ENV_SEED_CONFIGURATION }}"
-        IMAGE_TAG                               = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.IMAGE_TAG }}"
-      }
+        ENV_SEED_CONFIGURATION                  = "${NOMAD_VAR_ENV_SEED_CONFIGURATION}"
 
+        # Misc.
+        IMAGE_TAG                               = "${IMAGE_TAG}"
+      }
 
       service {
         name = "api-server"
@@ -164,9 +178,7 @@ job "danswer_web" {
       }
       config {
         image = "danswer/danswer-web-server:${env.IMAGE_TAG}"
-        port_map {
-          web_port = 80
-        }
+        ports = ["web_port"]
       }
 
       vault {
@@ -175,22 +187,47 @@ job "danswer_web" {
 
       # Build arguments (replaced in Nomad by environment variables)
       env {
-        NEXT_PUBLIC_DISABLE_STREAMING                    = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NEXT_PUBLIC_DISABLE_STREAMING }}"
-        NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA     = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA }}"
-        NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS }}"
-        NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS }}"
-        NEXT_PUBLIC_DISABLE_LOGOUT                       = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NEXT_PUBLIC_DISABLE_LOGOUT }}"
-        NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN                 = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN }}"
-        NEXT_PUBLIC_THEME                                = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NEXT_PUBLIC_THEME }}"
-        NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED }}"
+        NEXT_PUBLIC_DISABLE_STREAMING                     = "${NOMAD_VAR_NEXT_PUBLIC_DISABLE_STREAMING}"
+        NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA      = "${NOMAD_VAR_NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA}"
+        NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS  = "${NOMAD_VAR_NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS}"
+        NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS  = "${NOMAD_VAR_NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS}"
+        NEXT_PUBLIC_DISABLE_LOGOUT                        = "${NOMAD_VAR_NEXT_PUBLIC_DISABLE_LOGOUT}"
+        NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN                  = "${NOMAD_VAR_NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN}"
+        NEXT_PUBLIC_THEME                                 = "${NOMAD_VAR_NEXT_PUBLIC_THEME}"
+        NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED = "${NOMAD_VAR_NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED}"
 
         # Environment Variables
         INTERNAL_URL                            = "http://api_server:8080"
-        WEB_DOMAIN                              = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.WEB_DOMAIN }}"
-        THEME_IS_DARK                           = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.THEME_IS_DARK }}"
-        DISABLE_LLM_DOC_RELEVANCE               = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_LLM_DOC_RELEVANCE }}"
-        ENABLE_PAID_ENTERPRISE_EDITION_FEATURES = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.ENABLE_PAID_ENTERPRISE_EDITION_FEATURES }}"
-        IMAGE_TAG                               = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.IMAGE_TAG }}"
+        WEB_DOMAIN                              = "${NOMAD_VAR_WEB_DOMAIN}"
+        THEME_IS_DARK                           = "${NOMAD_VAR_THEME_IS_DARK}"
+        DISABLE_LLM_DOC_RELEVANCE               = "${NOMAD_VAR_DISABLE_LLM_DOC_RELEVANCE}"
+        ENABLE_PAID_ENTERPRISE_EDITION_FEATURES = "${NOMAD_VAR_ENABLE_PAID_ENTERPRISE_EDITION_FEATURES}"
+        IMAGE_TAG                               = "${IMAGE_TAG}"
+      }
+
+      # Template to fetch Vault secrets
+      template {
+        data = <<EOH
+        {{ with secret "secret/data/danswer" }}
+        NOMAD_VAR_NEXT_PUBLIC_DISABLE_STREAMING={{ .Data.data.NEXT_PUBLIC_DISABLE_STREAMING }}
+        NOMAD_VAR_NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA={{ .Data.data.NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA }}
+        NOMAD_VAR_NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS={{ .Data.data.NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS }}
+        NOMAD_VAR_NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS={{ .Data.data.NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS }}
+        NOMAD_VAR_NEXT_PUBLIC_DISABLE_LOGOUT={{ .Data.data.NEXT_PUBLIC_DISABLE_LOGOUT }}
+        NOMAD_VAR_NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN={{ .Data.data.NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN }}
+        NOMAD_VAR_NEXT_PUBLIC_THEME={{ .Data.data.NEXT_PUBLIC_THEME }}
+        NOMAD_VAR_NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED={{ .Data.data.NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED }}
+
+        NOMAD_VAR_WEB_DOMAIN={{ .Data.data.WEB_DOMAIN }}
+        NOMAD_VAR_THEME_IS_DARK={{ .Data.data.THEME_IS_DARK }}
+        NOMAD_VAR_DISABLE_LLM_DOC_RELEVANCE={{ .Data.data.DISABLE_LLM_DOC_RELEVANCE }}
+        NOMAD_VAR_ENABLE_PAID_ENTERPRISE_EDITION_FEATURES={{ .Data.data.ENABLE_PAID_ENTERPRISE_EDITION_FEATURES }}
+        IMAGE_TAG={{ .Data.data.IMAGE_TAG }}
+        {{ end }}
+        EOH
+
+        destination = "local/env.sh"
+        env         = true
       }
 
       # Resources for this task
