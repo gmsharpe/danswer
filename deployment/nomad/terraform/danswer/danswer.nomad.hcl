@@ -5,7 +5,7 @@ job "danswer" {
   node_pool = "secondary"
 
   vault {
-    policies = ["danswer-policy"]  # Vault policies required for this job
+    policies = ["nomad-server"]  # Vault policies required for this job
   }
 
   group "background_group" {
@@ -35,6 +35,10 @@ job "danswer" {
       resources {
         cpu    = 500
         memory = 1024
+      }
+
+      vault {
+        policies = ["nomad-server"]  # Specify the Vault policies to use
       }
 
       env {
@@ -149,6 +153,10 @@ job "danswer" {
         }
       }
 
+      vault {
+        policies = ["nomad-server"]  # Specify the Vault policies to use
+      }
+
       env {
         POSTGRES_USER     = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.POSTGRES_USER }}"
         POSTGRES_PASSWORD = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.POSTGRES_PASSWORD }}"
@@ -204,6 +212,10 @@ job "danswer" {
         volumes = ["model_cache_huggingface:/root/.cache/huggingface/"]
       }
 
+      vault {
+        policies = ["nomad-server"]  # Specify the Vault policies to use
+      }
+
       # Environment Variables
       env {
 
@@ -253,6 +265,10 @@ job "danswer" {
 
         # Mount the Huggingface cache as a volume
         volumes = ["indexing_model_cache_huggingface:/root/.cache/huggingface/"]
+      }
+
+      vault {
+        policies = ["nomad-server"]  # Specify the Vault policies to use
       }
 
       # Environment Variables
@@ -321,6 +337,10 @@ job "danswer" {
 
         # Set the container to run in the background with the appropriate ports
         ports = ["19071", "8081"]
+      }
+
+      vault {
+        policies = ["nomad-server"]  # Specify the Vault policies to use
       }
 
       # Resources for the Vespa task

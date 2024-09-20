@@ -5,7 +5,7 @@ job "danswer_web" {
   node_pool = "primary"
 
   vault {
-    policies = ["danswer-policy"]  # Vault policies required for this job
+    policies = ["nomad-server"]  # Specify the Vault policies to use
   }
 
   group "api_group" {
@@ -39,6 +39,10 @@ job "danswer_web" {
           "-c",
           "alembic upgrade head && echo \"Starting Danswer API Server\" && uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
         ]
+      }
+
+      vault {
+        policies = ["nomad-server"]  # Specify the Vault policies to use
       }
 
       resources {
@@ -163,6 +167,10 @@ job "danswer_web" {
         port_map {
           web_port = 80
         }
+      }
+
+      vault {
+        policies = ["nomad-server"]  # Specify the Vault policies to use
       }
 
       # Build arguments (replaced in Nomad by environment variables)
