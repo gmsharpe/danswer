@@ -150,8 +150,8 @@ job "danswer" {
       }
 
       env {
-        POSTGRES_USER     = "${NOMAD_META.POSTGRES_USER}"
-        POSTGRES_PASSWORD = "${NOMAD_META.POSTGRES_PASSWORD}"
+        POSTGRES_USER     = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.POSTGRES_USER }}"
+        POSTGRES_PASSWORD = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.POSTGRES_PASSWORD }}"
       }
 
       resources {
@@ -191,13 +191,13 @@ job "danswer" {
         max_file_size = 10
       }
       config {
-        image = "danswer/danswer-model-server:${NOMAD_META.IMAGE_TAG}"
+        image = "danswer/danswer-model-server:${env.IMAGE_TAG}"
 
         # Command block to handle conditional logic
         command = "/bin/sh"
         args = [
           "-c",
-          "if [ \"${NOMAD_META.DISABLE_MODEL_SERVER}\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000; fi"
+          "if [ \"${env.DISABLE_MODEL_SERVER}\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000; fi"
         ]
 
         # Mount the Huggingface cache as a volume
@@ -206,9 +206,10 @@ job "danswer" {
 
       # Environment Variables
       env {
-        MIN_THREADS_ML_MODELS = "${NOMAD_META.MIN_THREADS_ML_MODELS}"
-        LOG_LEVEL = "${NOMAD_META.LOG_LEVEL}"  # Default to info level for logs
-        DISABLE_MODEL_SERVER  = "${NOMAD_META.DISABLE_MODEL_SERVER}"
+
+        MIN_THREADS_ML_MODELS = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.MIN_THREADS_ML_MODELS }}"
+        LOG_LEVEL = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_LEVEL }}"  # Default to info level for logs
+        DISABLE_MODEL_SERVER  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_MODEL_SERVER }}"
       }
 
       # Resources allocation
@@ -241,13 +242,13 @@ job "danswer" {
         max_file_size = 10
       }
       config {
-        image = "danswer/danswer-model-server:${NOMAD_META.IMAGE_TAG}"
+        image = "danswer/danswer-model-server:${env.IMAGE_TAG}"
 
         # Command block to handle conditional logic
         command = "/bin/sh"
         args = [
           "-c",
-          "if [ \"${NOMAD_META.DISABLE_MODEL_SERVER}\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000; fi"
+          "if [ \"${env.DISABLE_MODEL_SERVER}\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000; fi"
         ]
 
         # Mount the Huggingface cache as a volume
@@ -256,10 +257,10 @@ job "danswer" {
 
       # Environment Variables
       env {
-        MIN_THREADS_ML_MODELS = "${NOMAD_META.MIN_THREADS_ML_MODELS}"
+        MIN_THREADS_ML_MODELS = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.MIN_THREADS_ML_MODELS }}"
         INDEXING_ONLY         = "True"
-        LOG_LEVEL = "${NOMAD_META.LOG_LEVEL}"  # Default to info level for logs
-        DISABLE_MODEL_SERVER  = "${NOMAD_META.DISABLE_MODEL_SERVER}"
+        LOG_LEVEL = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.LOG_LEVEL }}"  # Default to info level for logs
+        DISABLE_MODEL_SERVER  = "{{ (include \"vault://secret/data/danswer\" | parseJSON).data.DISABLE_MODEL_SERVER }}"
       }
 
       # Resources allocation

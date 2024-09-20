@@ -52,6 +52,6 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
 
   # Install and configure Consul if required
   if [ "$INSTALL_CONSUL" == "true" ]; then
-    sudo /opt/danswer/deployment/nomad/terraform/scripts/setup_consul.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+    sudo /opt/danswer/scripts/setup_consul.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
   fi
 fi
