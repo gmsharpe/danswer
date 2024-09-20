@@ -3,6 +3,7 @@
 RUN_USER_DATA_SCRIPT=${run_user_data_script}
 
 if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
+  echo "Running user data script"
   sudo yum update -y
   sudo yum install -y yum-utils shadow-utils
   sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
@@ -26,30 +27,31 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
 
   sudo yum install -y git && \
     cd /opt/danswer && \
-    sudo git clone https://github.com/gmsharpe/danswer.git .
-
-  # Copy nginx files
-  sudo cp -r /opt/danswer/deployment/data/nginx /var/nomad/volumes/danswer
+    #sudo git clone https://github.com/gmsharpe/danswer.git .
+    sudo git clone -b gms/infrastructure https://github.com/gmsharpe/danswer.git .
 
   # Copy setup scripts
-  sudo cp -r /opt/danswer/deployment/terraform/nomad/ec2_cluster_deployment/scripts /opt/danswer/deployment/nomad
+  sudo cp -r /opt/danswer/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/scripts /opt/danswer
+
+  # make scripts executable
+  sudo chmod +x /opt/danswer/scripts/*.sh
 
   # Execute 'setup_vault.sh' script
   if [ "$INSTALL_VAULT" == "true" ]; then
-    sudo /opt/danswer/deployment/nomad/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+    sudo /opt/danswer/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
   fi
 
   # Execute 'setup_nomad.sh' script
-  sudo /opt/danswer/deployment/nomad/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+  sudo /opt/danswer/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
 
   # Execute 'create_volumes.sh' script
-  sudo /opt/danswer/deployment/nomad/create_volumes.sh $SERVER_IP
+  sudo /opt/danswer/scripts/create_volumes.sh $SERVER_IP
 
 
   ### CONSUL ###
 
   # Install and configure Consul if required
   if [ "$INSTALL_CONSUL" == "true" ]; then
-    sudo /opt/danswer/deployment/nomad/scripts/setup_consul.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+    sudo /opt/danswer/deployment/nomad/terraform/scripts/setup_consul.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
   fi
 fi

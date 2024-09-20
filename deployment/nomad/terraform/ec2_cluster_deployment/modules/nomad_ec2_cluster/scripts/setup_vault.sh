@@ -47,11 +47,20 @@ EOT
   sudo systemctl start vault
 
   export VAULT_ADDR="http://$SERVER_IP:8200"
+  export PATH="$PATH"
 
   # Wait for Vault to be fully started by checking the API
   echo "Waiting for Vault to start..."
   while true; do
-    status_code=$(curl -s -o /dev/null -w "%%{http_code}" http://$SERVER_IP:8200/v1/sys/health)
+    status_code=$(curl -s -o /dev/null -w "%{http_code}" http://$SERVER_IP:8200/v1/sys/health)
+
+    # Ensure the status code is not empty or null
+    if [ -z "$status_code" ]; then
+      echo "Failed to retrieve status code. Retrying in 5 seconds..."
+      sleep 5
+      continue
+    fi
+
     # 200: Vault is initialized, unsealed, and active.
     # 429: Vault is unsealed and in standby mode.
     # 472: Vault is sealed.
@@ -79,8 +88,8 @@ EOT
 
   # Save unseal keys and root token to a secure file
   cat <<EOT > /var/vault/keys/keys.txt
-unseal_key_1: $unseal_key_1
-root_token: $root_token
+unseal_key_1=$unseal_key_1
+root_token=$root_token
 EOT
 
   # Secure the file
@@ -88,6 +97,7 @@ EOT
 
   # Set the VAULT_TOKEN environment variable for remainder of this session
   export VAULT_TOKEN="$root_token"
+  export PATH="$PATH"
 
   vault secrets enable -path=secret kv-v2
 

@@ -205,7 +205,8 @@ resource "aws_instance" "bastion_host" {
   }
 
   tags = {
-    Name = "bastion-host"
+    Name = "bastion-host",
+    Project = "Danswer"
   }
   depends_on = [aws_eip.bastion_eip]
 
@@ -256,7 +257,8 @@ resource "aws_instance" "nomad_instance" {
   })
 
   tags = {
-    Name = "NomadInstance-${count.index == 0 ? "Server" : ""}-${count.index}"
+    Name = "NomadInstance-${count.index == 0 ? "Server" : ""}-${count.index}",
+    Project = "Danswer"
   }
 
   lifecycle {
