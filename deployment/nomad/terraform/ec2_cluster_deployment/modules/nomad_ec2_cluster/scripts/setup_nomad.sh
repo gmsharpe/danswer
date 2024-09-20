@@ -87,11 +87,10 @@ EOT
 
 # setup NOMAD_VAULT_TOKEN
 # If you have a token for Nomad to access Vault, configure the token permissions in Vault
-if [ "$INSTALL_VAULT" == "true" ]; then
-  echo "Setting up Vault policies and token for Nomad..."
+echo "Setting up Vault policies and token for Nomad..."
 
-  # Configure a policy for Nomad in Vault
-  vault policy write nomad-server - <<EOT
+# Configure a policy for Nomad in Vault
+vault policy write nomad-server - <<EOT
 path "auth/token/create" {
   capabilities = ["update"]
 }
@@ -112,17 +111,23 @@ path "sys/leases/revoke" {
 }
 EOT
 
-  # Create a token with the Nomad policy
-  NOMAD_VAULT_TOKEN=$(vault token create -policy="nomad-server" -field token)
-  echo "Vault token for Nomad: $NOMAD_VAULT_TOKEN"
+# Create a token with the Nomad policy
+NOMAD_VAULT_TOKEN=$(vault token create -policy="nomad-server" -field token)
 
-  # Substitute the generated token into Nomad config (or pass it securely)
-  sed -i "s/YOUR_VAULT_TOKEN/$NOMAD_VAULT_TOKEN/" /etc/nomad.d/nomad.hcl
+if [ -z "$NOMAD_VAULT_TOKEN" ]; then
+  echo "Error creating Vault token."
+  exit 1
+fi
 
-  cat <<EOT >> /var/vault/keys/keys.txt
+echo "Vault token for Nomad: $NOMAD_VAULT_TOKEN"
+
+# Substitute the generated token into Nomad config (or pass it securely)
+sed -i "s/YOUR_VAULT_TOKEN/$NOMAD_VAULT_TOKEN/" /etc/nomad.d/nomad.hcl
+
+cat <<EOT >> /var/vault/keys/keys.txt
 nomad_vault_token=$NOMAD_VAULT_TOKEN
 EOT
-fi
+
 
 # Create a systemd service file for Nomad
 cat <<EOT > /etc/systemd/system/nomad.service
