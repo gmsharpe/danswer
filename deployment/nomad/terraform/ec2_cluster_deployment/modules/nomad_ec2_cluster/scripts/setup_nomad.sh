@@ -4,8 +4,9 @@ PRIVATE_IP=$1
 SERVER_IP=$2
 IS_SERVER=$3
 
-VAULT_POLICY_NAME="nomad-server"
-VAULT_ROLE_NAME="nomad-agent"
+VAULT_POLICY_NAME="nomad-cluster"
+# Set the Vault role name if not already set
+VAULT_ROLE_NAME=${VAULT_ROLE_NAME:-"nomad-cluster"}
 
 # remove for non-dev environments
 export VAULT_ADDR="http://$SERVER_IP:8200"
@@ -71,7 +72,7 @@ vault {
   enabled = true
   address = "http://$SERVER_IP:8200"  # Vault server address
   token   = "YOUR_VAULT_TOKEN"         # Token with access to Vault policies
-  role = "nomad-agent"
+  role = "nomad-cluster"
 }
 client {
   enabled = true
@@ -98,8 +99,10 @@ EOT
 # If you have a token for Nomad to access Vault, configure the token permissions in Vault
 echo "Setting up Vault policies and token for Nomad..."
 
-# Configure a policy for Nomad in Vault
-vault policy write nomad-server - <<EOT
+# Check if the 'nomad-cluster' policy already exists
+if ! vault policy list | grep -q '^nomad-cluster$'; then
+  # Configure a policy for Nomad in Vault
+  vault policy write nomad-cluster - <<EOT
 path "auth/token/create" {
   capabilities = ["update"]
 }
@@ -109,10 +112,10 @@ path "auth/token/roles/nomad-cluster" {
 path "auth/token/lookup-self" {
   capabilities = ["read"]
 }
-path "auth/token/roles/nomad-agent" {
+path "auth/token/roles/nomad-cluster" {
   capabilities = ["read"]
 }
-path  "auth/token/create/nomad-agent" {
+path "auth/token/create/nomad-cluster" {
   capabilities = ["update"]
 }
 path "auth/token/revoke-accessor" {
@@ -131,12 +134,22 @@ path "secret/data/danswer" {
   capabilities = ["read"]
 }
 EOT
+  echo "Policy 'nomad-cluster' has been created."
+else
+  echo "Policy 'nomad-cluster' already exists. Skipping policy creation."
+fi
 
-vault write auth/token/roles/$VAULT_ROLE_NAME policy=nomad-server period=2h
+# Check if the token role already exists
+if ! vault list auth/token/roles | grep -q "^${VAULT_ROLE_NAME}$"; then
+  vault write auth/token/roles/${VAULT_ROLE_NAME} policy=nomad-cluster period=2h
+  echo "Token role '${VAULT_ROLE_NAME}' has been created."
+else
+  echo "Token role '${VAULT_ROLE_NAME}' already exists. Skipping role creation."
+fi
 
 
 # Create a token with the Nomad policy
-NOMAD_VAULT_TOKEN=$(vault token create -policy="nomad-server" -role "nomad-agent" -field token -period "2h")
+NOMAD_VAULT_TOKEN=$(vault token create -policy="nomad-cluster" -role "nomad-cluster" -field token -period "2h")
 
 if [ -z "$NOMAD_VAULT_TOKEN" ]; then
   echo "Error creating Vault token."
@@ -149,7 +162,7 @@ echo "Vault token for Nomad: $NOMAD_VAULT_TOKEN"
 sed -i "s/YOUR_VAULT_TOKEN/$NOMAD_VAULT_TOKEN/" /etc/nomad.d/nomad.hcl
 
 cat <<EOT >> /var/vault/keys/keys.txt
-nomad_vault_token=$NOMAD_VAULT_TOKEN
+nomad_vault_token="$NOMAD_VAULT_TOKEN"
 EOT
 
 

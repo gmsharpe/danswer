@@ -38,6 +38,7 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
 
   # Execute 'setup_vault.sh' script
   if [ "$INSTALL_VAULT" == "true" ]; then
+    sudo export VAULT_ADDR="http://$PRIVATE_IP:8200"
     sudo /opt/danswer/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
   fi
 

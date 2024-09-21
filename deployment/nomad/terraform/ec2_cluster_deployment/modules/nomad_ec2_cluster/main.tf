@@ -54,6 +54,7 @@ resource "aws_security_group" "nomad_sg" {
     from_port = 22
     to_port   = 22
     protocol  = "tcp"
+    self      = true
     security_groups = [aws_security_group.bastion_sg.id]
   }
 
