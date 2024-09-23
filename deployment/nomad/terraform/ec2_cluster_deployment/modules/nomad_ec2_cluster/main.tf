@@ -256,6 +256,7 @@ resource "aws_instance" "nomad_instance" {
     install_vault   = var.install_vault
     run_user_data_script = "true"
   })
+  user_data_replace_on_change = true
 
   tags = {
     Name = "NomadInstance-${count.index == 0 ? "Server" : ""}-${count.index}",
@@ -264,10 +265,17 @@ resource "aws_instance" "nomad_instance" {
 
   lifecycle {
     ignore_changes = [
-      security_groups, user_data
+      security_groups
     ]
   }
 
+  # Add Elastic Block Store (EBS) volume
+  ebs_block_device {
+    device_name = "/dev/xvdf"
+    volume_size = 15 # Size in GB
+    volume_type = "gp2" # General Purpose SSD
+    delete_on_termination = true # Ensures volume is deleted when instance is terminated
+  }
 }
 
 # variable "local_port1" {

@@ -32,14 +32,16 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
 
   # Copy setup scripts
   sudo cp -r /opt/danswer/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/scripts /opt/danswer
+  sudo cp -r /opt/danswer/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/shared_configurations /opt/danswer
 
   # make scripts executable
   sudo chmod +x /opt/danswer/scripts/*.sh
 
   # Execute 'setup_vault.sh' script
   if [ "$INSTALL_VAULT" == "true" ]; then
-    sudo export VAULT_ADDR="http://$PRIVATE_IP:8200"
-    sudo /opt/danswer/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+    #sudo /opt/danswer/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+    sudo /opt/danswer/shared_configurations/vault/scripts/install_vault.sh
+
   fi
 
   # Execute 'setup_nomad.sh' script

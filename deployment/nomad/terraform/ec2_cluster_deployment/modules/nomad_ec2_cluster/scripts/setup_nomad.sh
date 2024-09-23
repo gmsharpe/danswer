@@ -112,9 +112,6 @@ path "auth/token/roles/nomad-cluster" {
 path "auth/token/lookup-self" {
   capabilities = ["read"]
 }
-path "auth/token/roles/nomad-cluster" {
-  capabilities = ["read"]
-}
 path "auth/token/create/nomad-cluster" {
   capabilities = ["update"]
 }

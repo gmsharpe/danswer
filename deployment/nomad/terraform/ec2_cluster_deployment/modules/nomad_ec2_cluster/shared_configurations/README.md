@@ -1,0 +1,2 @@
+## Resource Links
+* [provision-nomad/vagrant-local](https://github.com/hashicorp/nomad-guides/blob/master/operations/provision-nomad/dev/vagrant-local/Vagrantfile) - provides a good example of using the guides-configuration scripts to install Nomad, Consul & Vault

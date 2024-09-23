@@ -1,21 +1,35 @@
 #!/bin/bash
 
+set -euo pipefail
 
 # Default values
 DEFAULT_PRIVATE_IP="10.0.1.10"
 DEFAULT_LEADER_IP="10.0.1.10"
-DEFAULT_IS_SERVER="false"
-DEFAULT_IS_LEADER="false"
+DEFAULT_IS_SERVER="true"
+DEFAULT_IS_LEADER="true"
 
 # Assign variables, using defaults if arguments are not provided
-PRIVATE_IP=${1:-$DEFAULT_PRIVATE_IP}   # The private IP address of the current node
-LEADER_IP=${2:-$DEFAULT_LEADER_IP}     # The private IP address of the leader node
-IS_SERVER=${3:-$DEFAULT_IS_SERVER}     # "true" if the node is a server
-IS_LEADER=${4:-$DEFAULT_IS_LEADER}     # "true" if the node is the leader (only one leader)
+PRIVATE_IP="${1:-$DEFAULT_PRIVATE_IP}"   # The private IP address of the current node
+LEADER_IP="${2:-$DEFAULT_LEADER_IP}"     # The private IP address of the leader node
+IS_SERVER="${3:-$DEFAULT_IS_SERVER}"     # "true" if the node is a server
+IS_LEADER="${4:-$DEFAULT_IS_LEADER}"     # "true" if the node is the leader (only one leader)
 
+# Ensure vault user exists
+#if ! id -u vault &>/dev/null; then
+#  sudo useradd --system --home /etc/vault.d --shell /bin/false vault
+#fi
+
+# Set VAULT_ADDR environment variable
+VAULT_ADDR="http://$LEADER_IP:8200"
+sudo bash -c "echo 'export VAULT_ADDR=$VAULT_ADDR' > /etc/profile.d/vault.sh"
+sudo chmod 644 /etc/profile.d/vault.sh
+echo "VAULT_ADDR is set to $VAULT_ADDR. Please log out and back in or run 'source /etc/profile.d/vault.sh' to apply the changes."
 
 ### VAULT ###
 
+# Add HashiCorp repository and install Vault
+sudo yum install -y yum-utils
+sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
 sudo yum -y install vault
 
 if [ "$IS_SERVER" == "true" ]; then
@@ -24,7 +38,7 @@ if [ "$IS_SERVER" == "true" ]; then
   sudo chown vault:vault /opt/vault/data
 
   # Configure Vault with Raft storage and clustering settings
-  cat <<EOT > /etc/vault.d/vault.hcl
+  sudo tee /etc/vault.d/vault.hcl > /dev/null <<EOT
 storage "raft" {
   path    = "/opt/vault/data"
   node_id = "vault-node-$PRIVATE_IP"
@@ -37,7 +51,7 @@ storage "raft" {
 listener "tcp" {
   address         = "0.0.0.0:8200"
   cluster_address = "0.0.0.0:8201"
-  tls_disable     = "true"
+  tls_disable     = "true"  # Consider enabling TLS
 }
 
 api_addr     = "http://$PRIVATE_IP:8200"
@@ -48,7 +62,7 @@ disable_mlock = true
 EOT
 
   # Create Vault systemd service
-  cat <<EOT > /etc/systemd/system/vault.service
+  sudo tee /etc/systemd/system/vault.service > /dev/null <<EOT
 [Unit]
 Description=Vault Server
 Documentation=https://www.vaultproject.io/docs/
@@ -80,35 +94,38 @@ EOT
   sudo systemctl enable vault
   sudo systemctl start vault
 
-  # This should already be set, but just in case
+  # Ensure VAULT_ADDR is available for subsequent commands
   export VAULT_ADDR="http://$PRIVATE_IP:8200"
 
-  # for now, the only 'server' will also be the 'leader'
-  #if [ "$IS_LEADER" == "true" ]; then
-  if [ "$IS_SERVER" == "true" ]; then
+  if [ "$IS_LEADER" == "true" ]; then
     # Initialize Vault only on the leader node
     echo "Initializing Vault on leader node..."
-    vault operator init -key-shares=1 -key-threshold=1 > /opt/vault/data/vault-init-output.txt
 
-    # Extract root token and unseal key
+    # Initialize Vault with multiple key shares and threshold for better security
+    sudo -u vault env VAULT_ADDR="$VAULT_ADDR" vault operator init -key-shares=5 -key-threshold=3 | sudo tee /opt/vault/data/vault-init-output.txt > /dev/null
+
+    # Extract root token and unseal keys
     root_token=$(grep 'Initial Root Token' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')
-    unseal_key=$(grep 'Unseal Key 1' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')
+    unseal_keys=$(grep 'Unseal Key ' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')
 
-    # Unseal Vault
-    vault operator unseal "$unseal_key"
-
-    # Save unseal key and root token securely
-    cat <<EOT > /opt/vault/data/keys.txt
-vault_unseal_key=$unseal_key
+    # Save unseal keys and root token securely
+    sudo tee /opt/vault/data/keys.txt > /dev/null <<EOT
 vault_root_token=$root_token
+vault_unseal_keys=$unseal_keys
 EOT
-    chmod 600 /opt/vault/data/keys.txt
+    sudo chmod 600 /opt/vault/data/keys.txt
+
+    # Unseal Vault using multiple keys
+    IFS=$'\n' read -d '' -r -a keys <<< "$unseal_keys"
+    for key in "${keys[@]}"; do
+      sudo -u vault VAULT_ADDR=$VAULT_ADDR vault operator unseal "$key"
+    done
 
     # Set VAULT_TOKEN for further operations
     export VAULT_TOKEN="$root_token"
 
     # Enable KV secrets engine at 'secret' path
-    vault secrets enable -path=secret kv-v2
+    sudo -u vault VAULT_ADDR=$VAULT_ADDR VAULT_TOKEN=$VAULT_TOKEN vault secrets enable -path=secret kv-v2
 
     echo "Vault is initialized and unsealed on the leader node."
   else
@@ -125,16 +142,31 @@ EOT
       fi
     done
 
-    # Unseal the follower node using the leader's unseal key
+    # Unseal the follower node using the leader's unseal keys
     echo "Unsealing Vault on follower node..."
-    unseal_key=$(ssh user@$LEADER_IP "sudo cat /opt/vault/data/keys.txt | grep 'unseal_key' | cut -d'=' -f2")
-    vault operator unseal "$unseal_key"
+
+    # Retrieve unseal keys securely (consider using a more secure method)
+    for i in {1..5}; do
+      unseal_key=$(ssh user@$LEADER_IP "sudo grep 'vault_unseal_keys' /opt/vault/data/keys.txt | cut -d'=' -f2 | tr ',' '\n' | head -n1")
+      if [ -n "$unseal_key" ]; then
+        break
+      fi
+      echo "Failed to retrieve unseal key. Retrying in 5 seconds..."
+      sleep 5
+    done
+
+    if [ -z "$unseal_key" ]; then
+      echo "Error: Unable to retrieve unseal key from leader node."
+      exit 1
+    fi
+
+    sudo -u vault VAULT_ADDR=$VAULT_ADDR vault operator unseal "$unseal_key"
     echo "Vault is unsealed on the follower node."
   fi
 else
   # Configure Vault client on non-server nodes
   echo "Configuring Vault client..."
-  echo "export VAULT_ADDR=\"http://$LEADER_IP:8200\"" >> ~/.bash_profile
-  source ~/.bash_profile
-  echo "Vault client is configured to communicate with the leader at $LEADER_IP."
+  sudo bash -c "echo 'export VAULT_ADDR=\"http://$LEADER_IP:8200\"' > /etc/profile.d/vault_client.sh"
+  sudo chmod 644 /etc/profile.d/vault_client.sh
+  echo "Vault client is configured to communicate with the leader at $LEADER_IP. Please log out and back in or run 'source /etc/profile.d/vault_client.sh' to apply the changes."
 fi
