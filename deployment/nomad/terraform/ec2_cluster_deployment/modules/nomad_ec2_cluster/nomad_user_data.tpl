@@ -40,8 +40,16 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
   # Execute 'setup_vault.sh' script
   if [ "$INSTALL_VAULT" == "true" ]; then
     #sudo /opt/danswer/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
-    sudo /opt/danswer/shared_configurations/vault/scripts/install_vault.sh
+    cd /opt/danswer/shared_configurations/
+    sudo USER=$vault_user GROUP=$vault_group \
+      COMMENT=$vault_comment HOME=$vault_home \
+      ./vault/scripts/create_user.sh
 
+    sudo VERSION=$vault_version URL=$vault_ent_url \
+      USER=$vault_user GROUP=$vault_group \
+      ./vault/scripts/install_vault.sh
+
+    sudo ./vault/scripts/install-vault-systemd.sh
   fi
 
   # Execute 'setup_nomad.sh' script

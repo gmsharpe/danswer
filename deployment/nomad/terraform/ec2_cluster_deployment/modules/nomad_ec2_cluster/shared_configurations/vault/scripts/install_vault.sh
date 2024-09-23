@@ -3,7 +3,7 @@ set -x
 
 echo "Running"
 
-VAULT_VERSION=${VERSION}
+VAULT_VERSION=${VERSION:-"1.17.5"}
 VAULT_ZIP=vault_${VAULT_VERSION}_linux_amd64.zip
 VAULT_URL=${URL:-https://releases.hashicorp.com/vault/${VAULT_VERSION}/${VAULT_ZIP}}
 VAULT_DIR=/usr/local/bin
