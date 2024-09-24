@@ -248,13 +248,20 @@ resource "aws_instance" "nomad_instance" {
   private_ip    = "10.0.1.${count.index + 10}"
 
   user_data = templatefile("${path.module}/nomad_user_data.tpl", {
-    count           = count.index,
-    private_ip      = "10.0.1.${count.index + 10}",
+    count           = count.index
+    private_ip      = "10.0.1.${count.index + 10}"
     server_ip       = "10.0.1.10"
     install_consul  = var.install_consul
     install_danswer = var.install_danswer
     install_vault   = var.install_vault
     run_user_data_script = "true"
+    vault_override  = true
+    name            = "danswer-vault"
+    vault_config    = templatefile("${path.module}/shared_configurations/vault/config/vault_server.hcl.tpl", {
+      leader_ip       = "10.0.1.10"
+      private_ip      = "10.0.1.${count.index + 10}"
+      name            = "danswer-vault"
+    } )
   })
   user_data_replace_on_change = true
 

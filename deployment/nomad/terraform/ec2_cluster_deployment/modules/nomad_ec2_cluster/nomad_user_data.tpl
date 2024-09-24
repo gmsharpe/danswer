@@ -2,6 +2,34 @@
 
 RUN_USER_DATA_SCRIPT=${run_user_data_script}
 
+consul_install=$(echo "$${CONSUL_INSTALL:-true}" | tr '[:upper:]' '[:lower:]')
+consul_install=$(if [[ "$consul_install" == "true" || "$consul_install" == "1" ]]; then echo true; else echo false; fi)
+consul_host_port=$${CONSUL_HOST_PORT:-8500}
+consul_version=$${CONSUL_VERSION:-"1.4.1"}
+consul_ent_url=$${CONSUL_ENT_URL}
+consul_group="consul"
+consul_user="consul"
+consul_comment="Consul"
+consul_home="/opt/consul"
+
+# Vault variables
+vault_install=$(echo "$${VAULT_INSTALL:-true}" | tr '[:upper:]' '[:lower:]')
+vault_install=$(if [[ "$vault_install" == "true" || "$vault_install" == "1" ]]; then echo true; else echo false; fi)
+vault_host_port=$${VAULT_HOST_PORT:-8200}
+vault_version=$${VAULT_VERSION:-"1.0.2"}
+vault_ent_url=$${VAULT_ENT_URL}
+vault_group="vault"
+vault_user="vault"
+vault_comment="Vault"
+vault_home="/opt/vault"
+
+# Nomad variables
+nomad_host_port=$${NOMAD_HOST_PORT:-4646}
+nomad_version=$${NOMAD_VERSION:-"0.8.7"}
+nomad_ent_url=$${NOMAD_ENT_URL}
+nomad_group="root"
+nomad_user="root"
+
 if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
   echo "Running user data script"
   sudo yum update -y
@@ -36,13 +64,16 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
 
   # make scripts executable
   sudo chmod +x /opt/danswer/scripts/*.sh
+  sudo find /opt/danswer/shared_configurations/{vault,nomad,consul,scripts} -type f -name "*.sh" -exec chmod +x {} \;
 
   # Execute 'setup_vault.sh' script
-  if [ "$INSTALL_VAULT" == "true" ]; then
+  if [ $INSTALL_VAULT == true ]; then
+    echo "Installing Vault"
     #sudo /opt/danswer/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
 
-    # Steps originally outlined by
+    # Steps loosely modeled after
     #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/install-vault-systemd.sh.tpl
+    #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/quick-start-vault-systemd.sh.tpl
 
     cd /opt/danswer/shared_configurations/
     sudo USER=$vault_user GROUP=$vault_group \
@@ -59,9 +90,9 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
     VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
     VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
 
-    echo "Minimal configuration for Vault"
+    echo "Configure Vault with Raft storage and clustering settings"
     cat <<CONFIG | sudo tee $VAULT_CONFIG_FILE
-cluster_name = "${name}"
+    cluster_name = "${name}"
 CONFIG
 
     echo "Update Vault configuration file permissions"
@@ -90,7 +121,6 @@ CONFIG
 
   # Execute 'create_volumes.sh' script
   sudo /opt/danswer/scripts/create_volumes.sh $SERVER_IP
-
 
   ### CONSUL ###
 

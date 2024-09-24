@@ -21,5 +21,5 @@ variable "install_danswer" {
   default = "true"
 }
 variable "install_vault" {
-  default = "true"
+  default = true
 }
