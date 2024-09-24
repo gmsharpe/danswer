@@ -50,7 +50,7 @@ else
     sudo mkdir -p ${CONFIG_DIR}
 
     # Write the override config to consul.hcl
-    sudo tee ${CONFIG_DIR}/consul.hcl > /dev/null <<< "${CONSUL_OVERRIDE_CONFIG}"
+    echo "${CONSUL_OVERRIDE_CONFIG}" | sudo tee ${CONFIG_DIR}/consul.hcl > /dev/null
 fi
 
 echo "Update directory permissions"
