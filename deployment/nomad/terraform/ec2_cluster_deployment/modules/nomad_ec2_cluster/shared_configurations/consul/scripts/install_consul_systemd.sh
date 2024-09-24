@@ -11,10 +11,10 @@ echo "Installing consul systemd service for RHEL/CentOS based systems"
 # sudo curl --silent -Lo ${SYSTEMD_DIR}/consul.service ${CONFIG_URL}/shared_configurations/consul/init/systemd/consul.service
 
 # let's assume that they are already downloaded in the ../init/systemd directory
-sudo cp ${CONFIG_SOURCE}/consul/init/systemd/consul.service ${SYSTEMD_DIR}/consul.service
-sudo chmod 0664 ${SYSTEMD_DIR}/consul.service
+sudo cp ./consul/init/systemd/consul.service $SYSTEMD_DIR/consul.service
+sudo chmod 0664 $SYSTEMD_DIR/consul.service
 
 sudo systemctl enable consul
 sudo systemctl start consul
 
-echo "Complete"
+echo "Completed execution of `install-consul-systemd.sh`"

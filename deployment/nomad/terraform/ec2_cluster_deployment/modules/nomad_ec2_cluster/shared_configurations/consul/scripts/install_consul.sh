@@ -31,10 +31,6 @@ echo "$(${CONSUL_PATH} --version)"
 echo "Configuring Consul ${CONSUL_VERSION}"
 sudo mkdir -pm 0755 ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR}
 
-echo "Update directory permissions"
-sudo chown -R ${USER}:${GROUP} ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR}
-sudo chmod -R 0644 ${CONSUL_CONFIG_DIR}/*
-
 # Check if CONSUL_OVERRIDE_CONFIG is set
 if [ -z "${CONSUL_OVERRIDE_CONFIG}" ]; then
     # If CONSUL_OVERRIDE_CONFIG is not set, run Consul in -dev mode
@@ -56,6 +52,10 @@ else
     # Write the override config to consul.hcl
     sudo tee ${CONFIG_DIR}/consul.hcl > /dev/null <<< "${CONSUL_OVERRIDE_CONFIG}"
 fi
+
+echo "Update directory permissions"
+sudo chown -R ${USER}:${GROUP} ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR}
+sudo chmod -R 0644 ${CONSUL_CONFIG_DIR}/*
 
 # Set Consul profile script
 echo "Setting Consul profile script"
