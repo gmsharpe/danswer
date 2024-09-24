@@ -47,6 +47,8 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
   INSTALL_DANSWER=${install_danswer}
   INSTALL_VAULT=${install_vault}
 
+  WORK_DIR=$${WORK_DIR:-/opt/danswer}
+
   # Determine if this instance should include the server configuration
   IS_SERVER="${count == 0 ? "true" : "false"}"
   echo "IS_SERVER: $IS_SERVER"
@@ -62,28 +64,38 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
     sudo git clone -b gms/infrastructure https://github.com/gmsharpe/danswer.git .
 
   # Copy setup scripts
-  sudo cp -r /opt/danswer/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/scripts /opt/danswer
-  sudo cp -r /opt/danswer/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/shared_configurations /opt/danswer
+  sudo cp -r $WORK_DIR/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/scripts /opt/danswer
+  sudo cp -r $WORK_DIR/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/shared_configurations $WORK_DIR
 
   # make scripts executable
-  sudo chmod +x /opt/danswer/scripts/*.sh
-  sudo find /opt/danswer/shared_configurations/{vault,nomad,consul,scripts} -type f -name "*.sh" -exec chmod +x {} \;
+  sudo chmod +x $WORK_DIR/scripts/*.sh
+  sudo find $WORK_DIR/shared_configurations/{vault,nomad,consul,scripts} -type f -name "*.sh" -exec chmod +x {} \;
 
   # Install and configure Consul if required
   if [ "$INSTALL_CONSUL" == "true" ]; then
-    sudo /opt/danswer/scripts/setup_consul.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+    #sudo $WORK_DIR/scripts/setup_consul.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+    cd $WORK_DIR/shared_configurations/
+    sudo USER=$consul_user GROUP=$consul_group \
+      COMMENT=$consul_comment HOME=$consul_home \
+      ./scripts/create_user.sh
+
+    sudo VERSION=$consul_version sudo USER=$consul_user \
+      GROUP=$consul_group ./consul/scripts/install_consul.sh
+
+    sudo ./consul/scripts/install_consul_systemd.sh
+
   fi
 
   # Execute 'setup_vault.sh' script
   if [ $INSTALL_VAULT == true ]; then
     echo "Installing Vault"
-    #sudo /opt/danswer/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+    #sudo $WORK_DIR/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
 
     # Steps loosely modeled after
     #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/install-vault-systemd.sh.tpl
     #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/quick-start-vault-systemd.sh.tpl
 
-    cd /opt/danswer/shared_configurations/
+    cd $WORK_DIR/shared_configurations/
     sudo USER=$vault_user GROUP=$vault_group \
       COMMENT=$vault_comment HOME=$vault_home \
       ./scripts/create_user.sh
@@ -125,10 +137,10 @@ CONFIG
   fi
 
   # Execute 'setup_nomad.sh' script
-  sudo /opt/danswer/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+  sudo $WORK_DIR/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
 
   # Execute 'create_volumes.sh' script
-  sudo /opt/danswer/scripts/create_volumes.sh $SERVER_IP
+  sudo $WORK_DIR/scripts/create_volumes.sh $SERVER_IP
 
   ### CONSUL ###
 

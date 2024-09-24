@@ -207,7 +207,7 @@ resource "aws_instance" "bastion_host" {
 
   tags = {
     Name = "bastion-host",
-    Project = "Danswer"
+    Project = "Danswer-Bastion"
   }
   depends_on = [aws_eip.bastion_eip]
 

@@ -9,11 +9,13 @@ SYSTEMD_DIR="/etc/systemd/system"
 echo "Installing systemd services for RHEL/CentOS"
 
 sudo cp ./vault/init/systemd/vault.service ${SYSTEMD_DIR}/vault.service
-sudo cp ./consul/init/systemd/consul-online.service ${SYSTEMD_DIR}/consul-online.service
-sudo cp ./consul/init/systemd/consul-online.target ${SYSTEMD_DIR}/consul-online.target
-sudo cp ./consul/init/systemd/consul-online.sh ${SYSTEMD_DIR}/consul-online.sh
+sudo cp ./consul/init/systemd/consul_online.service ${SYSTEMD_DIR}/consul_online.service
+sudo cp ./consul/init/systemd/consul_online.target ${SYSTEMD_DIR}/consul_online.target
+sudo cp ./consul/init/systemd/consul_online.sh ${SYSTEMD_DIR}/consul_online.sh
 
 sudo chmod 0664 ${SYSTEMD_DIR}/{vault*,consul*}
+
+sudo systemctl unmask ${SYSTEMD_DIR}/consul_online.target
 
 sudo systemctl enable consul
 sudo systemctl start consul

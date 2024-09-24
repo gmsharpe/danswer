@@ -17,6 +17,8 @@ CONSUL_TLS_DIR=/opt/consul/tls
 CONSUL_ENV_VARS=${CONSUL_CONFIG_DIR}/consul.conf
 CONSUL_PROFILE_SCRIPT=/etc/profile.d/consul.sh
 
+CONSUL_OVERRIDE_CONFIG=${CONSUL_OVERRIDE_CONFIG}
+
 echo "Downloading Consul ${CONSUL_VERSION}"
 [ 200 -ne $(curl --write-out %{http_code} --silent --output /tmp/${CONSUL_ZIP} ${CONSUL_URL}) ] && exit 1
 
@@ -29,18 +31,34 @@ echo "$(${CONSUL_PATH} --version)"
 echo "Configuring Consul ${CONSUL_VERSION}"
 sudo mkdir -pm 0755 ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR}
 
-# todo - modify for optionally using in a production environment
-echo "Start Consul in -dev mode"
-sudo tee ${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
-FLAGS=-dev -ui -client 0.0.0.0
-CONSUL_HTTP_ADDR=http://127.0.0.1:8500
-ENVVARS
-
 echo "Update directory permissions"
 sudo chown -R ${USER}:${GROUP} ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR}
 sudo chmod -R 0644 ${CONSUL_CONFIG_DIR}/*
 
-echo "Set Consul profile script"
+# Check if CONSUL_OVERRIDE_CONFIG is set
+if [ -z "${CONSUL_OVERRIDE_CONFIG}" ]; then
+    # If CONSUL_OVERRIDE_CONFIG is not set, run Consul in -dev mode
+    echo "CONSUL_OVERRIDE_CONFIG is not set. Starting Consul in -dev mode."
+
+    sudo tee ${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
+FLAGS=-dev -ui -client 0.0.0.0
+CONSUL_HTTP_ADDR=http://127.0.0.1:8500
+ENVVARS
+
+else
+    # If CONSUL_OVERRIDE_CONFIG is set, save it to consul.hcl in the config directory
+    echo "CONSUL_OVERRIDE_CONFIG is set. Saving to consul.hcl in the config directory."
+
+    # Assuming you have a config directory, for example /etc/consul.d/
+    CONFIG_DIR="/etc/consul.d"
+    sudo mkdir -p ${CONFIG_DIR}
+
+    # Write the override config to consul.hcl
+    sudo tee ${CONFIG_DIR}/consul.hcl > /dev/null <<< "${CONSUL_OVERRIDE_CONFIG}"
+fi
+
+# Set Consul profile script
+echo "Setting Consul profile script"
 sudo tee ${CONSUL_PROFILE_SCRIPT} > /dev/null <<PROFILE
 export CONSUL_HTTP_ADDR=http://127.0.0.1:8500
 PROFILE
@@ -52,10 +70,6 @@ echo "Allow consul sudo access for echo, tee, cat, sed, and systemctl"
 sudo tee /etc/sudoers.d/consul > /dev/null <<SUDOERS
 consul ALL=(ALL) NOPASSWD: /usr/bin/echo, /usr/bin/tee, /usr/bin/cat, /usr/bin/sed, /usr/bin/systemctl
 SUDOERS
-
-echo "Detect package management system."
-YUM=$(which yum 2>/dev/null)
-APT_GET=$(which apt-get 2>/dev/null)
 
 
 echo "Installing dnsmasq"
