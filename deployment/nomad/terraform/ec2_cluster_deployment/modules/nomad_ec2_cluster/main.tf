@@ -257,6 +257,11 @@ resource "aws_instance" "nomad_instance" {
     run_user_data_script = "true"
     vault_override  = true
     name            = "danswer-vault"
+    consul_config   = templatefile("${path.module}/shared_configurations/consul/config/consul_server.hcl.tpl", {
+      private_ip      = "10.0.1.${count.index + 10}"
+      server_ips      = ["10.0.1.10", "10.0.1.11", "10.0.1.12"]
+    }
+
     vault_config    = templatefile("${path.module}/shared_configurations/vault/config/vault_server.hcl.tpl", {
       leader_ip       = "10.0.1.10"
       private_ip      = "10.0.1.${count.index + 10}"

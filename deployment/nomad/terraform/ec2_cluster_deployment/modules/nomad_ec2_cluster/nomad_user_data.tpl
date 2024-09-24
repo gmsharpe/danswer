@@ -80,7 +80,7 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
       ./scripts/create_user.sh
 
     sudo VERSION=$consul_version sudo USER=$consul_user \
-      GROUP=$consul_group ./consul/scripts/install_consul.sh
+      GROUP=$consul_group CONSUL_OVERRIDE_CONFIG=${consul_config}./consul/scripts/install_consul.sh
 
     sudo ./consul/scripts/install_consul_systemd.sh
 
