@@ -40,16 +40,49 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
   # Execute 'setup_vault.sh' script
   if [ "$INSTALL_VAULT" == "true" ]; then
     #sudo /opt/danswer/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+
+    # Steps originally outlined by
+    #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/install-vault-systemd.sh.tpl
+
     cd /opt/danswer/shared_configurations/
     sudo USER=$vault_user GROUP=$vault_group \
       COMMENT=$vault_comment HOME=$vault_home \
-      ./vault/scripts/create_user.sh
+      ./scripts/create_user.sh
 
     sudo VERSION=$vault_version URL=$vault_ent_url \
       USER=$vault_user GROUP=$vault_group \
       ./vault/scripts/install_vault.sh
 
     sudo ./vault/scripts/install-vault-systemd.sh
+
+    echo "Set variables"
+    VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
+    VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
+
+    echo "Minimal configuration for Vault"
+    cat <<CONFIG | sudo tee $VAULT_CONFIG_FILE
+cluster_name = "${name}"
+CONFIG
+
+    echo "Update Vault configuration file permissions"
+    sudo chown vault:vault $VAULT_CONFIG_FILE
+
+    if [ ${vault_override} == true ] || [ ${vault_override} == 1 ]; then
+      echo "Add custom Vault server override config"
+      cat <<CONFIG | sudo tee $VAULT_CONFIG_OVERRIDE_FILE
+${vault_config}
+CONFIG
+
+      echo "Update Vault configuration override file permissions"
+      sudo chown vault:vault $VAULT_CONFIG_OVERRIDE_FILE
+
+      echo "If Vault config is overridden, don't start Vault in -dev mode"
+      echo '' | sudo tee /etc/vault.d/vault.conf
+    fi
+
+    echo "Restart Vault"
+    sudo systemctl restart vault
+
   fi
 
   # Execute 'setup_nomad.sh' script
