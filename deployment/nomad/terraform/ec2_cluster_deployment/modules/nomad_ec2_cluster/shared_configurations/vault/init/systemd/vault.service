@@ -1,7 +1,7 @@
 [Unit]
 Description=Vault Agent
-Requires=consul_online.target
-After=consul_online.target
+Requires=consul-online.target
+After=consul-online.target
 
 [Service]
 Restart=on-failure

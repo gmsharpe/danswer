@@ -5,9 +5,9 @@ After=consul.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/consul_online.sh
+ExecStart=/usr/bin/consul-online.sh
 User=consul
 Group=consul
 
 [Install]
-WantedBy=consul_online.target multi-user.target
+WantedBy=consul-online.target multi-user.target
