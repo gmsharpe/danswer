@@ -15,8 +15,6 @@ sudo cp ./consul/init/systemd/consul_online.sh ${SYSTEMD_DIR}/consul_online.sh
 
 sudo chmod 0664 ${SYSTEMD_DIR}/{vault*,consul*}
 
-sudo systemctl unmask ${SYSTEMD_DIR}/consul-online.target
-
 sudo systemctl enable consul
 sudo systemctl start consul
 
