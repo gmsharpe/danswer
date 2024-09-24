@@ -15,7 +15,7 @@ variable "nomad_instance_type" {
   default = "t2.large"
 }
 variable "install_consul" {
-  default = "true"
+  default = true
 }
 variable "install_danswer" {
   default = "true"

@@ -72,7 +72,7 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
   sudo find $WORK_DIR/shared_configurations/{vault,nomad,consul,scripts} -type f -name "*.sh" -exec chmod +x {} \;
 
   # Install and configure Consul if required
-  if [ "$INSTALL_CONSUL" == "true" ]; then
+  if [ $INSTALL_CONSUL == true ]; then
     #sudo $WORK_DIR/scripts/setup_consul.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
     cd $WORK_DIR/shared_configurations/
     sudo USER=$consul_user GROUP=$consul_group \
