@@ -2,6 +2,7 @@
 
 RUN_USER_DATA_SCRIPT=${run_user_data_script}
 
+### REMOVE after switching to using the shared_configurations scripts entirely
 consul_install=$(echo "$${CONSUL_INSTALL:-true}" | tr '[:upper:]' '[:lower:]')
 consul_install=$(if [[ "$consul_install" == "true" || "$consul_install" == "1" ]]; then echo true; else echo false; fi)
 consul_host_port=$${CONSUL_HOST_PORT:-8500}
@@ -29,6 +30,7 @@ nomad_version=$${NOMAD_VERSION:-"0.8.7"}
 nomad_ent_url=$${NOMAD_ENT_URL}
 nomad_group="root"
 nomad_user="root"
+############################################## REMOVE ABOVE
 
 if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
   echo "Running user data script"
@@ -47,6 +49,7 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
 
   # Determine if this instance should include the server configuration
   IS_SERVER="${count == 0 ? "true" : "false"}"
+  echo "IS_SERVER: $IS_SERVER"
 
   echo "Preparing to install Danswer"
   sudo mkdir -p /opt/danswer && \
@@ -66,6 +69,11 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
   sudo chmod +x /opt/danswer/scripts/*.sh
   sudo find /opt/danswer/shared_configurations/{vault,nomad,consul,scripts} -type f -name "*.sh" -exec chmod +x {} \;
 
+  # Install and configure Consul if required
+  if [ "$INSTALL_CONSUL" == "true" ]; then
+    sudo /opt/danswer/scripts/setup_consul.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+  fi
+
   # Execute 'setup_vault.sh' script
   if [ $INSTALL_VAULT == true ]; then
     echo "Installing Vault"
@@ -84,7 +92,7 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
       USER=$vault_user GROUP=$vault_group \
       ./vault/scripts/install_vault.sh
 
-    sudo ./vault/scripts/install-vault-systemd.sh
+    sudo ./vault/scripts/install_vault_systemd.sh
 
     echo "Set variables"
     VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
@@ -124,8 +132,5 @@ CONFIG
 
   ### CONSUL ###
 
-  # Install and configure Consul if required
-  if [ "$INSTALL_CONSUL" == "true" ]; then
-    sudo /opt/danswer/scripts/setup_consul.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
-  fi
+
 fi

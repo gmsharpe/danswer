@@ -44,6 +44,7 @@ EOT
 
 # Conditionally add the server configuration
 if [ "$IS_SERVER" == "true" ]; then
+  echo "Configuring Nomad as a server on $PRIVATE_IP ..."
   cat <<EOT >> /etc/nomad.d/nomad.hcl
 server {
   enabled = true
