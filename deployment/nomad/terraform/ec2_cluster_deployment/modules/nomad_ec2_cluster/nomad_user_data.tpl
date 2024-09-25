@@ -52,6 +52,8 @@ INSTALL_CONSUL=${install_consul}
 INSTALL_DANSWER=${install_danswer}
 INSTALL_VAULT=${install_vault}
 
+CLUSTER_NAME=${name}
+
 WORK_DIR=$${WORK_DIR:-/opt/danswer}
 
 # Determine if this instance should include the server configuration
@@ -86,11 +88,16 @@ if [ $INSTALL_CONSUL == true ]; then
   #sudo $WORK_DIR/scripts/setup_consul.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
   cd $WORK_DIR/shared_configurations/
 
+  CONSUL_CONFIG=$(cat <<EOF
+${consul_config}
+EOF
+  )
+
   sudo USER=$consul_user GROUP=$consul_group COMMENT=$consul_comment HOME=$consul_home \
     ./scripts/create_user.sh
   sudo VERSION=$consul_version sudo USER=$consul_user GROUP=$consul_group \
     ./consul/scripts/install_consul.sh
-  sudo CONSUL_OVERRIDE_CONFIG=${consul_config} DO_OVERRIDE_CONFIG=${consul_override} \
+  sudo CONSUL_OVERRIDE_CONFIG=$${CONSUL_CONFIG} DO_OVERRIDE_CONFIG=${consul_override} \
     ./consul/scripts/configure_consul_agent.sh
 
 #    if [ ${consul_override} == true ] || [ ${consul_override} == 1 ]; then
@@ -137,37 +144,19 @@ if [ $INSTALL_VAULT == true ]; then
     USER=$vault_user GROUP=$vault_group \
     ./vault/scripts/install_vault.sh
 
-  echo "Set variables"
-  VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
-  VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
-
-  echo "Configure 'default.hcl' file"
-  cat <<CONFIG | sudo tee $VAULT_CONFIG_FILE
-  cluster_name = "${name}"
-CONFIG
-
-  echo "Update Vault configuration file permissions"
-  sudo chown vault:vault $VAULT_CONFIG_FILE
-
-  if [ ${vault_override} == true ] || [ ${vault_override} == 1 ]; then
-    if [ "$IS_SERVER" == "true" ]; then
-      echo "Add custom Vault server override config"
-      cat <<CONFIG | sudo tee $VAULT_CONFIG_OVERRIDE_FILE
+    VAULT_SERVER_CONFIG=$(cat <<EOF
 ${vault_server_config}
-CONFIG
-    else
-      echo "Add custom Vault server override config"
-      cat <<CONFIG | sudo tee $VAULT_CONFIG_OVERRIDE_FILE
+EOF
+    )
+
+    VAULT_CLIENT_CONFIG=$(cat <<EOF
 ${vault_client_config}
-CONFIG
-    fi
+EOF
+    )
 
-    echo "Update Vault configuration override file permissions"
-    sudo chown vault:vault $VAULT_CONFIG_OVERRIDE_FILE
-
-    echo "If Vault config is overridden, don't start Vault in -dev mode"
-    echo '' | sudo tee /etc/vault.d/vault.conf
-  fi
+  sudo DO_OVERRIDE_CONFIG=${vault_override} IS_SERVER=$IS_SERVER CLUSTER_NAME=$CLUSTER_NAME \
+    VAULT_SERVER_CONFIG=$${VAULT_SERVER_CONFIG} VAULT_CLIENT_CONFIG=$${VAULT_CLIENT_CONFIG} \
+    ./vault/scripts/configure_vault_agent.sh
 
   # Install Vault as a systemd service and start it
   sudo ./vault/scripts/install_vault_systemd.sh
