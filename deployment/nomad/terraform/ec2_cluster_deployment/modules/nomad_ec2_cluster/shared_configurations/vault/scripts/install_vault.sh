@@ -1,8 +1,6 @@
 #!/bin/bash
 set -x
 
-echo "Running"
-
 VAULT_VERSION=${VERSION:-"1.17.5"}
 VAULT_ZIP=vault_${VAULT_VERSION}_linux_amd64.zip
 VAULT_URL=${URL:-https://releases.hashicorp.com/vault/${VAULT_VERSION}/${VAULT_ZIP}}
@@ -43,5 +41,3 @@ PROFILE
 
 echo "Granting mlock syscall to vault binary"
 sudo setcap cap_ipc_lock=+ep ${VAULT_PATH}
-
-echo "Complete"

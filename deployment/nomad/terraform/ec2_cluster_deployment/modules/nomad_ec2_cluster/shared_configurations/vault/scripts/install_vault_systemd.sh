@@ -3,7 +3,7 @@ set -x
 
 # Based on https://github.com/hashicorp/guides-configuration/blob/master/vault/scripts/install-vault-systemd.sh
 
-echo "Running `install-vault-systemd.sh`"
+echo "Running install-vault-systemd.sh"
 
 SYSTEMD_DIR="/etc/systemd/system"
 echo "Installing systemd services for RHEL/CentOS"
