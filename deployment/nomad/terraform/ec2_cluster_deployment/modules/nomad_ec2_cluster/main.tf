@@ -261,12 +261,15 @@ resource "aws_instance" "nomad_instance" {
     consul_config   = templatefile("${path.module}/shared_configurations/consul/config/consul.hcl.tpl", {
       private_ip      = "10.0.1.${count.index + 10}"
       server_ips      = jsonencode(["10.0.1.10", "10.0.1.11", "10.0.1.12"])
-    }),
-    vault_config    = templatefile("${path.module}/shared_configurations/vault/config/vault_server.hcl.tpl", {
+    })
+    vault_server_config    = templatefile("${path.module}/shared_configurations/vault/config/vault_server.hcl.tpl", {
       leader_ip       = "10.0.1.10"
       private_ip      = "10.0.1.${count.index + 10}"
-      name            = "danswer-vault"
-    } )
+    })
+    vault_client_config    = templatefile("${path.module}/shared_configurations/vault/config/vault_client.hcl.tpl", {
+      leader_ip       = "10.0.1.10"
+    })
+
   })
   user_data_replace_on_change = true
 

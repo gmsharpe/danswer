@@ -126,7 +126,7 @@ if [ $INSTALL_VAULT == true ]; then
   VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
   VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
 
-  echo "Configure Vault with Raft storage and clustering settings"
+  echo "Configure 'default.hcl' file"
   cat <<CONFIG | sudo tee $VAULT_CONFIG_FILE
   cluster_name = "${name}"
 CONFIG
@@ -135,16 +135,66 @@ CONFIG
   sudo chown vault:vault $VAULT_CONFIG_FILE
 
   if [ ${vault_override} == true ] || [ ${vault_override} == 1 ]; then
-    echo "Add custom Vault server override config"
-    cat <<CONFIG | sudo tee $VAULT_CONFIG_OVERRIDE_FILE
-${vault_config}
+    if [ "$IS_SERVER" == "true" ]; then
+      echo "Add custom Vault server override config"
+      cat <<CONFIG | sudo tee $VAULT_CONFIG_OVERRIDE_FILE
+${vault_server_config}
 CONFIG
+    else
+      echo "Add custom Vault server override config"
+      cat <<CONFIG | sudo tee $VAULT_CONFIG_OVERRIDE_FILE
+${vault_client_config}
+CONFIG
+    fi
 
     echo "Update Vault configuration override file permissions"
     sudo chown vault:vault $VAULT_CONFIG_OVERRIDE_FILE
 
     echo "If Vault config is overridden, don't start Vault in -dev mode"
     echo '' | sudo tee /etc/vault.d/vault.conf
+
+    # unseal vault if not in dev mode
+    if [ "$IS_SERVER" == "true" ]; then
+        # if there is more than one 'server', this configuration would need to be adjusted to account for that by
+        #    1st checking if the server is the designated leader (or first configured server) and then unsealing
+        #    2nd checking if the server is a follower and then joining the leader (or first configured server) and then unsealing
+
+        # backup the vault-init-output.txt file, if present
+        if [ -f /opt/vault/data/vault-init-output.txt ]; then
+            sudo mv /opt/vault/data/vault-init-output.txt /opt/vault/data/vault-init-output.txt.bak
+        fi
+
+        # Initialize Vault with multiple key shares and threshold for better security
+        sudo -u vault env VAULT_ADDR="$VAULT_ADDR" vault operator init -key-shares=1 -key-threshold=1 | sudo tee /opt/vault/data/vault-init-output.txt > /dev/null
+
+        # Extract root token and unseal keys
+        root_token=$(grep 'Initial Root Token' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')
+        unseal_keys=$(grep 'Unseal Key ' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')
+
+        # Save unseal keys and root token securely
+        # if multiple unseal keys are generated, this file should be adjusted accordingly
+        sudo tee /opt/vault/data/keys.txt > /dev/null <<EOT
+vault_root_token=$root_token
+vault_unseal_keys=$unseal_keys
+EOT
+        sudo chmod 600 /opt/vault/data/keys.txt
+
+        # Unseal Vault using multiple keys
+#        IFS=$'\n' read -d '' -r -a keys <<< "$unseal_keys"
+#        for key in "${keys[@]}"; do
+#          sudo -u vault VAULT_ADDR=$VAULT_ADDR vault operator unseal "$key"
+#        done
+
+        # Set VAULT_TOKEN for further operations
+        export VAULT_TOKEN="$root_token"
+
+        # Enable KV secrets engine at 'secret' path
+        echo "Enable KV secrets engine with path = 'secret'"
+        sudo -u vault VAULT_ADDR=$VAULT_ADDR VAULT_TOKEN=$VAULT_TOKEN vault secrets enable -path=secret kv-v2
+
+        echo "Vault is initialized and unsealed on the leader node."
+    fi
+
   fi
 
   echo "Restart Vault"

@@ -3,7 +3,7 @@ storage "raft" {
   node_id = "vault-node-${private_ip}"
 
   retry_join {
-    leader_api_addr = "http://${leader_ip}:8200"
+    leader_api_addr = "http://${leader_ip}:8201"
   }
 }
 

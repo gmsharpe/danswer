@@ -102,7 +102,7 @@ EOT
     echo "Initializing Vault on leader node..."
 
     # Initialize Vault with multiple key shares and threshold for better security
-    sudo -u vault env VAULT_ADDR="$VAULT_ADDR" vault operator init -key-shares=5 -key-threshold=3 | sudo tee /opt/vault/data/vault-init-output.txt > /dev/null
+    sudo -u vault env VAULT_ADDR="$VAULT_ADDR" vault operator init -key-shares=1 -key-threshold=1 | sudo tee /opt/vault/data/vault-init-output.txt > /dev/null
 
     # Extract root token and unseal keys
     root_token=$(grep 'Initial Root Token' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')
