@@ -30,7 +30,10 @@ nomad_ent_url=$${NOMAD_ENT_URL}
 nomad_group="root"
 nomad_user="root"
 
+# todo - default.hcl is not created, yet
+CONSUL_CONFIG_DEFAULT_FILE=/etc/consul.d/default.hcl
 CONSUL_CONFIG_OVERRIDE_FILE=/etc/consul.d/z-override.hcl
+
 VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
 VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
 
@@ -88,6 +91,10 @@ if [ $INSTALL_CONSUL == true ]; then
     COMMENT=$consul_comment HOME=$consul_home \
     ./scripts/create_user.sh
 
+    sudo VERSION=$consul_version sudo USER=$consul_user \
+      GROUP=$consul_group CONSUL_CONFIG_OVERRIDE_FILE=$CONSUL_CONFIG_OVERRIDE_FILE \
+      CONSUL_OVERRIDE=${consul_override} ./consul/scripts/install_consul.sh
+
     if [ ${consul_override} == true ] || [ ${consul_override} == 1 ]; then
       echo "Add custom Consul client override config"
       cat <<CONFIG | sudo tee $CONSUL_CONFIG_OVERRIDE_FILE
@@ -96,11 +103,16 @@ CONFIG
 
       echo "Update Consul configuration override file permissions"
       sudo chown consul:consul $CONSUL_CONFIG_OVERRIDE_FILE
-    fi
+    else
+        # If CONSUL_OVERRIDE_CONFIG is not set, run Consul in -dev mode
+        echo "CONSUL_OVERRIDE_CONFIG is not set. Starting Consul in -dev mode."
 
-  sudo VERSION=$consul_version sudo USER=$consul_user \
-    GROUP=$consul_group CONSUL_CONFIG_OVERRIDE_FILE=$CONSUL_CONFIG_OVERRIDE_FILE \
-    CONSUL_OVERRIDE=${consul_override} ./consul/scripts/install_consul.sh
+        sudo tee ${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
+FLAGS=-dev -ui -client 0.0.0.0
+CONSUL_HTTP_ADDR=http://127.0.0.1:8500
+ENVVARS
+
+    fi
 
   sudo ./consul/scripts/install_consul_systemd.sh
 
