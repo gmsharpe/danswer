@@ -29,7 +29,8 @@ sudo mkdir -pm 0755 ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR}
 
 echo "Update directory permissions"
 sudo chown -R ${USER}:${GROUP} ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR}
-sudo chmod -R 0644 ${CONSUL_CONFIG_DIR}/*
+# updated since the original script was not working as expected
+sudo find ${CONSUL_CONFIG_DIR} -type f -exec chmod 0644 {} \;
 
 # Set Consul profile script
 echo "Setting Consul profile script"
