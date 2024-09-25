@@ -124,8 +124,6 @@ if [ $INSTALL_VAULT == true ]; then
     USER=$vault_user GROUP=$vault_group \
     ./vault/scripts/install_vault.sh
 
-  sudo ./vault/scripts/install_vault_systemd.sh
-
   echo "Set variables"
   VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
   VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
@@ -173,6 +171,7 @@ CONFIG
         VAULT_ADDR=http://127.0.0.1:8200
 
         # Initialize Vault with multiple key shares and threshold for better security
+        echo "Initialize Vault"
         sudo -u vault env VAULT_ADDR="$VAULT_ADDR" vault operator init -key-shares=1 -key-threshold=1 | sudo tee /opt/vault/data/vault-init-output.txt > /dev/null
 
         # Extract root token and unseal keys
@@ -197,6 +196,7 @@ export VAULT_ADDR=http://127.0.0.1:8200
 export VAULT_TOKEN=$VAULT_TOKEN
 PROFILE
 
+        echo "Unsealing Vault"
         sudo -u vault VAULT_ADDR=$VAULT_ADDR vault operator unseal "$unseal_key"
 
         # Enable KV secrets engine at 'secret' path
@@ -206,9 +206,10 @@ PROFILE
         echo "Vault is initialized and unsealed on the leader node."
     fi
   fi
-  echo "Restart Vault"
-  sudo systemctl restart vault
+  sudo ./vault/scripts/install_vault_systemd.sh
 fi
+
+
 
 # Execute 'setup_nomad.sh' script
 sudo $WORK_DIR/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER

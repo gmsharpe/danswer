@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+#set -x
 
 # Based on https://github.com/hashicorp/guides-configuration/blob/master/vault/scripts/install-vault-systemd.sh
 

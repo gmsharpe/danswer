@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+#set -x
 
 VAULT_VERSION=${VERSION:-"1.17.5"}
 VAULT_ZIP=vault_${VAULT_VERSION}_linux_amd64.zip
