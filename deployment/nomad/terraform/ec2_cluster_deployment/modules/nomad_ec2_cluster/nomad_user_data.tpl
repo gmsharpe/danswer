@@ -26,7 +26,7 @@ vault_home="/opt/vault"
 
 # Nomad variables
 nomad_host_port=$${NOMAD_HOST_PORT:-4646}
-nomad_version=$${NOMAD_VERSION:-"0.8.7"}
+nomad_version=$${NOMAD_VERSION:-"1.8.4"}
 nomad_ent_url=$${NOMAD_ENT_URL}
 nomad_group="root"
 nomad_user="root"
