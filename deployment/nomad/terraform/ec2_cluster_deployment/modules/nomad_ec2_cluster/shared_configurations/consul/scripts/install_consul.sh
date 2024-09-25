@@ -17,7 +17,7 @@ CONSUL_TLS_DIR=/opt/consul/tls
 CONSUL_ENV_VARS=${CONSUL_CONFIG_DIR}/consul.conf
 CONSUL_PROFILE_SCRIPT=/etc/profile.d/consul.sh
 
-CONSUL_OVERRIDE_CONFIG=${CONSUL_OVERRIDE_CONFIG}
+CONSUL_OVERRIDE_CONFIG_FILE=${CONSUL_OVERRIDE_CONFIG_FILE:-/etc/consul.d/consul.hcl}
 
 echo "Downloading Consul ${CONSUL_VERSION}"
 [ 200 -ne $(curl --write-out %{http_code} --silent --output /tmp/${CONSUL_ZIP} ${CONSUL_URL}) ] && exit 1
@@ -49,15 +49,11 @@ else
     CONFIG_DIR="/etc/consul.d"
     sudo mkdir -p ${CONFIG_DIR}
 
-    cat <<CONFIG | sudo tee $CONSUL_OVERRIDE_CONFIG_FILE
-${consul_config}
-CONFIG
-
     echo "Update Vault configuration override file permissions"
     sudo chown vault:vault $VAULT_CONFIG_OVERRIDE_FILE
 
     # Write the override config to consul.hcl
-    echo "${CONSUL_OVERRIDE_CONFIG}" | sudo tee ${CONFIG_DIR}/consul.hcl > /dev/null
+    echo "${CONSUL_OVERRIDE_CONFIG_FILE}" | sudo tee ${CONFIG_DIR}/consul.hcl > /dev/null
 fi
 
 echo "Update directory permissions"

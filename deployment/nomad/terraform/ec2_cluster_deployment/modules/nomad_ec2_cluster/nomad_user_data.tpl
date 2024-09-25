@@ -30,6 +30,11 @@ nomad_version=$${NOMAD_VERSION:-"0.8.7"}
 nomad_ent_url=$${NOMAD_ENT_URL}
 nomad_group="root"
 nomad_user="root"
+
+CONSUL_CONFIG_OVERRIDE_FILE=/etc/consul.d/z-override.json
+VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
+VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
+
 ############################################## REMOVE ABOVE
 
 #if [ $RUN_USER_DATA_SCRIPT == true ]; then
@@ -79,8 +84,18 @@ if [ $INSTALL_CONSUL == true ]; then
     COMMENT=$consul_comment HOME=$consul_home \
     ./scripts/create_user.sh
 
+    if [ ${consul_override} == true ] || [ ${consul_override} == 1 ]; then
+      echo "Add custom Consul client override config"
+      cat <<CONFIG | sudo tee $CONSUL_CONFIG_OVERRIDE_FILE
+${consul_config}
+CONFIG
+
+      echo "Update Consul configuration override file permissions"
+      sudo chown consul:consul $CONSUL_CONFIG_OVERRIDE_FILE
+    fi
+
   sudo VERSION=$consul_version sudo USER=$consul_user \
-    GROUP=$consul_group CONSUL_OVERRIDE_CONFIG=${consul_config} \
+    GROUP=$consul_group CONSUL_CONFIG_OVERRIDE_FILE=$CONSUL_CONFIG_OVERRIDE_FILE \
     CONSUL_OVERRIDE=${consul_override} ./consul/scripts/install_consul.sh
 
   sudo ./consul/scripts/install_consul_systemd.sh
