@@ -2,7 +2,7 @@
 listener "tcp" {
   # The client listens locally on the loopback interface
   address     = "127.0.0.1:8200"
-  tls_disable = "true"  # Should be set to true only in development environments. For production, enable TLS.
+  tls_disable = "true"
 }
 
 # Point to the Vault server's API address

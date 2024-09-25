@@ -269,7 +269,6 @@ resource "aws_instance" "nomad_instance" {
     vault_client_config    = templatefile("${path.module}/shared_configurations/vault/config/vault_client.hcl.tpl", {
       leader_ip       = "10.0.1.10"
     })
-
   })
   user_data_replace_on_change = true
 

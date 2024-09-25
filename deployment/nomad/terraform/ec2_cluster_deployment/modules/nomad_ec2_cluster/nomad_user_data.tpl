@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#RUN_USER_DATA_SCRIPT=${run_user_data_script}
-
 ### REMOVE after switching to using the shared_configurations scripts entirely
 consul_install=$(echo "$${CONSUL_INSTALL:-true}" | tr '[:upper:]' '[:lower:]')
 consul_install=$(if [[ "$consul_install" == "true" || "$consul_install" == "1" ]]; then echo true; else echo false; fi)
@@ -55,7 +53,12 @@ INSTALL_VAULT=${install_vault}
 WORK_DIR=$${WORK_DIR:-/opt/danswer}
 
 # Determine if this instance should include the server configuration
-IS_SERVER="${count == 0 ? "true" : "false"}"
+if [ ${count} -eq 0 ]; then
+  IS_SERVER="true"
+else
+  IS_SERVER="false"
+fi
+
 echo "IS_SERVER: $IS_SERVER"
 
 echo "Preparing to install Danswer"
@@ -179,12 +182,6 @@ vault_unseal_keys=$unseal_keys
 EOT
         sudo chmod 600 /opt/vault/data/keys.txt
 
-        # Unseal Vault using multiple keys
-#        IFS=$'\n' read -d '' -r -a keys <<< "$unseal_keys"
-#        for key in "${keys[@]}"; do
-#          sudo -u vault VAULT_ADDR=$VAULT_ADDR vault operator unseal "$key"
-#        done
-
         # Set VAULT_TOKEN for further operations
         export VAULT_TOKEN="$root_token"
 
@@ -194,12 +191,9 @@ EOT
 
         echo "Vault is initialized and unsealed on the leader node."
     fi
-
   fi
-
   echo "Restart Vault"
   sudo systemctl restart vault
-
 fi
 
 # Execute 'setup_nomad.sh' script
