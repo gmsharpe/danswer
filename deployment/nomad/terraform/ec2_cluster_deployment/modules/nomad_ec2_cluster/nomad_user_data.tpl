@@ -2,7 +2,7 @@
 
 ### REMOVE after switching to using the shared_configurations scripts entirely
 
-consul_host_port=$${CONSUL_HOST_PORT:-8500}
+consul_host_port=$${CONSUL_HOST_PORT:-8500} # todo - not used at the moment.use it.
 consul_version=$${CONSUL_VERSION:-"1.19.2"}
 consul_group="consul"
 consul_user="consul"
@@ -10,7 +10,7 @@ consul_comment="Consul"
 consul_home="/opt/consul"
 
 # Vault variables
-vault_host_port=$${VAULT_HOST_PORT:-8200}
+vault_host_port=$${VAULT_HOST_PORT:-8200} # todo - not used at the moment. use it.
 vault_version=$${VAULT_VERSION:-"1.17.5"}
 vault_ent_url=$${VAULT_ENT_URL}
 vault_group="vault"
@@ -85,15 +85,13 @@ sudo find $WORK_DIR/shared_configurations/{vault,nomad,consul,scripts} -type f -
 if [ $INSTALL_CONSUL == true ]; then
   #sudo $WORK_DIR/scripts/setup_consul.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
   cd $WORK_DIR/shared_configurations/
-  sudo USER=$consul_user GROUP=$consul_group \
-    COMMENT=$consul_comment HOME=$consul_home \
+
+  sudo USER=$consul_user GROUP=$consul_group COMMENT=$consul_comment HOME=$consul_home \
     ./scripts/create_user.sh
-
-    sudo VERSION=$consul_version sudo USER=$consul_user \
-      GROUP=$consul_group ./consul/scripts/install_consul.sh
-
-    SUDO CONSUL_OVERRIDE_CONFIG=${consul_config} OVERRIDE_CONSUL_CONFIG=${consul_override} \
-      ./consul/scripts/configure_consul_agent.sh
+  sudo VERSION=$consul_version sudo USER=$consul_user GROUP=$consul_group \
+    ./consul/scripts/install_consul.sh
+  sudo CONSUL_OVERRIDE_CONFIG=${consul_config} DO_OVERRIDE_CONFIG=${consul_override} \
+    ./consul/scripts/configure_consul_agent.sh
 
 #    if [ ${consul_override} == true ] || [ ${consul_override} == 1 ]; then
 #      echo "Add custom Consul client override config"
@@ -117,7 +115,6 @@ if [ $INSTALL_CONSUL == true ]; then
 #ENVVARS
 #
 #    fi
-
   sudo ./consul/scripts/install_consul_systemd.sh
 
 fi
