@@ -254,8 +254,9 @@ resource "aws_instance" "nomad_instance" {
     install_consul  = var.install_consul
     install_danswer = var.install_danswer
     install_vault   = var.install_vault
-    run_user_data_script = "true"
+    run_user_data_script = true
     vault_override  = true
+    consul_override = true
     name            = "danswer-vault"
     consul_config   = templatefile("${path.module}/shared_configurations/consul/config/consul.hcl.tpl", {
       private_ip      = "10.0.1.${count.index + 10}"

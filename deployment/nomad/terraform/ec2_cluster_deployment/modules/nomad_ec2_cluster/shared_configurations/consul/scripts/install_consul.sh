@@ -32,7 +32,7 @@ echo "Configuring Consul ${CONSUL_VERSION}"
 sudo mkdir -pm 0755 ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR}
 
 # Check if CONSUL_OVERRIDE_CONFIG is set
-if [ -z "${CONSUL_OVERRIDE_CONFIG}" ]; then
+if [ ${CONSUL_OVERRIDE} == true ]; then
     # If CONSUL_OVERRIDE_CONFIG is not set, run Consul in -dev mode
     echo "CONSUL_OVERRIDE_CONFIG is not set. Starting Consul in -dev mode."
 
@@ -48,6 +48,13 @@ else
     # Assuming you have a config directory, for example /etc/consul.d/
     CONFIG_DIR="/etc/consul.d"
     sudo mkdir -p ${CONFIG_DIR}
+
+    cat <<CONFIG | sudo tee $CONSUL_OVERRIDE_CONFIG_FILE
+${consul_config}
+CONFIG
+
+    echo "Update Vault configuration override file permissions"
+    sudo chown vault:vault $VAULT_CONFIG_OVERRIDE_FILE
 
     # Write the override config to consul.hcl
     echo "${CONSUL_OVERRIDE_CONFIG}" | sudo tee ${CONFIG_DIR}/consul.hcl > /dev/null

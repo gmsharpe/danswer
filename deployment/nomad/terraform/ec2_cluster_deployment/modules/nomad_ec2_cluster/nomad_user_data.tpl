@@ -32,7 +32,7 @@ nomad_group="root"
 nomad_user="root"
 ############################################## REMOVE ABOVE
 
-if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
+if [ $RUN_USER_DATA_SCRIPT == true ]; then
   echo "Running user data script"
   sudo yum update -y
   sudo yum install -y yum-utils shadow-utils
@@ -80,7 +80,8 @@ if [ "$RUN_USER_DATA_SCRIPT" == "true" ]; then
       ./scripts/create_user.sh
 
     sudo VERSION=$consul_version sudo USER=$consul_user \
-      GROUP=$consul_group CONSUL_OVERRIDE_CONFIG=${consul_config}./consul/scripts/install_consul.sh
+      GROUP=$consul_group CONSUL_OVERRIDE_CONFIG=${consul_config} \
+      CONSUL_OVERRIDE=${consul_override} ./consul/scripts/install_consul.sh
 
     sudo ./consul/scripts/install_consul_systemd.sh
 
