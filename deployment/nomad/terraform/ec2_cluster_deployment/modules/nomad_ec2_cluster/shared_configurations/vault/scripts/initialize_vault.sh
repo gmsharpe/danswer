@@ -1,5 +1,7 @@
-# Install Vault as a systemd service and start it
-sudo ./vault/scripts/install_vault_systemd.sh
+#!/bin/bash
+
+IS_SERVER=${IS_SERVER:-true}
+VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
 
 # unseal vault if not in dev mode
 if [ "$IS_SERVER" == "true" ]; then
