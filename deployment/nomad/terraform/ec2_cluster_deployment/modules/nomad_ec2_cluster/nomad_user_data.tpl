@@ -116,7 +116,7 @@ ENVVARS
 
     fi
 
-  sudo ./consul/scripts/install_consul_systemd.sh
+  sudo ./consul/init/systemd/install_consul_systemd.sh
 
 fi
 
