@@ -1,8 +1,7 @@
 #!/bin/bash
 
 ### REMOVE after switching to using the shared_configurations scripts entirely
-consul_install=$(echo "$${CONSUL_INSTALL:-true}" | tr '[:upper:]' '[:lower:]')
-consul_install=$(if [[ "$consul_install" == "true" || "$consul_install" == "1" ]]; then echo true; else echo false; fi)
+
 consul_host_port=$${CONSUL_HOST_PORT:-8500}
 consul_version=$${CONSUL_VERSION:-"1.19.2"}
 consul_ent_url=$${CONSUL_ENT_URL}
@@ -12,8 +11,6 @@ consul_comment="Consul"
 consul_home="/opt/consul"
 
 # Vault variables
-vault_install=$(echo "$${VAULT_INSTALL:-true}" | tr '[:upper:]' '[:lower:]')
-vault_install=$(if [[ "$vault_install" == "true" || "$vault_install" == "1" ]]; then echo true; else echo false; fi)
 vault_host_port=$${VAULT_HOST_PORT:-8200}
 vault_version=$${VAULT_VERSION:-"1.17.5"}
 vault_ent_url=$${VAULT_ENT_URL}
@@ -102,6 +99,10 @@ if [ $INSTALL_CONSUL == true ]; then
       cat <<CONFIG | sudo tee $CONSUL_CONFIG_OVERRIDE_FILE
 ${consul_config}
 CONFIG
+
+      sudo tee $${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
+CONSUL_HTTP_ADDR=http://127.0.0.1:8500
+ENVVARS
 
       echo "Update Consul configuration override file permissions"
       sudo chown consul:consul $CONSUL_CONFIG_OVERRIDE_FILE

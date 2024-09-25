@@ -16,4 +16,4 @@ sudo chmod 0664 $SYSTEMD_DIR/consul.service
 sudo systemctl enable consul
 sudo systemctl start consul
 
-echo "Completed execution of `install-consul-systemd.sh`"
+echo "Completed execution of install-consul-systemd.sh"
