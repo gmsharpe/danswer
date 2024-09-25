@@ -167,23 +167,35 @@ CONFIG
             sudo mv /opt/vault/data/vault-init-output.txt /opt/vault/data/vault-init-output.txt.bak
         fi
 
+
+        VAULT_ADDR=http://127.0.0.1:8200
+
         # Initialize Vault with multiple key shares and threshold for better security
         sudo -u vault env VAULT_ADDR="$VAULT_ADDR" vault operator init -key-shares=1 -key-threshold=1 | sudo tee /opt/vault/data/vault-init-output.txt > /dev/null
 
         # Extract root token and unseal keys
         root_token=$(grep 'Initial Root Token' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')
-        unseal_keys=$(grep 'Unseal Key ' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')
+        unseal_key=$(grep 'Unseal Key ' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')
 
         # Save unseal keys and root token securely
         # if multiple unseal keys are generated, this file should be adjusted accordingly
         sudo tee /opt/vault/data/keys.txt > /dev/null <<EOT
 vault_root_token=$root_token
-vault_unseal_keys=$unseal_keys
+vault_unseal_keys=$unseal_key
 EOT
         sudo chmod 600 /opt/vault/data/keys.txt
 
         # Set VAULT_TOKEN for further operations
-        export VAULT_TOKEN="$root_token"
+        VAULT_TOKEN="$root_token"
+
+        # todo - should adjust for tls and other security measures later
+        echo "Set Vault profile script"
+        sudo tee ${VAULT_PROFILE_SCRIPT} > /dev/null <<PROFILE
+export VAULT_ADDR=http://127.0.0.1:8200
+export VAULT_TOKEN=$VAULT_TOKEN
+PROFILE
+
+        sudo -u vault VAULT_ADDR=$VAULT_ADDR vault operator unseal "$unseal_key"
 
         # Enable KV secrets engine at 'secret' path
         echo "Enable KV secrets engine with path = 'secret'"
@@ -201,8 +213,3 @@ sudo $WORK_DIR/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
 
 # Execute 'create_volumes.sh' script
 sudo $WORK_DIR/scripts/create_volumes.sh $SERVER_IP
-
-### CONSUL ###
-
-
-#fi
