@@ -21,6 +21,7 @@ vault_group="vault"
 vault_user="vault"
 vault_comment="Vault"
 vault_home="/opt/vault"
+VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
 
 # Nomad variables
 nomad_host_port=$${NOMAD_HOST_PORT:-4646}
@@ -167,7 +168,8 @@ CONFIG
             sudo mv /opt/vault/data/vault-init-output.txt /opt/vault/data/vault-init-output.txt.bak
         fi
 
-
+        # Set VAULT_ADDR for further operations
+        # todo - should use 'https' later
         VAULT_ADDR=http://127.0.0.1:8200
 
         # Initialize Vault with multiple key shares and threshold for better security
@@ -190,7 +192,7 @@ EOT
 
         # todo - should adjust for tls and other security measures later
         echo "Set Vault profile script"
-        sudo tee ${VAULT_PROFILE_SCRIPT} > /dev/null <<PROFILE
+        sudo tee $${VAULT_PROFILE_SCRIPT} > /dev/null <<PROFILE
 export VAULT_ADDR=http://127.0.0.1:8200
 export VAULT_TOKEN=$VAULT_TOKEN
 PROFILE
