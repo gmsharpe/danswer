@@ -33,6 +33,8 @@ nomad_user="root"
 # todo - default.hcl is not created, yet
 CONSUL_CONFIG_DEFAULT_FILE=/etc/consul.d/default.hcl
 CONSUL_CONFIG_OVERRIDE_FILE=/etc/consul.d/z-override.hcl
+# this is where default settings are currently set
+CONSUL_ENV_VARS=${CONSUL_CONFIG_DIR}/consul.conf
 
 VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
 VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
@@ -92,8 +94,7 @@ if [ $INSTALL_CONSUL == true ]; then
     ./scripts/create_user.sh
 
     sudo VERSION=$consul_version sudo USER=$consul_user \
-      GROUP=$consul_group CONSUL_CONFIG_OVERRIDE_FILE=$CONSUL_CONFIG_OVERRIDE_FILE \
-      CONSUL_OVERRIDE=${consul_override} ./consul/scripts/install_consul.sh
+      GROUP=$consul_group ./consul/scripts/install_consul.sh
 
     if [ ${consul_override} == true ] || [ ${consul_override} == 1 ]; then
       echo "Add custom Consul client override config"

@@ -13,7 +13,6 @@ CONSUL_PATH=${CONSUL_DIR}/consul
 CONSUL_CONFIG_DIR=/etc/consul.d
 CONSUL_DATA_DIR=/opt/consul/data
 CONSUL_TLS_DIR=/opt/consul/tls
-CONSUL_ENV_VARS=${CONSUL_CONFIG_DIR}/consul.conf
 CONSUL_PROFILE_SCRIPT=/etc/profile.d/consul.sh
 
 echo "Downloading Consul ${CONSUL_VERSION}"
