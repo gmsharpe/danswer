@@ -4,7 +4,6 @@
 
 consul_host_port=$${CONSUL_HOST_PORT:-8500}
 consul_version=$${CONSUL_VERSION:-"1.19.2"}
-consul_ent_url=$${CONSUL_ENT_URL}
 consul_group="consul"
 consul_user="consul"
 consul_comment="Consul"
@@ -23,7 +22,6 @@ VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
 # Nomad variables
 nomad_host_port=$${NOMAD_HOST_PORT:-4646}
 nomad_version=$${NOMAD_VERSION:-"1.8.4"}
-nomad_ent_url=$${NOMAD_ENT_URL}
 nomad_group="root"
 nomad_user="root"
 
@@ -227,7 +225,7 @@ PROFILE
 fi
 
 # Execute 'setup_nomad.sh' script
-sudo $WORK_DIR/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+sudo VAULT_TOKEN=$VAULT_TOKEN $WORK_DIR/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
 
 # Execute 'create_volumes.sh' script
-sudo $WORK_DIR/scripts/create_volumes.sh $SERVER_IP
+sudo VAULT_TOKEN=$VAULT_TOKEN $WORK_DIR/scripts/create_volumes.sh $SERVER_IP

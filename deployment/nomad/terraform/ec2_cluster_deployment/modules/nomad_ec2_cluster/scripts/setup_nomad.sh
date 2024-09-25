@@ -11,7 +11,7 @@ VAULT_ROLE_NAME=${VAULT_ROLE_NAME:-"nomad-cluster"}
 # remove for non-dev environments
 export VAULT_ADDR="http://$SERVER_IP:8200"
 # just in case export wasn't retained
-export VAULT_TOKEN=$(grep 'Initial Root Token' /var/vault/keys/vault-init-output.txt | awk '{print $NF}')
+#export VAULT_TOKEN=$(grep 'Initial Root Token' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')
 
 # install nomad
 sudo yum -y install nomad
