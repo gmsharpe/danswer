@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 
 # Based on - https://github.com/hashicorp/guides-configuration/blob/master/consul/scripts/install-consul.sh
 
@@ -17,7 +16,7 @@ CONSUL_TLS_DIR=/opt/consul/tls
 CONSUL_ENV_VARS=${CONSUL_CONFIG_DIR}/consul.conf
 CONSUL_PROFILE_SCRIPT=/etc/profile.d/consul.sh
 
-CONSUL_OVERRIDE_CONFIG_FILE=${CONSUL_OVERRIDE_CONFIG_FILE:-/etc/consul.d/consul.hcl}
+CONSUL_OVERRIDE_CONFIG_FILE=${CONSUL_OVERRIDE_CONFIG_FILE:-/etc/consul.d/z-override.hcl}
 
 echo "Downloading Consul ${CONSUL_VERSION}"
 [ 200 -ne $(curl --write-out %{http_code} --silent --output /tmp/${CONSUL_ZIP} ${CONSUL_URL}) ] && exit 1
@@ -32,7 +31,7 @@ echo "Configuring Consul ${CONSUL_VERSION}"
 sudo mkdir -pm 0755 ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR}
 
 # Check if CONSUL_OVERRIDE_CONFIG is set
-if [ ${CONSUL_OVERRIDE} == true ]; then
+if [ ${CONSUL_OVERRIDE} == false ]; then
     # If CONSUL_OVERRIDE_CONFIG is not set, run Consul in -dev mode
     echo "CONSUL_OVERRIDE_CONFIG is not set. Starting Consul in -dev mode."
 
@@ -43,17 +42,10 @@ ENVVARS
 
 else
     # If CONSUL_OVERRIDE_CONFIG is set, save it to consul.hcl in the config directory
-    echo "CONSUL_OVERRIDE_CONFIG is set. Saving to consul.hcl in the config directory."
-
-    # Assuming you have a config directory, for example /etc/consul.d/
-    CONFIG_DIR="/etc/consul.d"
-    sudo mkdir -p ${CONFIG_DIR}
-
-    echo "Update Vault configuration override file permissions"
-    sudo chown vault:vault $VAULT_CONFIG_OVERRIDE_FILE
+    echo "CONSUL_OVERRIDE_CONFIG is set. Saving to using z-override.hcl in the config directory."
 
     # Write the override config to consul.hcl
-    echo "${CONSUL_OVERRIDE_CONFIG_FILE}" | sudo tee ${CONFIG_DIR}/consul.hcl > /dev/null
+    # echo "${CONSUL_OVERRIDE_CONFIG_FILE}" | sudo tee ${CONFIG_DIR}/consul.hcl > /dev/null
 fi
 
 echo "Update directory permissions"

@@ -1,7 +1,6 @@
 #!/bin/bash
-set -x
 
-echo "Running `install-consul-systemd.sh`"
+echo "Running install-consul-systemd.sh"
 
 SYSTEMD_DIR="/etc/systemd/system"
 echo "Installing consul systemd service for RHEL/CentOS based systems"

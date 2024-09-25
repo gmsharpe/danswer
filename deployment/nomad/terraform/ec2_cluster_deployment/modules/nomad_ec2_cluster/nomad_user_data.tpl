@@ -30,7 +30,7 @@ nomad_ent_url=$${NOMAD_ENT_URL}
 nomad_group="root"
 nomad_user="root"
 
-CONSUL_CONFIG_OVERRIDE_FILE=/etc/consul.d/z-override.json
+CONSUL_CONFIG_OVERRIDE_FILE=/etc/consul.d/z-override.hcl
 VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
 VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
 
@@ -210,8 +210,6 @@ PROFILE
       echo "Vault is initialized and unsealed on the leader node."
   fi
 fi
-
-
 
 # Execute 'setup_nomad.sh' script
 sudo $WORK_DIR/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
