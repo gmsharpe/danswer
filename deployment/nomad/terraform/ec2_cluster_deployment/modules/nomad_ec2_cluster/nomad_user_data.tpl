@@ -92,28 +92,31 @@ if [ $INSTALL_CONSUL == true ]; then
     sudo VERSION=$consul_version sudo USER=$consul_user \
       GROUP=$consul_group ./consul/scripts/install_consul.sh
 
-    if [ ${consul_override} == true ] || [ ${consul_override} == 1 ]; then
-      echo "Add custom Consul client override config"
-      cat <<CONFIG | sudo tee $CONSUL_CONFIG_OVERRIDE_FILE
-${consul_config}
-CONFIG
+    SUDO CONSUL_OVERRIDE_CONFIG=${consul_config} OVERRIDE_CONSUL_CONFIG=${consul_override} \
+      ./consul/scripts/configure_consul_agent.sh
 
-      sudo tee $${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
-CONSUL_HTTP_ADDR=http://127.0.0.1:8500
-ENVVARS
-
-      echo "Update Consul configuration override file permissions"
-      sudo chown consul:consul $CONSUL_CONFIG_OVERRIDE_FILE
-    else
-        # If CONSUL_OVERRIDE_CONFIG is not set, run Consul in -dev mode
-        echo "CONSUL_OVERRIDE_CONFIG is not set. Starting Consul in -dev mode."
-
-        sudo tee $${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
-FLAGS=-dev -ui -client 0.0.0.0
-CONSUL_HTTP_ADDR=http://127.0.0.1:8500
-ENVVARS
-
-    fi
+#    if [ ${consul_override} == true ] || [ ${consul_override} == 1 ]; then
+#      echo "Add custom Consul client override config"
+#      cat <<CONFIG | sudo tee $CONSUL_CONFIG_OVERRIDE_FILE
+#${consul_config}
+#CONFIG
+#
+#      sudo tee $${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
+#CONSUL_HTTP_ADDR=http://127.0.0.1:8500
+#ENVVARS
+#
+#      echo "Update Consul configuration override file permissions"
+#      sudo chown consul:consul $CONSUL_CONFIG_OVERRIDE_FILE
+#    else
+#        # If CONSUL_OVERRIDE_CONFIG is not set, run Consul in -dev mode
+#        echo "CONSUL_OVERRIDE_CONFIG is not set. Starting Consul in -dev mode."
+#
+#        sudo tee $${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
+#FLAGS=-dev -ui -client 0.0.0.0
+#CONSUL_HTTP_ADDR=http://127.0.0.1:8500
+#ENVVARS
+#
+#    fi
 
   sudo ./consul/scripts/install_consul_systemd.sh
 
