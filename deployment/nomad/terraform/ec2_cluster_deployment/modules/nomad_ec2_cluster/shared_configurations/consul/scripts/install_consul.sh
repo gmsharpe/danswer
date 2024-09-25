@@ -2,7 +2,7 @@
 
 # Based on - https://github.com/hashicorp/guides-configuration/blob/master/consul/scripts/install-consul.sh
 
-echo "Running `install_consul.sh`"
+echo "Running install_consul.sh"
 
 CONSUL_VERSION=${VERSION:-"1.19.2"}
 CONSUL_ZIP=consul_${CONSUL_VERSION}_linux_amd64.zip
