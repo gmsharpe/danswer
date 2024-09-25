@@ -35,7 +35,7 @@ CONSUL_CONFIG_DEFAULT_FILE=/etc/consul.d/default.hcl
 CONSUL_CONFIG_OVERRIDE_FILE=/etc/consul.d/z-override.hcl
 # this is where default settings are currently set
 CONSUL_CONFIG_DIR=/etc/consul.d
-CONSUL_ENV_VARS=${CONSUL_CONFIG_DIR}/consul.conf
+CONSUL_ENV_VARS=$CONSUL_CONFIG_DIR/consul.conf
 
 VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
 VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
@@ -109,7 +109,7 @@ CONFIG
         # If CONSUL_OVERRIDE_CONFIG is not set, run Consul in -dev mode
         echo "CONSUL_OVERRIDE_CONFIG is not set. Starting Consul in -dev mode."
 
-        sudo tee ${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
+        sudo tee $${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
 FLAGS=-dev -ui -client 0.0.0.0
 CONSUL_HTTP_ADDR=http://127.0.0.1:8500
 ENVVARS
