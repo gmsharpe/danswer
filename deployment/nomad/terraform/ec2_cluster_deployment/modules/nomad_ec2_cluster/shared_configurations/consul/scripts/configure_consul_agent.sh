@@ -9,9 +9,11 @@ CONSUL_CONFIG_DIR=/etc/consul.d
 CONSUL_ENV_VARS=$CONSUL_CONFIG_DIR/consul.conf
 
 # If override is true, use the custom config if set; otherwise, use the default config file
-if [ $DO_OVERRIDE_CONFIG == true ] && [ -n "$CONSUL_OVERRIDE_CONFIG" ]; then
+if [ ${DO_OVERRIDE_CONFIG} == true ] && [ -n "$CONSUL_OVERRIDE_CONFIG" ]; then
+  echo "Use custom Consul agent config (CONSUL_OVERRIDE_CONFIG)"
   CONSUL_CONFIG=$CONSUL_OVERRIDE_CONFIG
 else
+  echo "Use default Consul agent config"
   CONSUL_CONFIG=${CONSUL_CONFIG_FILE:-$CONSUL_CONFIG_DEFAULT}
 fi
 
@@ -20,7 +22,6 @@ if [ ${DO_OVERRIDE_CONFIG} == true ] || [ ${DO_OVERRIDE_CONFIG} == 1 ]; then
     echo "Error: DO_OVERRIDE_CONFIG is set to true, but no CONSUL_CONFIG is provided. Exiting."
     exit 1
   else
-    echo "Use custom Consul agent config"
     cat <<CONFIG | sudo tee $CONSUL_CONFIG_FILE
 ${CONSUL_CONFIG}
 CONFIG
