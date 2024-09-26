@@ -1,6 +1,9 @@
 #!/bin/bash
 
-CONSUL_OVERRIDE_CONFIG=$1
+CONSUL_OVERRIDE_CONFIG_TEMP_FILE=$1
+
+# Use the config files
+CONSUL_OVERRIDE_CONFIG=$(cat "$CONSUL_OVERRIDE_CONFIG_TEMP_FILE")
 
 # Default is 'dev' mode.  Do NOT run in production.
 CONSUL_CONFIG_FILE="/etc/consul.d/consul.hcl"

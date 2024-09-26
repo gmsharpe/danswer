@@ -90,17 +90,12 @@ if [ $INSTALL_CONSUL == true ]; then
 
   cd $WORK_DIR/shared_configurations/
 
-  CONSUL_CONFIG=$(cat <<EOF
-${consul_config}
-EOF
-  )
-
   sudo USER=$consul_user GROUP=$consul_group COMMENT=$consul_comment HOME=$consul_home ./scripts/create_user.sh
 
   sudo VERSION=$consul_version USER=$consul_user GROUP=$consul_group ./consul/scripts/install_consul.sh
 
-  echo "Configuring Consul agent with CONSUL_CONFIG: $CONSUL_CONFIG"
-  sudo DO_OVERRIDE_CONFIG=${consul_override} ./consul/scripts/configure_consul_agent.sh $${CONSUL_CONFIG}
+  echo "${consul_config}" | sudo tee /tmp/consul_config.hcl > /dev/null
+  sudo DO_OVERRIDE_CONFIG=${consul_override} ./consul/scripts/configure_consul_agent.sh /tmp/consul_config.hcl
 
   sudo ./consul/scripts/install_consul_systemd.sh
 
@@ -124,19 +119,13 @@ if [ $INSTALL_VAULT == true ]; then
     USER=$vault_user GROUP=$vault_group \
     ./vault/scripts/install_vault.sh
 
-    VAULT_SERVER_CONFIG=$(cat <<EOF
-${vault_server_config}
-EOF
-    )
+  # Write the multiline strings to temporary files
+  echo "${vault_server_config}" | sudo tee /tmp/vault_server_config.hcl > /dev/null
+  echo "${vault_client_config}" | sudo tee /tmp/vault_client_config.hcl > /dev/null
 
-    VAULT_CLIENT_CONFIG=$(cat <<EOF
-${vault_client_config}
-EOF
-    )
-
+  # Pass the file paths as arguments to the script
   sudo DO_OVERRIDE_CONFIG=${vault_override} IS_SERVER=$IS_SERVER CLUSTER_NAME=$CLUSTER_NAME \
-    VAULT_SERVER_CONFIG=$${VAULT_SERVER_CONFIG} VAULT_CLIENT_CONFIG=$${VAULT_CLIENT_CONFIG} \
-    ./vault/scripts/configure_vault_agent.sh
+    ./vault/scripts/configure_vault_agent.sh /tmp/vault_server_config.hcl /tmp/vault_client_config.hcl
 
   # Install Vault as a systemd service and start it
   sudo ./vault/scripts/install_vault_systemd.sh

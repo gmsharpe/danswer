@@ -2,6 +2,13 @@
 
 echo "Running configure_vault_agent.sh"
 
+VAULT_SERVER_CONFIG_FILE=$1
+VAULT_CLIENT_CONFIG_FILE=$2
+
+# Use the config files
+VAULT_SERVER_CONFIG=$(cat "$VAULT_SERVER_CONFIG_FILE")
+VAULT_CLIENT_CONFIG=$(cat "$VAULT_CLIENT_CONFIG_FILE")
+
 echo "Set variables"
 DEFAULT_VAULT_CONFIG="cluster_name = \"nomad-cluster\""
 VAULT_CONFIG_FILE=/etc/vault.d/vault.hcl
@@ -11,9 +18,6 @@ VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
 DO_OVERRIDE_CONFIG=${DO_OVERRIDE_CONFIG:-false}
 IS_SERVER=${IS_SERVER:-true}
 CLUSTER_NAME=${CLUSTER_NAME:-"nomad-cluster"}
-
-VAULT_SERVER_CONFIG=${VAULT_SERVER_CONFIG:-""}
-VAULT_CLIENT_CONFIG=${VAULT_CLIENT_CONFIG:-""}
 
 
 if [ "$DO_OVERRIDE_CONFIG" == "true" ] || [ "$DO_OVERRIDE_CONFIG" == 1 ]; then
