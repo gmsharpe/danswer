@@ -17,22 +17,12 @@ vault_group="vault"
 vault_user="vault"
 vault_comment="Vault"
 vault_home="/opt/vault"
-VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
 
 # Nomad variables
 nomad_host_port=$${NOMAD_HOST_PORT:-4646}
 nomad_version=$${NOMAD_VERSION:-"1.8.4"}
 nomad_group="root"
 nomad_user="root"
-
-# todo - default.hcl is not created, yet
-CONSUL_CONFIG_DEFAULT_FILE=/etc/consul.d/default.hcl
-CONSUL_CONFIG_OVERRIDE_FILE=/etc/consul.d/z-override.hcl
-# this is where default settings are currently set
-CONSUL_CONFIG_DIR=/etc/consul.d
-
-VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
-VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
 
 ############################################## REMOVE ABOVE
 
@@ -50,13 +40,12 @@ PRIVATE_IP=${private_ip} #$(curl http://169.254.169.254/latest/meta-data/local-i
 SERVER_IP=${server_ip}
 
 # convert variables to uppercase for consistency
-INSTALL_CONSUL=${install_consul}
+
 INSTALL_DANSWER=${install_danswer}
-INSTALL_VAULT=${install_vault}
 
 CLUSTER_NAME=${name}
 
-WORK_DIR=$${WORK_DIR:-/opt/danswer}
+work_dir=$${work_dir:-/opt/danswer}
 
 # Determine if this instance should include the server configuration
 if [ ${count} -eq 0 ]; then
@@ -78,17 +67,19 @@ sudo yum install -y git && \
   sudo git clone -b gms/infrastructure https://github.com/gmsharpe/danswer.git .
 
 # Copy setup scripts
-sudo cp -r $WORK_DIR/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/scripts /opt/danswer
-sudo cp -r $WORK_DIR/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/shared_configurations $WORK_DIR
+sudo cp -r $work_dir/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/scripts /opt/danswer
+sudo cp -r $work_dir/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/shared_configurations $work_dir
 
 # make scripts executable
-sudo chmod +x $WORK_DIR/scripts/*.sh
-sudo find $WORK_DIR/shared_configurations/{vault,nomad,consul,scripts} -type f -name "*.sh" -exec chmod +x {} \;
+sudo chmod +x $work_dir/scripts/*.sh
+sudo find $work_dir/shared_configurations/{vault,nomad,consul,scripts} -type f -name "*.sh" -exec chmod +x {} \;
 
 # Install and configure Consul if required
-if [ $INSTALL_CONSUL == true ]; then
+if [ ${install_consul} == true ]; then
 
-  cd $WORK_DIR/shared_configurations/
+  echo "Installing Consul"
+
+  cd $work_dir/shared_configurations/
 
   sudo USER=$consul_user GROUP=$consul_group COMMENT=$consul_comment HOME=$consul_home ./scripts/create_user.sh
 
@@ -102,15 +93,15 @@ if [ $INSTALL_CONSUL == true ]; then
 fi
 
 # Execute 'setup_vault.sh' script
-if [ $INSTALL_VAULT == true ]; then
+if [ ${install_vault} == true ]; then
   echo "Installing Vault"
-  #sudo $WORK_DIR/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+  #sudo $work_dir/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
 
   # Steps loosely modeled after
   #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/install-vault-systemd.sh.tpl
   #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/quick-start-vault-systemd.sh.tpl
 
-  cd $WORK_DIR/shared_configurations/
+  cd $work_dir/shared_configurations/
   sudo USER=$vault_user GROUP=$vault_group COMMENT=$vault_comment HOME=$vault_home ./scripts/create_user.sh
 
   sudo VERSION=$vault_version URL=$vault_ent_url USER=$vault_user GROUP=$vault_group ./vault/scripts/install_vault.sh
@@ -131,7 +122,7 @@ if [ $INSTALL_VAULT == true ]; then
 fi
 
 # Execute 'setup_nomad.sh' script
-sudo VAULT_TOKEN=$VAULT_TOKEN $WORK_DIR/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+sudo VAULT_TOKEN=$VAULT_TOKEN $work_dir/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
 
 # Execute 'create_volumes.sh' script
-sudo VAULT_TOKEN=$VAULT_TOKEN $WORK_DIR/scripts/create_volumes.sh $SERVER_IP
+sudo VAULT_TOKEN=$VAULT_TOKEN $work_dir/scripts/create_volumes.sh $SERVER_IP

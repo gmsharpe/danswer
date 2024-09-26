@@ -2,12 +2,12 @@
 
 echo "Running configure_vault_agent.sh"
 
-VAULT_SERVER_CONFIG_TEMP_FILE=$1
-VAULT_CLIENT_CONFIG_TEMP_FILE=$2
+vault_server_config_temp_file=$1
+vault_client_config_temp_file=$2
 
 # Use the config files
-VAULT_SERVER_CONFIG=$(cat "$VAULT_SERVER_CONFIG_TEMP_FILE")
-VAULT_CLIENT_CONFIG=$(cat "$VAULT_CLIENT_CONFIG_TEMP_FILE")
+vault_server_config=$(cat "$vault_server_config_temp_file")
+VAULT_CLIENT_CONFIG=$(cat "$vault_client_config_temp_file")
 
 echo "Set variables"
 DEFAULT_VAULT_CONFIG="cluster_name = \"nomad-cluster\""
@@ -21,15 +21,13 @@ CLUSTER_NAME=${CLUSTER_NAME:-"nomad-cluster"}
 
 
 if [ ${DO_OVERRIDE_CONFIG} == true ]; then
-
   if [ ${IS_SERVER} == true ]; then
     echo "Use custom Vault agent 'server' config"
-    VAULT_CONFIG=${VAULT_SERVER_CONFIG}
+    VAULT_CONFIG=${vault_server_config}
   else
     echo "Use custom Vault agent 'client' config"
     VAULT_CONFIG=${VAULT_CLIENT_CONFIG}
   fi
-fi
 else
   echo "Use default Vault agent config"
   VAULT_CONFIG=${DEFAULT_VAULT_CONFIG}
