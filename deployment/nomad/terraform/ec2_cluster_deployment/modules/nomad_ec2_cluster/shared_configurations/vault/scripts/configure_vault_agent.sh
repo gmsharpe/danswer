@@ -33,16 +33,16 @@ else
   vault_config=${default_vault_config}
 fi
 
-# todo - check if necessary?
-echo "Update Vault configuration file permissions"
-sudo chown vault:vault $vault_config_file
-
 if [ ${DO_OVERRIDE_CONFIG} == true ]; then
 
   echo "Add custom Vault server override config"
   cat <<CONFIG | sudo tee $vault_config_file
 ${vault_config}
 CONFIG
+
+# todo - check if necessary?
+echo "Update Vault configuration file permissions"
+sudo chown vault:vault $vault_config_file
 
   echo "If Vault config is overridden, don't start Vault in -dev mode"
   echo '' | sudo tee /etc/vault.d/vault.conf

@@ -23,7 +23,7 @@ sudo chown ${USER}:${GROUP} ${VAULT_PATH}
 echo "$(${VAULT_PATH} --version)"
 
 echo "Configuring Vault ${VAULT_VERSION}"
-sudo mkdir -pm 0755 ${VAULT_CONFIG_DIR} ${VAULT_DATA_DIR} ${VAULT_TLS_DIR} ${vault_config_file}
+sudo mkdir -pm 0755 ${VAULT_CONFIG_DIR} ${VAULT_DATA_DIR} ${VAULT_TLS_DIR}
 
 echo "Start Vault in -dev mode"
 sudo tee ${VAULT_ENV_VARS} > /dev/null <<ENVVARS
