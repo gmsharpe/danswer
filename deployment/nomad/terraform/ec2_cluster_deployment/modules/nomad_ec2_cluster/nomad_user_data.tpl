@@ -97,6 +97,7 @@ fi
 
 # Execute 'setup_vault.sh' script
 if [ ${install_vault} == true ]; then
+
   echo "Installing Vault"
   #sudo $work_dir/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
 
@@ -105,6 +106,7 @@ if [ ${install_vault} == true ]; then
   #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/quick-start-vault-systemd.sh.tpl
 
   cd $work_dir/shared_configurations/
+
   sudo USER=$vault_user GROUP=$vault_group COMMENT=$vault_comment HOME=$vault_home ./scripts/create_user.sh
 
   sudo VERSION=$vault_version URL=$vault_ent_url USER=$vault_user GROUP=$vault_group ./vault/scripts/install_vault.sh
