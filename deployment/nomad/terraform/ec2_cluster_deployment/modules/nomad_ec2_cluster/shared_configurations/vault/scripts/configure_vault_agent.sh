@@ -36,7 +36,7 @@ fi
 if [ ${DO_OVERRIDE_CONFIG} == true ]; then
 
   echo "Add custom Vault server override config"
-  cat <<CONFIG | sudo tee $vault_config_file
+  cat <<CONFIG | sudo tee $vault_config_file > /dev/null
 ${vault_config}
 CONFIG
 

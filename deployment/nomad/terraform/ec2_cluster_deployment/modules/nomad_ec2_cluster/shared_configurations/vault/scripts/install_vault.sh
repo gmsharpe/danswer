@@ -11,7 +11,6 @@ vault_data_dir=/opt/vault/data
 vault_tls_dir=/opt/vault/tls
 vault_env_vars=${vault_config_dir}/vault.conf
 vault_profile_script=/etc/profile.d/vault.sh
-vault_config_file=/etc/vault.d/vault.hcl
 
 echo "Downloading Vault ${vault_version}"
 [ 200 -ne $(curl --write-out %{http_code} --silent --output /tmp/${vault_zip} ${vault_url}) ] && exit 1
