@@ -100,7 +100,7 @@ EOF
   sudo VERSION=$consul_version USER=$consul_user GROUP=$consul_group ./consul/scripts/install_consul.sh
 
   echo "Configuring Consul agent with CONSUL_CONFIG: $CONSUL_CONFIG"
-  sudo CONSUL_OVERRIDE_CONFIG=$${CONSUL_CONFIG} DO_OVERRIDE_CONFIG=${consul_override} ./consul/scripts/configure_consul_agent.sh
+  sudo ./consul/scripts/configure_consul_agent.sh CONSUL_OVERRIDE_CONFIG=$${CONSUL_CONFIG} DO_OVERRIDE_CONFIG=${consul_override}
 
   sudo ./consul/scripts/install_consul_systemd.sh
 
