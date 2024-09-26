@@ -93,12 +93,11 @@ ${consul_config}
 EOF
   )
 
-  sudo env USER=$consul_user GROUP=$consul_group COMMENT=$consul_comment HOME=$consul_home \
-    ./scripts/create_user.sh
-  sudo env VERSION=$consul_version USER=$consul_user GROUP=$consul_group \
-    ./consul/scripts/install_consul.sh
-  sudo env CONSUL_OVERRIDE_CONFIG=$${CONSUL_CONFIG} DO_OVERRIDE_CONFIG=${consul_override} \
-    ./consul/scripts/configure_consul_agent.sh
+  sudo USER=$consul_user GROUP=$consul_group COMMENT=$consul_comment HOME=$consul_home ./scripts/create_user.sh
+
+  sudo VERSION=$consul_version USER=$consul_user GROUP=$consul_group ./consul/scripts/install_consul.sh
+
+  sudo CONSUL_OVERRIDE_CONFIG=$${CONSUL_CONFIG} DO_OVERRIDE_CONFIG=${consul_override} ./consul/scripts/configure_consul_agent.sh
 
   sudo ./consul/scripts/install_consul_systemd.sh
 
@@ -141,6 +140,7 @@ EOF
 
   # Install Vault as a systemd service and start it
   sudo IS_SERVER=$IS_SERVER ./vault/scripts/initialize_vault.sh
+fi
 
 # Execute 'setup_nomad.sh' script
 sudo VAULT_TOKEN=$VAULT_TOKEN $WORK_DIR/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
