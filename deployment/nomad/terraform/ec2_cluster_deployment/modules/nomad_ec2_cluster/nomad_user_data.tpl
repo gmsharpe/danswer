@@ -30,7 +30,6 @@ CONSUL_CONFIG_DEFAULT_FILE=/etc/consul.d/default.hcl
 CONSUL_CONFIG_OVERRIDE_FILE=/etc/consul.d/z-override.hcl
 # this is where default settings are currently set
 CONSUL_CONFIG_DIR=/etc/consul.d
-CONSUL_ENV_VARS=$CONSUL_CONFIG_DIR/consul.conf
 
 VAULT_CONFIG_FILE=/etc/vault.d/default.hcl
 VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl

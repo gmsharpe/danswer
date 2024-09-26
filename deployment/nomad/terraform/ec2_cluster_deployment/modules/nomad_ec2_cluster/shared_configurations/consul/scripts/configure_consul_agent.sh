@@ -5,6 +5,8 @@ CONSUL_CONFIG_FILE="/etc/consul.d/consul.hcl"
 CONSUL_CONFIG_DEFAULT=""
 CONSUL_OVERRIDE_CONFIG=${CONSUL_OVERRIDE_CONFIG:-""}
 DO_OVERRIDE_CONFIG=${DO_OVERRIDE_CONFIG:-false}
+CONSUL_CONFIG_DIR=/etc/consul.d
+CONSUL_ENV_VARS=$CONSUL_CONFIG_DIR/consul.conf
 
 # If override is true, use the custom config if set; otherwise, use the default config file
 if [ $DO_OVERRIDE_CONFIG == true ] && [ -n "$CONSUL_OVERRIDE_CONFIG" ]; then
