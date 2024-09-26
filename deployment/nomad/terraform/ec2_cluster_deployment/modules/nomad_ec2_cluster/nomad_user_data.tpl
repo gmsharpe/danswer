@@ -84,7 +84,7 @@ if [ ${install_consul} == true ]; then
   sudo USER=$consul_user GROUP=$consul_group COMMENT=$consul_comment HOME=$consul_home ./scripts/create_user.sh
 
   sudo VERSION=$consul_version USER=$consul_user GROUP=$consul_group ./consul/scripts/install_consul.sh
-
+  printf "%s" "${consul_config}"
   printf "%s" "${consul_config}" | sudo tee /tmp/consul_config.hcl > /dev/null
   sudo DO_OVERRIDE_CONFIG=${consul_override} ./consul/scripts/configure_consul_agent.sh /tmp/consul_config.hcl
 
@@ -107,6 +107,7 @@ if [ ${install_vault} == true ]; then
   sudo VERSION=$vault_version URL=$vault_ent_url USER=$vault_user GROUP=$vault_group ./vault/scripts/install_vault.sh
 
   # Write the multiline strings to temporary files
+  printf "%s" "${vault_server_config}"
   printf "%s" "${vault_server_config}" | sudo tee /tmp/vault_server_config.hcl > /dev/null
   printf "%s" "${vault_client_config}" | sudo tee /tmp/vault_client_config.hcl > /dev/null
 

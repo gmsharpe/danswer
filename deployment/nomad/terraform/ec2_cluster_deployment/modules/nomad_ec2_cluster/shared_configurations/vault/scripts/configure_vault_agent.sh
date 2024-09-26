@@ -7,12 +7,12 @@ vault_client_config_temp_file=$2
 
 # Use the config files
 vault_server_config=$(cat "$vault_server_config_temp_file")
-VAULT_CLIENT_CONFIG=$(cat "$vault_client_config_temp_file")
+vault_client_config=$(cat "$vault_client_config_temp_file")
 
 echo "Set variables"
-DEFAULT_VAULT_CONFIG="cluster_name = \"nomad-cluster\""
-VAULT_CONFIG_FILE=/etc/vault.d/vault.hcl
-VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
+default_vault_config="cluster_name = \"nomad-cluster\""
+vault_config_file=/etc/vault.d/vault.hcl
+# todo - create this?
 VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
 
 DO_OVERRIDE_CONFIG=${DO_OVERRIDE_CONFIG:-false}
@@ -23,25 +23,25 @@ CLUSTER_NAME=${CLUSTER_NAME:-"nomad-cluster"}
 if [ ${DO_OVERRIDE_CONFIG} == true ]; then
   if [ ${IS_SERVER} == true ]; then
     echo "Use custom Vault agent 'server' config"
-    VAULT_CONFIG=${vault_server_config}
+    vault_config=${vault_server_config}
   else
     echo "Use custom Vault agent 'client' config"
-    VAULT_CONFIG=${VAULT_CLIENT_CONFIG}
+    vault_config=${vault_client_config}
   fi
 else
   echo "Use default Vault agent config"
-  VAULT_CONFIG=${DEFAULT_VAULT_CONFIG}
+  vault_config=${default_vault_config}
 fi
 
 # todo - check if necessary?
 echo "Update Vault configuration file permissions"
-sudo chown vault:vault $VAULT_CONFIG_FILE
+sudo chown vault:vault $vault_config_file
 
 if [ ${DO_OVERRIDE_CONFIG} == true ]; then
 
   echo "Add custom Vault server override config"
-  cat <<CONFIG | sudo tee $VAULT_CONFIG_FILE
-${VAULT_CONFIG}
+  cat <<CONFIG | sudo tee $vault_config_file
+${vault_config}
 CONFIG
 
   echo "If Vault config is overridden, don't start Vault in -dev mode"
