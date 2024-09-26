@@ -20,14 +20,18 @@ IS_SERVER=${IS_SERVER:-true}
 CLUSTER_NAME=${CLUSTER_NAME:-"nomad-cluster"}
 
 
-if [ "$DO_OVERRIDE_CONFIG" == "true" ] || [ "$DO_OVERRIDE_CONFIG" == 1 ]; then
-  if [ "$IS_SERVER" == "true" ]; then
+if [ ${DO_OVERRIDE_CONFIG} == true ] || [ ${DO_OVERRIDE_CONFIG} == 1 ]; then
+
+  if [ ${IS_SERVER} == true ]; then
+    echo "Use custom Vault agent 'server' config"
     VAULT_CONFIG=${VAULT_SERVER_CONFIG}
   else
+    echo "Use custom Vault agent 'client' config"
     VAULT_CONFIG=${VAULT_CLIENT_CONFIG}
   fi
 fi
 else
+  echo "Use default Vault agent config"
   VAULT_CONFIG=${DEFAULT_VAULT_CONFIG}
 fi
 
