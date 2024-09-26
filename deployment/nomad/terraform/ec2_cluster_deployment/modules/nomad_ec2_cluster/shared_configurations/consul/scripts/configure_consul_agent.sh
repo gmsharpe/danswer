@@ -5,7 +5,7 @@ CONSUL_OVERRIDE_CONFIG=$1
 # Default is 'dev' mode.  Do NOT run in production.
 CONSUL_CONFIG_FILE="/etc/consul.d/consul.hcl"
 CONSUL_CONFIG_DEFAULT=""
-DO_OVERRIDE_CONFIG=${$2:-false}
+DO_OVERRIDE_CONFIG=${DO_OVERRIDE_CONFIG:-false}
 CONSUL_CONFIG_DIR=/etc/consul.d
 CONSUL_ENV_VARS=$CONSUL_CONFIG_DIR/consul.conf
 
