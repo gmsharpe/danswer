@@ -115,9 +115,7 @@ if [ $INSTALL_VAULT == true ]; then
     COMMENT=$vault_comment HOME=$vault_home \
     ./scripts/create_user.sh
 
-  sudo VERSION=$vault_version URL=$vault_ent_url \
-    USER=$vault_user GROUP=$vault_group \
-    ./vault/scripts/install_vault.sh
+  sudo VERSION=$vault_version URL=$vault_ent_url USER=$vault_user GROUP=$vault_group ./vault/scripts/install_vault.sh
 
   # Write the multiline strings to temporary files
   echo "${vault_server_config}" | sudo tee /tmp/vault_server_config.hcl > /dev/null

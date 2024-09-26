@@ -14,7 +14,6 @@ CONSUL_CONFIG_DIR=/etc/consul.d
 CONSUL_DATA_DIR=/opt/consul/data
 CONSUL_TLS_DIR=/opt/consul/tls
 CONSUL_PROFILE_SCRIPT=/etc/profile.d/consul.sh
-CONSUL_ENV_VARS=$CONSUL_CONFIG_DIR/consul.conf
 
 echo "Downloading Consul ${CONSUL_VERSION}"
 [ 200 -ne $(curl --write-out %{http_code} --silent --output /tmp/${CONSUL_ZIP} ${CONSUL_URL}) ] && exit 1
@@ -26,10 +25,10 @@ sudo chown ${USER}:${GROUP} ${CONSUL_PATH}
 echo "$(${CONSUL_PATH} --version)"
 
 echo "Configuring Consul ${CONSUL_VERSION}"
-sudo mkdir -pm 0755 ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR} ${CONSUL_ENV_VARS}
+sudo mkdir -pm 0755 ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR}
 
 echo "Update directory permissions"
-sudo chown -R ${USER}:${GROUP} ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR} ${CONSUL_ENV_VARS}
+sudo chown -R ${USER}:${GROUP} ${CONSUL_CONFIG_DIR} ${CONSUL_DATA_DIR} ${CONSUL_TLS_DIR}
 # updated since the original script was not working as expected
 sudo find ${CONSUL_CONFIG_DIR} -type f -exec chmod 0644 {} \;
 

@@ -21,7 +21,7 @@ else
   CONSUL_CONFIG=${CONSUL_CONFIG_DEFAULT}
 fi
 
-if [ ${DO_OVERRIDE_CONFIG} == true ] || [ ${DO_OVERRIDE_CONFIG} == 1 ]; then
+if [ ${DO_OVERRIDE_CONFIG} == true ]; then
   if [ ${#CONSUL_CONFIG} -eq 0 ]; then
     echo "Error: DO_OVERRIDE_CONFIG is set to true, but no CONSUL_CONFIG is provided. Exiting."
     exit 1
