@@ -20,7 +20,7 @@ IS_SERVER=${IS_SERVER:-true}
 CLUSTER_NAME=${CLUSTER_NAME:-"nomad-cluster"}
 
 
-if [ ${DO_OVERRIDE_CONFIG} == true ] || [ ${DO_OVERRIDE_CONFIG} == 1 ]; then
+if [ ${DO_OVERRIDE_CONFIG} == true ]; then
 
   if [ ${IS_SERVER} == true ]; then
     echo "Use custom Vault agent 'server' config"
@@ -39,7 +39,7 @@ fi
 echo "Update Vault configuration file permissions"
 sudo chown vault:vault $VAULT_CONFIG_FILE
 
-if [ ${DO_OVERRIDE_CONFIG} == true ] || [ ${DO_OVERRIDE_CONFIG} == 1 ]; then
+if [ ${DO_OVERRIDE_CONFIG} == true ]; then
 
   echo "Add custom Vault server override config"
   cat <<CONFIG | sudo tee $VAULT_CONFIG_FILE

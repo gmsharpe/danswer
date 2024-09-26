@@ -94,7 +94,7 @@ if [ $INSTALL_CONSUL == true ]; then
 
   sudo VERSION=$consul_version USER=$consul_user GROUP=$consul_group ./consul/scripts/install_consul.sh
 
-  echo "${consul_config}" | sudo tee /tmp/consul_config.hcl > /dev/null
+  printf "%s" "${consul_config}" | sudo tee /tmp/consul_config.hcl > /dev/null
   sudo DO_OVERRIDE_CONFIG=${consul_override} ./consul/scripts/configure_consul_agent.sh /tmp/consul_config.hcl
 
   sudo ./consul/scripts/install_consul_systemd.sh
@@ -111,15 +111,13 @@ if [ $INSTALL_VAULT == true ]; then
   #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/quick-start-vault-systemd.sh.tpl
 
   cd $WORK_DIR/shared_configurations/
-  sudo USER=$vault_user GROUP=$vault_group \
-    COMMENT=$vault_comment HOME=$vault_home \
-    ./scripts/create_user.sh
+  sudo USER=$vault_user GROUP=$vault_group COMMENT=$vault_comment HOME=$vault_home ./scripts/create_user.sh
 
   sudo VERSION=$vault_version URL=$vault_ent_url USER=$vault_user GROUP=$vault_group ./vault/scripts/install_vault.sh
 
   # Write the multiline strings to temporary files
-  echo "${vault_server_config}" | sudo tee /tmp/vault_server_config.hcl > /dev/null
-  echo "${vault_client_config}" | sudo tee /tmp/vault_client_config.hcl > /dev/null
+  printf "%s" "${vault_server_config}" | sudo tee /tmp/vault_server_config.hcl > /dev/null
+  printf "%s" "${vault_client_config}" | sudo tee /tmp/vault_client_config.hcl > /dev/null
 
   # Pass the file paths as arguments to the script
   sudo DO_OVERRIDE_CONFIG=${vault_override} IS_SERVER=$IS_SERVER CLUSTER_NAME=$CLUSTER_NAME \
