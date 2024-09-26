@@ -15,7 +15,7 @@ if [ ${DO_OVERRIDE_CONFIG} == true ] && [ -z "${CONSUL_OVERRIDE_CONFIG}" ]; then
   CONSUL_CONFIG=${CONSUL_OVERRIDE_CONFIG}
 else
   echo "Use default Consul agent config"
-  CONSUL_CONFIG=${CONSUL_CONFIG_FILE:-$CONSUL_CONFIG_DEFAULT}
+  CONSUL_CONFIG=${CONSUL_CONFIG_DEFAULT}
 fi
 
 if [ ${DO_OVERRIDE_CONFIG} == true ] || [ ${DO_OVERRIDE_CONFIG} == 1 ]; then
