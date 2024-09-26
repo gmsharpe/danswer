@@ -36,8 +36,11 @@ VAULT_CONFIG_OVERRIDE_FILE=/etc/vault.d/z-override.hcl
 
 ############################################## REMOVE ABOVE
 
-#if [ $RUN_USER_DATA_SCRIPT == true ]; then
-echo "Running user data script"
+#if [ ${run_user_data_script} == false ]; then
+#  echo "Do not run user data script"
+#  exit 0
+#fi
+
 sudo yum update -y
 sudo yum install -y yum-utils shadow-utils
 sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
