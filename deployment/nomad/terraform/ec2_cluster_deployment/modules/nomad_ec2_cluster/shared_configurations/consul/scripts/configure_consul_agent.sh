@@ -31,7 +31,7 @@ CONSUL_HTTP_ADDR=http://127.0.0.1:8500
 ENVVARS
 
     echo "Update Consul configuration override file permissions"
-    sudo chown consul:consul $CONSUL_CONFIG_OVERRIDE_FILE
+    sudo chown consul:consul $CONSUL_CONFIG_FILE
   fi
 else
     echo "CONSUL_OVERRIDE_CONFIG is not set. Starting Consul in -dev mode."
