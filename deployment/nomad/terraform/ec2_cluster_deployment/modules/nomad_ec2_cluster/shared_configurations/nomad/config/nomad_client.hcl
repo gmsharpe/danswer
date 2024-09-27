@@ -2,13 +2,13 @@
 #   https://github.com/hashicorp/nomad-guides/blob/master/application-deployment/microservices/shared/config/nomad_client.hcl
 #
 # The following variables need to be set via replacement (e.g. sed) before starting the Nomad client:
-# - IP_ADDRESS
+# - $ip_address
 # - VAULT_URL
 # - NODE_POOL
 
 data_dir = "/opt/nomad/data"
-bind_addr = "IP_ADDRESS"
-name = "nomad@IP_ADDRESS"
+bind_addr = "$ip_address"
+name = "nomad@$ip_address"
 
 # Enable the client
 client {
@@ -29,13 +29,13 @@ client {
 }
 
 advertise {
-  http = "IP_ADDRESS"
-  rpc = "IP_ADDRESS"
-  serf = "IP_ADDRESS"
+  http = "$ip_address"
+  rpc = "$ip_address"
+  serf = "$ip_address"
 }
 
 consul {
-  address = "IP_ADDRESS:8500"
+  address = "$ip_address:8500"
 }
 
 vault {

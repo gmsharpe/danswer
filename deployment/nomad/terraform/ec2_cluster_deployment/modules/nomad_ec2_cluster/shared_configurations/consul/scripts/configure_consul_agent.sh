@@ -1,46 +1,47 @@
 #!/bin/bash
 
-CONSUL_OVERRIDE_CONFIG_TEMP_FILE=$1
+consul_override_config_temp_file=$1
 
 # Use the config files
-CONSUL_OVERRIDE_CONFIG=$(cat "$CONSUL_OVERRIDE_CONFIG_TEMP_FILE")
+consul_override_config=$(cat "$consul_override_config_temp_file")
 
 # Default is 'dev' mode.  Do NOT run in production.
-CONSUL_CONFIG_FILE="/etc/consul.d/consul.hcl"
-CONSUL_CONFIG_DEFAULT=""
+consul_config_file="/etc/consul.d/consul.hcl"
+consul_config_default=""
+consul_config_dir=/etc/consul.d
+consul_env_vars=$consul_config_dir/consul.conf
+
 DO_OVERRIDE_CONFIG=${DO_OVERRIDE_CONFIG:-false}
-CONSUL_CONFIG_DIR=/etc/consul.d
-CONSUL_ENV_VARS=$CONSUL_CONFIG_DIR/consul.conf
 
 # If override is true, use the custom config if set; otherwise, use the default config file
 if [ ${DO_OVERRIDE_CONFIG} == true ]; then
-  echo "Use custom Consul agent config (CONSUL_OVERRIDE_CONFIG)"
-  CONSUL_CONFIG=${CONSUL_OVERRIDE_CONFIG}
+  echo "Use custom Consul agent config (consul_override_config)"
+  consul_config=${consul_override_config}
 else
   echo "Use default Consul agent config"
-  CONSUL_CONFIG=${CONSUL_CONFIG_DEFAULT}
+  consul_config=${consul_config_default}
 fi
 
 if [ ${DO_OVERRIDE_CONFIG} == true ]; then
-  if [ ${#CONSUL_CONFIG} -eq 0 ]; then
-    echo "Error: DO_OVERRIDE_CONFIG is set to true, but no CONSUL_CONFIG is provided. Exiting."
+  if [ ${#consul_config} -eq 0 ]; then
+    echo "Error: DO_OVERRIDE_CONFIG is set to true, but no consul_config is provided. Exiting."
     exit 1
   else
-    cat <<CONFIG | sudo tee $CONSUL_CONFIG_FILE
-${CONSUL_CONFIG}
+    cat <<CONFIG | sudo tee $consul_config_file
+${consul_config}
 CONFIG
 
-    sudo tee ${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
+    sudo tee ${consul_env_vars} > /dev/null <<ENVVARS
 CONSUL_HTTP_ADDR=http://127.0.0.1:8500
 ENVVARS
 
     echo "Update Consul configuration override file permissions"
-    sudo chown consul:consul $CONSUL_CONFIG_FILE
+    sudo chown consul:consul $consul_config_file
   fi
 else
-    echo "CONSUL_OVERRIDE_CONFIG is not set. Starting Consul in -dev mode."
+    echo "consul_override_config is not set. Starting Consul in -dev mode."
 
-    sudo tee ${CONSUL_ENV_VARS} > /dev/null <<ENVVARS
+    sudo tee ${consul_env_vars} > /dev/null <<ENVVARS
 FLAGS=-dev -ui -client 0.0.0.0
 CONSUL_HTTP_ADDR=http://127.0.0.1:8500
 ENVVARS

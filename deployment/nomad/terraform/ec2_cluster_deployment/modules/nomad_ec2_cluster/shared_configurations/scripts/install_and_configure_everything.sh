@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 
 # This script is based loosely on the steps taken to install and configure Consul, Vault and Nomad from Hashicorp's
 # guides-configuration repo:
@@ -8,95 +7,106 @@ set -x
 #
 #
 
-# Consul variables
-consul_install=$(echo "${CONSUL_INSTALL:-true}" | tr '[:upper:]' '[:lower:]')
-consul_install=$(if [[ "$consul_install" == "true" || "$consul_install" == "1" ]]; then echo true; else echo false; fi)
-consul_host_port=${CONSUL_HOST_PORT:-8500}
-consul_version=${CONSUL_VERSION:-"1.4.1"}
-consul_ent_url=${CONSUL_ENT_URL}
+consul_host_port=$${CONSUL_HOST_PORT:-8500} # todo - not used at the moment.use it.
+consul_version=$${CONSUL_VERSION:-"1.19.2"}
 consul_group="consul"
 consul_user="consul"
 consul_comment="Consul"
 consul_home="/opt/consul"
 
 # Vault variables
-vault_install=$(echo "${VAULT_INSTALL:-true}" | tr '[:upper:]' '[:lower:]')
-vault_install=$(if [[ "$vault_install" == "true" || "$vault_install" == "1" ]]; then echo true; else echo false; fi)
-vault_host_port=${VAULT_HOST_PORT:-8200}
-vault_version=${VAULT_VERSION:-"1.0.2"}
-vault_ent_url=${VAULT_ENT_URL}
+vault_host_port=$${VAULT_HOST_PORT:-8200} # todo - not used at the moment. use it.
+vault_version=$${VAULT_VERSION:-"1.17.5"}
+vault_ent_url=$${VAULT_ENT_URL}
 vault_group="vault"
 vault_user="vault"
 vault_comment="Vault"
 vault_home="/opt/vault"
 
 # Nomad variables
-nomad_host_port=${NOMAD_HOST_PORT:-4646}
-nomad_version=${NOMAD_VERSION:-"0.8.7"}
-nomad_ent_url=${NOMAD_ENT_URL}
+nomad_host_port=$${NOMAD_HOST_PORT:-4646}
+nomad_version=$${NOMAD_VERSION:-"1.8.4"}
+# todo - should this be changed to something like 'nomad' in production?
 nomad_group="root"
 nomad_user="root"
 
-# Docker and Java installation flags
-docker_install=$(echo "${DOCKER_INSTALL:-true}" | tr '[:upper:]' '[:lower:]')
-docker_install=$(if [[ "$docker_install" == "true" || "$docker_install" == "1" ]]; then echo true; else echo false; fi)
+cluster_name=${cluster_name:-"nomad-cluster"}
+work_dir=${work_dir:-~/tmp/nomad}
+is_server=${is_server:-false}
 
-java_install=$(echo "${JAVA_INSTALL:-true}" | tr '[:upper:]' '[:lower:]')
-java_install=$(if [[ "$java_install" == "true" || "$java_install" == "1" ]]; then echo true; else echo false; fi)
+sudo yum update -y
+sudo yum install -y yum-utils shadow-utils
+sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
 
+echo "Preparing to install Nomad, Vault & Consul agents (server and/or client) on instance"
+sudo mkdir -p $work_dir
+sudo chown -R nobody:nobody $work_dir
+sudo chmod -R 755 $work_dir
 
-# execute the base script
-echo "Running `base.sh`"
-./base.sh
+sudo yum install -y git
 
-# install and configure the Consul server
-echo "Creating consul user using `create_user.sh`"
-USER=$consul_user GROUP=$consul_group \
-  COMMENT=$consul_comment HOME=$consul_home \
-  ../consul/scripts/create_user.sh
+cd $work_dir
 
-VERSION=$consul_version URL=$consul_ent_url \
-  USER=$consul_user GROUP=$consul_group \
-  ../consul/scripts/install_consul.sh
+# make scripts executable
+sudo chmod +x $work_dir/shared_configurations/*.sh
+sudo find $work_dir/shared_configurations/{vault,nomad,consul,scripts} -type f -name "*.sh" -exec chmod +x {} \;
 
-../consul/scripts/install-consul-systemd.sh
+# Install and configure Consul if required
+if [ ${install_consul} == true ]; then
 
-# install and configure the Vault server
+  echo "Installing Consul"
 
-echo "Creating vault user using `create_user.sh`"
-USER=$vault_user GROUP=$vault_group \
-  COMMENT=$vault_comment HOME=$vault_home \
-  ../vault/scripts/create_user.sh
+  cd $work_dir/shared_configurations/
 
-VERSION=$vault_version URL=$vault_ent_url \
-  USER=$vault_user GROUP=$vault_group \
-  ../vault/scripts/install_vault.sh
+  sudo ./scripts/create_user.sh $consul_user $consul_group $consul_home $consul_comment
 
-# install and configure the Nomad server
-echo "Creating nomad user using `create_user.sh`"
-USER=$nomad_user GROUP=$nomad_group \
-  COMMENT=$nomad_comment HOME=$nomad_home \
-  ../nomad/scripts/create_user.sh
+  sudo VERSION=$consul_version USER=$consul_user GROUP=$consul_group ./consul/scripts/install_consul.sh
 
-VERSION=$nomad_version URL=$nomad_ent_url \
-  USER=$nomad_user GROUP=$nomad_group \
-  ../nomad/scripts/install_nomad.sh
+cat <<EOF | sudo tee /tmp/consul_config.hcl > /dev/null
+${consul_config}
+EOF
 
-../nomad/scripts/install-nomad-systemd.sh
+  sudo DO_OVERRIDE_CONFIG=${consul_override} ./consul/scripts/configure_consul_agent.sh /tmp/consul_config.hcl
 
-# Check if variables are set
-if [[ "$install_docker" == "true" ]]; then
-  # Install Docker if not already installed
-  if ! command -v docker >/dev/null 2>&1; then
-    echo "Installing Docker..."
-    ./install-docker.sh
-  fi
+  sudo ./consul/scripts/install_consul_systemd.sh
+
 fi
 
-if [[ "$install_java" == "true" ]]; then
-  # Install Java if not already installed
-  if ! command -v java >/dev/null 2>&1; then
-    echo "Installing Java..."
-    .scripts/install-java.sh
-  fi
+# Execute 'setup_vault.sh' script
+if [ ${install_vault} == true ]; then
+
+  echo "Installing Vault"
+
+  # Steps loosely modeled after
+  #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/install-vault-systemd.sh.tpl
+  #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/quick-start-vault-systemd.sh.tpl
+
+  cd $work_dir/shared_configurations/
+
+  sudo ./scripts/create_user.sh $vault_user $vault_group $vault_home $vault_comment
+
+  sudo VERSION=$vault_version URL=$vault_ent_url USER=$vault_user GROUP=$vault_group ./vault/scripts/install_vault.sh
+
+  # Write the multiline strings to temporary files
+cat <<EOF | sudo tee /tmp/vault_server_config.hcl > /dev/null
+${vault_server_config}
+EOF
+
+cat <<EOF | sudo tee /tmp/vault_client_config.hcl > /dev/null
+${vault_client_config}
+EOF
+
+  # Pass the file paths as arguments to the script
+  sudo DO_OVERRIDE_CONFIG=${vault_override} is_server=$is_server cluster_name=$cluster_name \
+    ./vault/scripts/configure_vault_agent.sh /tmp/vault_server_config.hcl /tmp/vault_client_config.hcl
+
+  # Install Vault as a systemd service and start it
+  sudo ./vault/scripts/install_vault_systemd.sh
+
+  # Install Vault as a systemd service and start it
+  sudo is_server=$is_server ./vault/scripts/initialize_vault.sh
 fi
+
+# Execute 'setup_nomad.sh' script
+
+# todo - add logic to run install and configure scripts for Nomad

@@ -1,32 +1,34 @@
 #!/bin/bash
-#set -x
 
 # Based in part on https://github.com/hashicorp/guides-configuration/blob/master/nomad/scripts/install-nomad.sh
 
-NOMAD_VERSION=${VERSION}
-NOMAD_ZIP=nomad_${NOMAD_VERSION}_linux_amd64.zip
-NOMAD_URL=${URL:-https://releases.hashicorp.com/nomad/${NOMAD_VERSION}/${NOMAD_ZIP}}
-NOMAD_DIR=/usr/local/bin
-NOMAD_PATH=${NOMAD_DIR}/nomad
-NOMAD_CONFIG_DIR=/etc/nomad.d
-NOMAD_DATA_DIR=/opt/nomad/data
-NOMAD_TLS_DIR=/opt/nomad/tls
-NOMAD_ENV_VARS=${NOMAD_CONFIG_DIR}/nomad.conf
-NOMAD_PROFILE_SCRIPT=/etc/profile.d/nomad.sh
+USER="${USER:-root}"
+GROUP="${GROUP:-root}"
+VERSION="${1:-1.8.4}" # most recent as of 09/27/24
 
-echo "Downloading Nomad ${NOMAD_VERSION}"
-[ 200 -ne $(curl --write-out %{http_code} --silent --output /tmp/${NOMAD_ZIP} ${NOMAD_URL}) ] && exit 1
+nomad_version=${VERSION}
+nomad_zip=nomad_${nomad_version}_linux_amd64.zip
+nomad_url=${URL:-https://releases.hashicorp.com/nomad/${nomad_version}/${nomad_zip}}
+nomad_dir=/usr/local/bin
+nomad_path=${nomad_dir}/nomad
+nomad_config_dir=/etc/nomad.d
+nomad_data_dir=/opt/nomad/data
+nomad_tls_dir=/opt/nomad/tls
+nomad_env_vars=${nomad_config_dir}/nomad.conf
+nomad_profile_script=/etc/profile.d/nomad.sh
+
+echo "Downloading Nomad ${nomad_version}"
+[ 200 -ne $(curl --write-out %{http_code} --silent --output /tmp/${nomad_zip} ${nomad_url}) ] && exit 1
 
 echo "Installing Nomad"
-sudo unzip -o /tmp/${NOMAD_ZIP} -d ${NOMAD_DIR}
-sudo chmod 0755 ${NOMAD_PATH}
-sudo chown ${USER}:${GROUP} ${NOMAD_PATH}
-echo "$(${NOMAD_PATH} --version)"
+sudo unzip -o /tmp/${nomad_zip} -d ${nomad_dir}
+sudo chmod 0755 ${nomad_path}
+sudo chown ${USER}:${GROUP} ${nomad_path}
+echo "$(${nomad_path} --version)"
 
-echo "Configuring Nomad ${NOMAD_VERSION}"
-sudo mkdir -pm 0755 ${NOMAD_CONFIG_DIR} ${NOMAD_DATA_DIR} ${NOMAD_TLS_DIR}
-
+echo "Configuring Nomad ${nomad_version}"
+sudo mkdir -pm 0755 ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
 
 echo "Update directory permissions"
-sudo chown -R ${USER}:${GROUP} ${NOMAD_CONFIG_DIR} ${NOMAD_DATA_DIR} ${NOMAD_TLS_DIR}
-sudo chmod -R 0644 ${NOMAD_CONFIG_DIR}/*
+sudo chown -R ${USER}:${GROUP} ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
+sudo chmod -R 0644 ${nomad_config_dir}/*

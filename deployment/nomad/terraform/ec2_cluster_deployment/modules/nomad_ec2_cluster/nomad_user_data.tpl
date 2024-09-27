@@ -24,26 +24,18 @@ nomad_version=$${NOMAD_VERSION:-"1.8.4"}
 nomad_group="root"
 nomad_user="root"
 
-############################################## REMOVE ABOVE
+nomad_plugins=("docker", "raw_exec", "java")
 
-#if [ ${run_user_data_script} == false ]; then
-#  echo "Do not run user data script"
-#  exit 0
-#fi
+if [ ${is_server} == true ]; then
+  node_pool="primary"
+else
+  node_pool="secondary"
+fi
+
 
 sudo yum update -y
 sudo yum install -y yum-utils shadow-utils
 sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
-
-# Use EC2 metadata service to get the instance's private IP
-PRIVATE_IP=${private_ip} #$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
-SERVER_IP=${server_ip}
-
-# convert variables to uppercase for consistency
-
-INSTALL_DANSWER=${install_danswer}
-
-CLUSTER_NAME=${name}
 
 work_dir=$${work_dir:-/opt/danswer}
 
@@ -81,7 +73,7 @@ if [ ${install_consul} == true ]; then
 
   cd $work_dir/shared_configurations/
 
-  sudo USER=$consul_user GROUP=$consul_group COMMENT=$consul_comment HOME=$consul_home ./scripts/create_user.sh
+  sudo ./scripts/create_user.sh $consul_user $consul_group $consul_home $consul_comment
 
   sudo VERSION=$consul_version USER=$consul_user GROUP=$consul_group ./consul/scripts/install_consul.sh
 
@@ -99,7 +91,6 @@ fi
 if [ ${install_vault} == true ]; then
 
   echo "Installing Vault"
-  #sudo $work_dir/scripts/setup_vault.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
 
   # Steps loosely modeled after
   #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/install-vault-systemd.sh.tpl
@@ -107,7 +98,7 @@ if [ ${install_vault} == true ]; then
 
   cd $work_dir/shared_configurations/
 
-  sudo USER=$vault_user GROUP=$vault_group COMMENT=$vault_comment HOME=$vault_home ./scripts/create_user.sh
+  sudo ./scripts/create_user.sh $vault_user $vault_group $vault_home $vault_comment
 
   sudo VERSION=$vault_version URL=$vault_ent_url USER=$vault_user GROUP=$vault_group ./vault/scripts/install_vault.sh
 
@@ -131,8 +122,50 @@ EOF
   sudo IS_SERVER=$IS_SERVER ./vault/scripts/initialize_vault.sh
 fi
 
-# Execute 'setup_nomad.sh' script
-sudo VAULT_TOKEN=$VAULT_TOKEN $work_dir/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+if [ ${install_nomad} == true ]; then
+  
+  # todo - should likely be running nomad as a non-root user in future iterations
+  #sudo ./scripts/create_user.sh $nomad_user $nomad_group $nomad_home $nomad_comment
 
-# Execute 'create_volumes.sh' script
-sudo VAULT_TOKEN=$VAULT_TOKEN $work_dir/scripts/create_volumes.sh $SERVER_IP
+  sudo ./nomad/scripts/install_nomad.sh $nomad_version
+
+  if [ ${IS_SERVER} == true ]; then
+    if [ ${AND_CLIENT} == true ]; then
+      echo "Use custom Nomad agent 'server' config"
+      cat <<EOF | sudo tee /tmp/nomad.hcl > /dev/null
+${nomad_server_config}
+EOF
+    else
+      echo "Use custom Nomad agent 'server' and 'client' config"
+      cat <<EOF | sudo tee /tmp/nomad.hcl > /dev/null
+${nomad_server_and_client_config}
+EOF
+  else
+    echo "Use custom Nomad agent 'client' config"
+    cat <<EOF | sudo tee /tmp/nomad.hcl > /dev/null
+${nomad_client_config}
+EOF
+  fi
+
+  sudo ./nomad/scripts/configure_plugins.sh "${nomad_plugins[@]}"
+
+  # set variables for the configure_nomad_agent.sh script
+
+  sudo DO_OVERRIDE_CONFIG=${nomad_override} NODE_POOL=$node_pool ./nomad/scripts/configure_nomad_agent.sh /tmp/nomad.hcl
+
+  sudo ./nomad/scripts/install_nomad_systemd.sh
+
+  # Execute 'setup_nomad.sh' script
+  #sudo VAULT_TOKEN=$VAULT_TOKEN $work_dir/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $IS_SERVER
+
+  # Execute 'create_volumes.sh' script
+  #sudo VAULT_TOKEN=$VAULT_TOKEN $work_dir/scripts/create_volumes.sh $SERVER_IP
+
+  # Execute 'post_install_setup.sh' script
+
+fi
+
+
+
+
+

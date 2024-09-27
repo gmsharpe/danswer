@@ -6,11 +6,13 @@
 # The following variables need to be set via replacement (e.g. sed) before starting the Nomad server:
 # - IP_ADDRESS
 # - SERVER_COUNT
-# - VAULT_URL
+# - VAULT_IP
 # - TOKEN_FOR_NOMAD
+# - CONSUL_IP_ADDRESS
+# - TASK_TOKEN_TTL
 
 data_dir = "/opt/nomad/data"
-bind_addr = "IP_ADDRESS"
+bind_addr = "$IP_ADDRESS"
 
 ui {
   enabled = true
@@ -19,21 +21,21 @@ ui {
 # Enable the server
 server {
   enabled = true
-  bootstrap_expect = SERVER_COUNT
+  bootstrap_expect = "$SERVER_COUNT"
 }
 
-name = "nomad@IP_ADDRESS"
+name = "nomad@$IP_ADDRESS"
 
 consul {
-  address = "IP_ADDRESS:8500"
+  address = "$CONSUL_IP_ADDRESS:8500"
 }
 
 vault {
   enabled = true
-  address = "VAULT_URL"
-  task_token_ttl = "1h"
+  address = "$VAULT_IP:8200"
+  task_token_ttl = "$TASK_TOKEN_TTL" # e.g. "1h"
   create_from_role = "nomad-cluster"
-  token = "TOKEN_FOR_NOMAD"
+  token = "$TOKEN_FOR_NOMAD"
 }
 
 telemetry {
@@ -42,7 +44,22 @@ telemetry {
 }
 
 advertise {
-  http = "IP_ADDRESS"
-  rpc = "IP_ADDRESS"
-  serf = "IP_ADDRESS"
+  http = "$IP_ADDRESS"
+  rpc  = "$IP_ADDRESS"
+  serf = "$IP_ADDRESS"
 }
+
+client {
+  enabled = true
+  servers = ${SERVER_IPS}
+  node_pool  = "$NODE_POOL"
+  meta {
+    node_pool = "$NODE_POOL"
+  }
+  options {
+    "driver.raw_exec.enable" = "true"
+    "driver.exec.enable" = "true"
+    "driver.docker.enable" = "true"
+  }
+}
+

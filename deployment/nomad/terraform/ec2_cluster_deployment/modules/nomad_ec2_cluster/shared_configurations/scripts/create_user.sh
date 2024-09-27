@@ -1,14 +1,10 @@
 #!/bin/bash
 # based on https://github.com/hashicorp/guides-configuration/blob/master/shared/scripts/setup-user.sh
-# modified to work for RH based systems only
-set -x
 
-echo "Running"
-
-GROUP="${GROUP:-}"
-USER="${USER:-}"
-COMMENT="${COMMENT:-}"
-HOME="${HOME:-}"
+USER="${1:-$USER}"
+GROUP="${2:-$GROUP}"
+HOME="${3:-$HOME}"
+COMMENT="${4:-$COMMENT}"
 
 create_user() {
   sudo /usr/sbin/groupadd --force --system ${GROUP}
@@ -33,5 +29,3 @@ create_user
 sudo mkdir -pm 0755 ${HOME}
 sudo chown -R ${USER}:${GROUP} ${HOME}
 sudo chmod -R 0755 ${HOME}
-
-echo "Complete"

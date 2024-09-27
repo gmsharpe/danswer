@@ -13,7 +13,7 @@ echo "Set variables"
 default_vault_config="cluster_name = \"nomad-cluster\""
 vault_config_file=/etc/vault.d/vault.hcl
 # todo - create this?
-VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
+vault_profile_script=/etc/profile.d/vault.sh
 
 DO_OVERRIDE_CONFIG=${DO_OVERRIDE_CONFIG:-false}
 IS_SERVER=${IS_SERVER:-true}
