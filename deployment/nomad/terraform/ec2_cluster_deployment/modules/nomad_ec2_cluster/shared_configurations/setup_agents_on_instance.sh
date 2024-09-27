@@ -55,15 +55,14 @@ fi
 cd $work_dir
 
 # make scripts executable
-sudo chmod +x $work_dir/shared_configurations/*.sh
-sudo find $work_dir/shared_configurations/{vault,nomad,consul,scripts} -type f -name "*.sh" -exec chmod +x {} \;
+sudo find $work_dir -type f -name "*.sh" -exec chmod +x {} \;
 
 # Install and configure Consul if required
-if [ ${install_consul} == true ]; then
+if [ "${install_consul}" = true ]; then
 
   echo "Installing Consul"
 
-  cd $work_dir/shared_configurations/
+  cd $work_dir
 
   sudo ./scripts/create_user.sh $consul_user $consul_group $consul_home $consul_comment
 
@@ -78,7 +77,7 @@ if [ ${install_consul} == true ]; then
 fi
 
 # Execute 'setup_vault.sh' script
-if [ ${install_vault} == true ]; then
+if [ "${install_vault}" = true ]; then
 
   echo "Installing Vault"
 
@@ -86,7 +85,7 @@ if [ ${install_vault} == true ]; then
   #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/install-vault-systemd.sh.tpl
   #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/quick-start-vault-systemd.sh.tpl
 
-  cd $work_dir/shared_configurations/
+  cd $work_dir
 
   sudo ./scripts/create_user.sh $vault_user $vault_group $vault_home $vault_comment
 
@@ -108,7 +107,7 @@ fi
 
 # Execute 'setup_nomad.sh' script
 
-if [ ${install_nomad} == true ]; then
+if [ "${install_nomad}" = true ]; then
 
   # todo - should likely be running nomad as a non-root user in future iterations
   #sudo ./scripts/create_user.sh $nomad_user $nomad_group $nomad_home $nomad_comment
