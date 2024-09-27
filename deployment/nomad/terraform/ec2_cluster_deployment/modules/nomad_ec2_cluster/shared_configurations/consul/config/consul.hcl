@@ -7,7 +7,7 @@ datacenter = "${datacenter}"
 
 # server settings
 server = true
-bootstrap_expect = ${server_count}
+bootstrap_expect = "${server_count}"
 ui_config {
   enabled = true
 }

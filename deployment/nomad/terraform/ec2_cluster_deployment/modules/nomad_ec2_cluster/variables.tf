@@ -17,8 +17,8 @@ variable "nomad_instance_type" {
 variable "install_consul" {
   default = true
 }
-variable "install_danswer" {
-  default = "true"
+variable "install_nomad" {
+  default = true
 }
 variable "install_vault" {
   default = true

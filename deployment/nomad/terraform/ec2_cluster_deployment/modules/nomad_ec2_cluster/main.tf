@@ -252,28 +252,59 @@ resource "aws_instance" "nomad_instance" {
     private_ip      = "10.0.1.${count.index + 10}"
     server_ip       = "10.0.1.10"
     install_consul  = var.install_consul
-    install_danswer = var.install_danswer
+    install_nomad = var.install_nomad
     install_vault   = var.install_vault
     run_user_data_script = true
     vault_override  = true
     consul_override = true
+    nomad_override  = true
+    is_server       = count.index == 0 ? true : false # update this with more appropriate logic
     name            = "danswer-vault"
-    consul_config   = templatefile("${path.module}/shared_configurations/consul/config/consul.hcl.tpl", {
+    nomad_server_config   = templatefile("${path.module}/shared_configurations/nomad/config/nomad.hcl", {
+      ip_address   = "10.0.1.${count.index + 10}"
+      server_count = 3
+      vault_ip_address     = "10.0.1.10"
+      token_for_nomad = ""
+      task_token_ttl  = "1h"
+      consul_ip_address = "10.0.1.10"
+    })
+    nomad_client_config = templatefile("${path.module}/shared_configurations/nomad/config/nomad_client.hcl", {
+      ip_address = "10.0.1.${count.index + 10}"
+      vault_ip_address  = ""
+      node_pool  = "danswer"
+      consul_ip_address = "10.0.1.10"
+    })
+    nomad_server_and_client_config = templatefile("${path.module}/shared_configurations/nomad/config/nomad_server_and_client.hcl", {
+      ip_address   = "10.0.1.${count.index + 10}"
+      server_count = 3
+      vault_ip_address     = "10.0.1.10"
+      token_for_nomad = ""
+      task_token_ttl  = "1h"
+      node_pool  = "danswer"
+      consul_ip_address = "10.0.1.10"
+      server_ips = jsonencode(["10.0.1.10", "10.0.1.11", "10.0.1.12"])
+    })
+    consul_config   = templatefile("${path.module}/shared_configurations/consul/config/consul.hcl", {
       private_ip      = "10.0.1.${count.index + 10}"
       server_ips      = jsonencode(["10.0.1.10", "10.0.1.11", "10.0.1.12"])
+      datacenter      = "ats-1"
+      server_count    = 3
     })
-    vault_server_config    = templatefile("${path.module}/shared_configurations/vault/config/vault_server.hcl.tpl", {
+    vault_server_config    = templatefile("${path.module}/shared_configurations/vault/config/vault_server.hcl", {
       leader_ip       = "10.0.1.10"
       private_ip      = "10.0.1.${count.index + 10}"
+      consul_ip_address = "10.0.1.10"
+      tls_disable     = true
     })
-    vault_client_config    = templatefile("${path.module}/shared_configurations/vault/config/vault_client.hcl.tpl", {
+    vault_client_config    = templatefile("${path.module}/shared_configurations/vault/config/vault_client.hcl", {
       leader_ip       = "10.0.1.10"
+      tls_disable     = true
     })
   })
   user_data_replace_on_change = true
 
   tags = {
-    Name = "NomadInstance-${count.index == 0 ? "Server" : ""}-${count.index}",
+    Name    = count.index == 0 ? "NomadInstance-Server-${count.index}" : "NomadInstance-${count.index}"
     Project = "Danswer"
   }
 

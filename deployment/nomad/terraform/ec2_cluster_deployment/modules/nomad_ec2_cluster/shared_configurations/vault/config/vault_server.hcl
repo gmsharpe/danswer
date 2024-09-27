@@ -10,7 +10,7 @@ storage "raft" {
 # https://www.vaultproject.io/docs/configuration/storage/consul.html
 backend "consul" {
   scheme  = "http"
-  address = "127.0.0.1:8500"
+  address = "${consul_ip_address}:8500"
   path    = "vault/"
   service = "vault"
 }
@@ -18,7 +18,7 @@ backend "consul" {
 listener "tcp" {
   address         = "0.0.0.0:8200"
   cluster_address = "0.0.0.0:8201"
-  tls_disable     = "true"  # Consider enabling TLS
+  tls_disable     = "${tls_disable}"  # Consider enabling TLS
 }
 
 api_addr     = "http://${private_ip}:8200"
