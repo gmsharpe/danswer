@@ -10,23 +10,21 @@ sudo chmod -R 755 $work_dir
 sudo yum install -y git
 
 echo "Preparing to install Danswer"
-sudo mkdir -p /opt/danswer && \
-  sudo chown -R nobody:nobody /opt/danswer && \
-  sudo chmod -R 755 /opt/danswer
+sudo mkdir -p $work_dir/repo && \
+  sudo chown -R nobody:nobody work_dir && \
+  sudo chmod -R 755 $work_dir
 
 sudo yum install -y git && \
   cd /opt/danswer && \
   #sudo git clone https://github.com/gmsharpe/danswer.git .
-  sudo git clone -b gms/infrastructure https://github.com/gmsharpe/danswer.git .
+  sudo git clone -b gms/infrastructure https://github.com/gmsharpe/danswer.git repo
 
 # Copy setup scripts
-sudo cp -r $work_dir/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/scripts /opt/danswer
-sudo cp -r $work_dir/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/shared_configurations $work_dir
+sudo cp -r $work_dir/repo/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/scripts/* /opt/danswer/
+sudo cp -r $work_dir/repo/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/shared_configurations/* /opt/danswer
 
 # make scripts executable
-sudo chmod +x $work_dir/scripts/*.sh
-sudo find $work_dir/shared_configurations/{vault,nomad,consul,scripts} -type f -name "*.sh" -exec chmod +x {} \;
-
+sudo find $work_dir -type f -name "*.sh" -exec chmod +x {} \; #/{vault,nomad,consul,scripts}
 
 # read in config files
 
@@ -72,6 +70,7 @@ nomad_client_config_override_dir="$work_dir/tmp/nomad_client.hcl"
 
 # everything below should be moved to 'setup_agents_on_instance.sh' script
 sudo WORK_DIR=$work_dir \
+  install_consul=true install_nomad=true install_vault=true \
   consul_config_override_dir=$consul_config_override_dir \
   vault_server_config_override_dir=$vault_server_config_override_dir \
   vault_client_config_override_dir=$vault_client_config_override_dir \
