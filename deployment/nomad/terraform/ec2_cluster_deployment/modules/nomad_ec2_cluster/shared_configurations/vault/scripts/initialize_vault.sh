@@ -1,10 +1,36 @@
 #!/bin/bash
 
-IS_SERVER=${IS_SERVER:-true}
+# Parse the named arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -vault_id)
+      vault_id="$2"
+      shift 2
+      ;;
+    -is_server)
+      is_server="$2"
+      shift 2
+      ;;
+    *)
+      echo "Invalid argument: $1"
+      usage
+      ;;
+  esac
+done
+
+is_server=${is_server:-true}
 VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
 
+
+# Get the current date in 'MM-DD-YYYY' format
+current_date=$(date +'%m-%d-%Y')
+default_vault_id="vault-${current_date}"
+
+# Check if vault_id is provided as an argument, otherwise default
+vault_id="${1:-$default_vault_id}"
+
 # unseal vault if not in dev mode
-if [ "$IS_SERVER" == "true" ]; then
+if [ "$is_server" == "true" ]; then
   # if there is more than one 'server', this configuration would need to be adjusted to account for that by
   #    1st checking if the server is the designated leader (or first configured server) and then unsealing
   #    2nd checking if the server is a follower and then joining the leader (or first configured server) and then unsealing
@@ -52,4 +78,16 @@ PROFILE
   sudo -u vault VAULT_ADDR=$VAULT_ADDR VAULT_TOKEN=$VAULT_TOKEN vault secrets enable -path=secret kv-v2
 
   echo "Vault is initialized and unsealed on the leader node."
+
+  # Call store_vault_keys.sh to store the root token and unseal key in SSM Parameter Store
+  echo "Storing Vault keys in SSM Parameter Store"
+
+  # Construct unseal keys JSON object (if multiple unseal keys exist, modify accordingly)
+  unseal_keys_json=$(jq -n --arg unseal_key_1 "$unseal_key" '{unseal_key_1: $unseal_key_1}')
+
+  # Call store_vault_keys.sh with appropriate arguments, using the default vault_id if not provided
+  ./vault/scripts/store_vault_keys.sh -location 'ssm' \
+                                      -root_key "$root_token" \
+                                      -unseal_keys "$unseal_keys_json" \
+                                      -vault_id "$vault_id"
 fi

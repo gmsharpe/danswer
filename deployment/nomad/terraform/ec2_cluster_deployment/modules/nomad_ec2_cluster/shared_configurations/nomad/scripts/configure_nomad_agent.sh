@@ -4,15 +4,15 @@ nomad_override_config_temp_file=$1
 nomad_override_config=$(cat "$nomad_override_config_temp_file")
 
 # Set the default values for the Nomad configuration
-IP_ADDRESS=${IP_ADDRESS:-"10.0.1.10"}
-SERVER_COUNT=${SERVER_COUNT:-"1"}
-VAULT_IP=${VAULT_IP:-"10.0.1.10"}
-TOKEN_FOR_NOMAD=${TOKEN_FOR_NOMAD:-}
-CONSUL_IP_ADDRESS=${CONSUL_IP_ADDRESS:-}
-TASK_TOKEN_TTL=${TASK_TOKEN_TTL:-"1h"}
+ip_address=${IP_ADDRESS:-"10.0.1.10"}
+server_count=${SERVER_COUNT:-"1"}
+vault_ip=${VAULT_IP:-"10.0.1.10"}
+token_for_nomad=${TOKEN_FOR_NOMAD:-}
+consul_ip_address=${CONSUL_IP_ADDRESS:-}
+task_token_ttl=${TASK_TOKEN_TTL:-"1h"}
 
-NODE_POOL=${NODE_POOL:-"default"}
-SERVER_IPS=${SERVER_IPS:-'["10.0.1.10"]'}
+node_pool=${NODE_POOL:-"default"}
+server_ips=${SERVER_IPS:-'["10.0.1.10"]'}
 
 
 nomad_config_default=""

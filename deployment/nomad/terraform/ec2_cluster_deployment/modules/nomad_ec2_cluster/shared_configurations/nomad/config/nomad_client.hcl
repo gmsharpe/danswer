@@ -38,10 +38,10 @@ consul {
   address = "${consul_ip_address}:8500"
 }
 
-vault {
-  enabled = true
-  address = "${vault_ip_address}"
-}
+# vault {
+#   enabled = true
+#   address = "${vault_ip_address}"
+# }
 
 telemetry {
   publish_allocation_metrics = true

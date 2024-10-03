@@ -4,6 +4,33 @@ sudo yum update -y
 sudo yum install -y yum-utils shadow-utils
 sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
 
+# Parse the named arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -instance_ip)
+      instance_ip="$2"
+      shift 2
+      ;;
+    -is_server)
+      is_server="$2"
+      shift 2
+      ;;
+    -is_client)
+      is_client="$2"
+      shift 2
+      ;;
+    -server_ip)
+      server_ip="$2"
+      shift 2
+      ;;
+    *)
+      echo "Invalid argument: $1"
+      usage
+      ;;
+  esac
+done
+
+
 echo "Preparing to install Nomad, Vault & Consul agents (server and/or client) on instance"
 
 # Consul variables
@@ -22,6 +49,7 @@ vault_group="vault"
 vault_user="vault"
 vault_comment="Vault"
 vault_home="/opt/vault"
+vault_id=${VAULT_ID:-}
 
 # Nomad variables
 nomad_host_port=${NOMAD_HOST_PORT:-4646}
@@ -32,12 +60,12 @@ nomad_user="root"
 
 cluster_name=${CLUSTER_NAME:-"nomad-cluster"}
 work_dir=${WORK_DIR:-~/tmp/nomad}
-is_server=${IS_SERVER:-false}
-and_client=${AND_CLIENT:-false} # is BOTH server and client
+is_server=${is_server:-false}
+is_client=${is_client:-false} # is BOTH server and client
 
 nomad_plugins=("docker", "raw_exec", "java")
 
-is_server=${IS_SERVER:-false}
+is_server=${is_server:-false}
 
 # todo - replace with more appropriate logic for determining node pool
 if [ ${is_server} == true ]; then
@@ -96,13 +124,13 @@ if [ "${install_vault}" = true ]; then
 
   # Pass the file paths as arguments to the script
   sudo DO_OVERRIDE_CONFIG=${vault_override} is_server=$is_server cluster_name=$cluster_name \
-    ./vault/scripts/configure_vault_agent.sh /tmp/vault_server_config.hcl /tmp/vault_client_config.hcl
+    ./vault/scripts/configure_vault_agent.sh $vault_server_config_file_source_dir $vault_client_config_file_source_dir
 
   # Install Vault as a systemd service and start it
   sudo ./vault/scripts/install_vault_systemd.sh
 
   # Install Vault as a systemd service and start it
-  sudo is_server=$is_server ./vault/scripts/initialize_vault.sh
+  sudo is_server=$is_server ./vault/scripts/initialize_vault.sh -vault_id $vault_id
 fi
 
 # Execute 'setup_nomad.sh' script
@@ -117,7 +145,7 @@ if [ "${install_nomad}" = true ]; then
   sudo ./nomad/scripts/configure_plugins.sh "${nomad_plugins[@]}"
 
   # Determine the configuration file based on server and client roles
-  if [ "${is_server}" = true ] && [ "${and_client}" = true ]; then
+  if [ "${is_server}" = true ] && [ "${is_client}" = true ]; then
     # Server and client
     nomad_config_file_source_dir=${nomad_server_and_client_config_override_dir:-$work_dir/nomad/config/nomad_server_and_client.hcl}
   elif [ "${is_server}" = true ]; then
@@ -135,6 +163,8 @@ if [ "${install_nomad}" = true ]; then
   fi
 
   sudo DO_OVERRIDE_CONFIG=${nomad_override} NODE_POOL=$node_pool ./nomad/scripts/configure_nomad_agent.sh $nomad_config_file_source_dir
+
+  sudo ./nomad/scripts/add_vault_config.sh -vault_token $vault_token -vault_server_ip $server_ip
 
   sudo ./nomad/scripts/install_nomad_systemd.sh
 

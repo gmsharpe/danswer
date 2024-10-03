@@ -5,12 +5,17 @@
 # This file is used to configure the Nomad server. It is used by the Nomad server to connect to the Consul server and Vault server.
 # The server block is used to enable the server and set the number of servers to expect.
 # The following variables need to be set via replacement (e.g. sed) before starting the Nomad server:
+#
 # - ip_address
 # - server_count
-# - vault_ip
-# - token_for_nomad
+#
+### If using Consul
 # - consul_ip_address
+#
+### If using Vault
+# - token_for_nomad
 # - task_token_ttl
+# - vault_ip_address
 
 data_dir = "/opt/nomad/data"
 bind_addr = "${ip_address}"
@@ -31,13 +36,13 @@ consul {
   address = "${consul_ip_address}:8500"
 }
 
-vault {
-  enabled = true
-  address = "${vault_ip_address}:8200"
-  task_token_ttl = "${task_token_ttl}" # e.g. "1h"
-  create_from_role = "nomad-cluster"
-  token = "${token_for_nomad}"
-}
+# vault {
+#   enabled = true
+#   address = "${vault_ip_address}:8200"
+#   task_token_ttl = "${task_token_ttl}" # e.g. "1h"
+#   create_from_role = "nomad-cluster"
+#   token = "${token_for_nomad}"
+# }
 
 telemetry {
   publish_allocation_metrics = true

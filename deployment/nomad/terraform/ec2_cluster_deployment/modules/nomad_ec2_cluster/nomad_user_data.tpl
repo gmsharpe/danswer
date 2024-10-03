@@ -29,9 +29,11 @@ sudo find $work_dir -type f -name "*.sh" -exec chmod +x {} \; #/{vault,nomad,con
 # read in config files
 
 echo "Consul agent config" # todo - distinguish between server and clients?
-cat <<EOF | sudo tee $work_dir/tmp/consul_config.hcl > /dev/null
+cat <<EOF | sudo tee $work_dir/tmp/consul.hcl > /dev/null
 ${consul_config}
 EOF
+
+consul_config_override_dir="$work_dir/tmp/consul.hcl"
 
 echo "Vault agent 'server' config"
 cat <<EOF | sudo tee /tmp/vault_server.hcl > /dev/null
@@ -77,7 +79,7 @@ sudo WORK_DIR=$work_dir \
   nomad_server_config_override_dir=$nomad_server_config_override_dir \
   nomad_server_and_client_config_override_dir=$nomad_server_and_client_config_override_dir \
   nomad_client_config_override_dir=$nomad_client_config_override_dir \
-  ./setup_agents_on_instance.sh
+  ./setup_agents_on_instance.sh -instance_ip $ip_address -server_ip $server_ip -is_server $is_server
 
 # Execute 'setup_nomad.sh' script
 #sudo VAULT_TOKEN=$VAULT_TOKEN $work_dir/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $is_server

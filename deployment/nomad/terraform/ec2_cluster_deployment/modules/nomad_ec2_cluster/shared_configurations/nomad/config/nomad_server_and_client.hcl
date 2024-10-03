@@ -30,13 +30,13 @@ consul {
   address = "${consul_ip_address}:8500"
 }
 
-vault {
-  enabled = true
-  address = "${vault_ip_address}:8200"
-  task_token_ttl = "${task_token_ttl}" # e.g. "1h"
-  create_from_role = "nomad-cluster"
-  token = "${token_for_nomad}"
-}
+# vault {
+#   enabled = true
+#   address = "${vault_ip_address}:8200"
+#   task_token_ttl = "${task_token_ttl}" # e.g. "1h"
+#   create_from_role = "nomad-cluster"
+#   token = "${token_for_nomad}"
+# }
 
 telemetry {
   publish_allocation_metrics = true
