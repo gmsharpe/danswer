@@ -9,15 +9,20 @@ sudo chmod -R 755 $work_dir
 
 sudo yum install -y git
 
-echo "Preparing to install Danswer"
-sudo mkdir -p $work_dir/repo && \
-  sudo chown -R nobody:nobody work_dir && \
-  sudo chmod -R 755 $work_dir
+# get ec2 instance private ip address
+ip_address=${ip_address:-$(curl http://169.254.169.254/latest/meta-data/local-ipv4)}
+server_ip=${server_ip:-$ip_address}
+is_server=${is_server:-true}
 
-sudo yum install -y git && \
-  cd /opt/danswer && \
-  #sudo git clone https://github.com/gmsharpe/danswer.git .
-  sudo git clone -b gms/infrastructure https://github.com/gmsharpe/danswer.git repo
+echo "Preparing to install Danswer"
+sudo mkdir -p $work_dir/repo
+sudo chown -R nobody:nobody $work_dir/repo &&
+sudo chmod -R 755 $work_dir/repo
+
+sudo yum install -y git
+cd /opt/danswer
+#sudo git clone https://github.com/gmsharpe/danswer.git .
+sudo git clone -b gms/infrastructure https://github.com/gmsharpe/danswer.git repo
 
 # Copy setup scripts
 sudo cp -r $work_dir/repo/deployment/nomad/terraform/ec2_cluster_deployment/modules/nomad_ec2_cluster/scripts/* /opt/danswer/
