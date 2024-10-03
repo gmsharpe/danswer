@@ -3,9 +3,9 @@
 work_dir="/opt/danswer"
 
 echo "Preparing to install Nomad, Vault & Consul agents (server and/or client) on instance"
-sudo mkdir -p $work_dir
-sudo chown -R nobody:nobody $work_dir
-sudo chmod -R 755 $work_dir
+sudo mkdir -p $work_dir/{tmp,repo}
+sudo chown -R nobody:nobody $work_dir/{tmp,repo}
+sudo chmod -R 755 $work_dir/{tmp,repo}
 
 sudo yum install -y git
 
@@ -13,11 +13,6 @@ sudo yum install -y git
 ip_address=${ip_address:-$(curl http://169.254.169.254/latest/meta-data/local-ipv4)}
 server_ip=${server_ip:-$ip_address}
 is_server=${is_server:-true}
-
-echo "Preparing to install Danswer"
-sudo mkdir -p $work_dir/repo
-sudo chown -R nobody:nobody $work_dir/repo &&
-sudo chmod -R 755 $work_dir/repo
 
 sudo yum install -y git
 cd /opt/danswer
