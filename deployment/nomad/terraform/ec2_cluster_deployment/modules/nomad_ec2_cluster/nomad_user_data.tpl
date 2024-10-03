@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# NOTE: server_ip, ip_address, is_client & is_server are all passed in as user_data variables within the Terraform module
+
 work_dir="/opt/danswer"
 
 echo "Preparing to install Nomad, Vault & Consul agents (server and/or client) on instance"
@@ -9,14 +11,6 @@ sudo chmod -R 755 $work_dir/{tmp,repo}
 
 sudo yum install -y git
 
-# get ec2 instance private ip address
-ip_address=${ip_address:-$(curl http://169.254.169.254/latest/meta-data/local-ipv4)}
-server_ip=${server_ip:-$ip_address}
-# todo - should consider using separate flags for nomad, consul & vault
-is_server=${is_server:-true}
-is_client=${is_client:-true}
-
-sudo yum install -y git
 cd /opt/danswer
 #sudo git clone https://github.com/gmsharpe/danswer.git .
 sudo git clone -b gms/infrastructure https://github.com/gmsharpe/danswer.git repo
