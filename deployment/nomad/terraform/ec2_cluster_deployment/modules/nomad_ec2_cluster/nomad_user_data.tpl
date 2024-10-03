@@ -12,7 +12,9 @@ sudo yum install -y git
 # get ec2 instance private ip address
 ip_address=${ip_address:-$(curl http://169.254.169.254/latest/meta-data/local-ipv4)}
 server_ip=${server_ip:-$ip_address}
+# todo - should consider using separate flags for nomad, consul & vault
 is_server=${is_server:-true}
+is_client=${is_client:-true}
 
 sudo yum install -y git
 cd /opt/danswer
@@ -79,7 +81,7 @@ sudo WORK_DIR=$work_dir \
   nomad_server_config_override_dir=$nomad_server_config_override_dir \
   nomad_server_and_client_config_override_dir=$nomad_server_and_client_config_override_dir \
   nomad_client_config_override_dir=$nomad_client_config_override_dir \
-  ./setup_agents_on_instance.sh -instance_ip $ip_address -server_ip $server_ip -is_server $is_server
+  ./setup_agents_on_instance.sh -instance_ip $ip_address -server_ip $server_ip -is_server $is_server -is_client $is_client
 
 # Execute 'setup_nomad.sh' script
 #sudo VAULT_TOKEN=$VAULT_TOKEN $work_dir/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $is_server
