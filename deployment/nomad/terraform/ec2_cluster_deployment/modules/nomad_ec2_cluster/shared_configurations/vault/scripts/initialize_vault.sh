@@ -5,6 +5,23 @@ echo "#############################################"
 echo "### Initialize and unseal Vault on leader ###"
 echo "#############################################"
 
+# Usage function to display help
+usage() {
+  echo "Usage: $0 [options]"
+  echo
+  echo "Options:"
+  echo "  -vault_id              Specify the vault ID."
+  echo "  -is_server             Specify if this is a server (true/false)."
+  echo "  -num_key_shares        Number of key shares."
+  echo "  -num_key_threshold     Number of key shares required to unseal."
+  echo "  -save_keys_externally  Specify if keys should be saved externally (true/false)."
+  echo
+  echo "Example:"
+  echo "  $0 -vault_id 1234 -is_server true -num_key_shares 5 -num_key_threshold 3 -save_keys_externally false"
+  echo
+  exit 1
+}
+
 # Parse the named arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
