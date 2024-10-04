@@ -3,7 +3,10 @@
 # Based in part on https://github.com/hashicorp/guides-configuration/blob/master/nomad/scripts/install-nomad.sh
 
 echo "Running install_nomad.sh"
-echo -e "\n# =====================================\n#        Installing Nomad\n# ====================================="
+echo "# ====================================="
+echo "#        Installing Nomad"
+echo "# ====================================="
+
 
 USER="${USER:-root}"
 GROUP="${GROUP:-root}"
@@ -22,7 +25,6 @@ nomad_profile_script=/etc/profile.d/nomad.sh
 
 echo "Downloading Nomad ${nomad_version} from ${nomad_url}"
 [ 200 -ne $(curl --write-out %{http_code} --silent --output /tmp/${nomad_zip} ${nomad_url}) ] && exit 1
-
 
 sudo unzip -o /tmp/${nomad_zip} -d ${nomad_dir}
 sudo chmod 0755 ${nomad_path}

@@ -3,8 +3,9 @@
 # Based on - https://github.com/hashicorp/guides-configuration/blob/master/consul/scripts/install-consul.sh
 
 echo "Running install_consul.sh"
-echo -e "\n# =====================================\n#        Installing Consul\n# ====================================="
-
+echo "# ====================================="
+echo "#        Installing Consul"
+echo "# ====================================="
 
 consul_version=${VERSION:-"1.19.2"}
 consul_zip=consul_${consul_version}_linux_amd64.zip
