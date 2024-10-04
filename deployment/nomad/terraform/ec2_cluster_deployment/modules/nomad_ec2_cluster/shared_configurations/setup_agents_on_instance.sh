@@ -99,10 +99,10 @@ cd $work_dir
 # make scripts executable
 sudo find $work_dir -type f -name "*.sh" -exec chmod +x {} \;
 
-# Install and configure Consul if required
+# =====================================
+#        Installing Consul
+# =====================================
 if [ "${install_consul}" = true ]; then
-
-  echo "Installing Consul"
 
   cd $work_dir
 
@@ -118,10 +118,10 @@ if [ "${install_consul}" = true ]; then
 
 fi
 
-# Execute 'setup_vault.sh' script
+# =====================================
+#        Installing Vault
+# =====================================
 if [ "${install_vault}" = true ]; then
-
-  echo "Installing Vault"
 
   # Steps loosely modeled after
   #   https://github.com/hashicorp/vault-guides/blob/master/operations/provision-vault/templates/install-vault-systemd.sh.tpl
@@ -147,8 +147,9 @@ if [ "${install_vault}" = true ]; then
   sudo is_server=$is_server ./vault/scripts/initialize_vault.sh -vault_id $vault_id
 fi
 
-# Execute 'setup_nomad.sh' script
-
+# =====================================
+#        Installing Nomad
+# =====================================
 if [ "${install_nomad}" = true ]; then
 
   # todo - should likely be running nomad as a non-root user in future iterations

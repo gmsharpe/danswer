@@ -59,7 +59,3 @@ CONFIG
   echo "If Vault config is overridden, don't start Vault in -dev mode"
   echo '' | sudo tee /etc/vault.d/vault.conf
 fi
-
-# todo check if necessary here or if it should be conditionally set  based on environment
-echo "Granting mlock syscall to vault binary"
-sudo setcap cap_ipc_lock=+ep ${vault_path}

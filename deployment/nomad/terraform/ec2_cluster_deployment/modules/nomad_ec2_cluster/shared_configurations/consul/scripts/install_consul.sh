@@ -49,7 +49,6 @@ sudo tee /etc/sudoers.d/consul > /dev/null <<SUDOERS
 consul ALL=(ALL) NOPASSWD: /usr/bin/echo, /usr/bin/tee, /usr/bin/cat, /usr/bin/sed, /usr/bin/systemctl
 SUDOERS
 
-
 echo "Installing dnsmasq"
 sudo yum install -q -y dnsmasq
 
@@ -64,5 +63,3 @@ DNSMASQ
 echo "Enable and restart dnsmasq"
 sudo systemctl enable dnsmasq
 sudo systemctl restart dnsmasq
-
-echo "Complete"

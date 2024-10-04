@@ -5,7 +5,6 @@ echo "# ====================================="
 echo "#        Installing Vault"
 echo "# ====================================="
 
-
 vault_version=${VERSION:-"1.17.5"}
 vault_zip=vault_${vault_version}_linux_amd64.zip
 vault_url=${URL:-https://releases.hashicorp.com/vault/${vault_version}/${vault_zip}}
@@ -31,3 +30,7 @@ sudo mkdir -pm 0755 ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}
 sudo chown -R ${USER}:${GROUP} ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}
 sudo chmod -R 0644 ${vault_config_dir}/*
 
+echo "Granting mlock syscall to vault binary"
+# todo check if necessary here or if it should be conditionally set  based on environment
+
+sudo setcap cap_ipc_lock=+ep ${vault_path}
