@@ -30,6 +30,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+consul_override=${consul_override:-false}
+vault_override=${vault_override:-false}
+nomad_override=${nomad_override:-false}
+
 
 echo "Preparing to install Nomad, Vault & Consul agents (server and/or client) on instance"
 

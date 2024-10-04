@@ -22,7 +22,7 @@ sudo cp -r $work_dir/repo/deployment/nomad/terraform/ec2_cluster_deployment/modu
 # make scripts executable
 sudo find $work_dir -type f -name "*.sh" -exec chmod +x {} \; #/{vault,nomad,consul,scripts}
 
-# read in config files
+# write the configuration for Consul, Vault & Nomad (provided as variables in the Terraform module)
 
 echo "Consul agent config" # todo - distinguish between server and clients?
 cat <<EOF | sudo tee $work_dir/tmp/consul.hcl > /dev/null
@@ -69,6 +69,7 @@ nomad_client_config_override_dir="$work_dir/tmp/nomad_client.hcl"
 # everything below should be moved to 'setup_agents_on_instance.sh' script
 sudo WORK_DIR=$work_dir \
   install_consul=true install_nomad=true install_vault=true \
+  nomad_override=true consul_override=true vault_override=true \
   consul_config_override_dir=$consul_config_override_dir \
   vault_server_config_override_dir=$vault_server_config_override_dir \
   vault_client_config_override_dir=$vault_client_config_override_dir \
