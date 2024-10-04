@@ -3,6 +3,8 @@
 # Based on - https://github.com/hashicorp/guides-configuration/blob/master/consul/scripts/install-consul.sh
 
 echo "Running install_consul.sh"
+echo -e "\n# =====================================\n#        Installing Consul\n# ====================================="
+
 
 consul_version=${VERSION:-"1.19.2"}
 consul_zip=consul_${consul_version}_linux_amd64.zip
@@ -15,10 +17,9 @@ consul_data_dir=/opt/consul/data
 consul_tls_dir=/opt/consul/tls
 consul_profile_script=/etc/profile.d/consul.sh
 
-echo "Downloading Consul ${consul_version}"
+echo "Downloading Consul ${consul_version} from ${consul_url}"
 [ 200 -ne $(curl --write-out %{http_code} --silent --output /tmp/${consul_zip} ${consul_url}) ] && exit 1
 
-echo "Installing Consul"
 sudo unzip -o /tmp/${consul_zip} -d ${consul_dir}
 sudo chmod 0755 ${consul_path}
 sudo chown ${USER}:${GROUP} ${consul_path}
