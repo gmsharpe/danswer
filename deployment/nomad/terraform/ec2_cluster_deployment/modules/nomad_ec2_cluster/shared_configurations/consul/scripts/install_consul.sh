@@ -26,25 +26,23 @@ sudo chmod 0755 ${consul_path}
 sudo chown ${USER}:${GROUP} ${consul_path}
 echo "$(${consul_path} --version)"
 
-echo "Configuring Consul ${consul_version}"
 sudo mkdir -pm 0755 ${consul_config_dir} ${consul_data_dir} ${consul_tls_dir}
 
-echo "Update directory permissions"
 sudo chown -R ${USER}:${GROUP} ${consul_config_dir} ${consul_data_dir} ${consul_tls_dir}
 # updated since the original script was not working as expected
 sudo find ${consul_config_dir} -type f -exec chmod 0644 {} \;
 
 # Set Consul profile script
 # todo - this should be set based on environment and likely in 'configure_consul_agent.sh'
-echo "Setting Consul profile script"
 sudo tee ${consul_profile_script} > /dev/null <<PROFILE
 export CONSUL_HTTP_ADDR=http://127.0.0.1:8500
 PROFILE
 
 echo "Give consul user shell access for remote exec"
+# todo - check on necessity of this
 sudo /usr/sbin/usermod --shell /bin/bash ${USER} >/dev/null
 
-echo "Allow consul sudo access for echo, tee, cat, sed, and systemctl"
+# "Allow consul sudo access for echo, tee, cat, sed, and systemctl"
 sudo tee /etc/sudoers.d/consul > /dev/null <<SUDOERS
 consul ALL=(ALL) NOPASSWD: /usr/bin/echo, /usr/bin/tee, /usr/bin/cat, /usr/bin/sed, /usr/bin/systemctl
 SUDOERS

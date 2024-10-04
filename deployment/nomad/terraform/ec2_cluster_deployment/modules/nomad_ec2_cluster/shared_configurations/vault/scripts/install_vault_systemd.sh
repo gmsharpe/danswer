@@ -20,5 +20,3 @@ sudo systemctl start consul
 
 sudo systemctl enable vault
 sudo systemctl start vault
-
-echo "Completed install of Vault"
