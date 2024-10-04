@@ -36,6 +36,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 is_server=${is_server:-true}
+echo "is_server = $is_server"
 VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
 
 # Get the current date in 'MM-DD-YYYY' format
@@ -48,7 +49,7 @@ num_key_shares=${num_key_shares:-1}
 num_key_threshold=${num_key_threshold:-1}
 save_keys_externally=${save_keys_externally:-false}
 
-# unseal vault if not in dev mode
+# todo - should adjust to identify a 'leader' rather than use 'server' as the default
 if [ "$is_server" = true ]; then
   # if there is more than one 'server', this configuration would need to be adjusted to account for that by
   #    1st checking if the server is the designated leader (or first configured server) and then unsealing
@@ -114,4 +115,7 @@ PROFILE
                                         -vault_id "$vault_id"
   fi
 
+else
+  echo "Vault is not initialized and unsealed on the follower nodes.  By default the leader is the 'server' in this configuration."
 fi
+
