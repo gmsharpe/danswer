@@ -32,14 +32,14 @@ EOF
 consul_config_override_dir="$work_dir/tmp/consul.hcl"
 
 echo "Vault agent 'server' config"
-cat <<EOF | sudo tee /tmp/vault_server.hcl > /dev/null
+cat <<EOF | sudo tee $work_dir//tmp/vault_server.hcl > /dev/null
 ${vault_server_config}
 EOF
 
 vault_server_config_override_dir="$work_dir/tmp/vault_server.hcl"
 
 echo "Vault agent 'client' config"
-cat <<EOF | sudo tee /tmp/vault_client.hcl > /dev/null
+cat <<EOF | sudo tee $work_dir//tmp/vault_client.hcl > /dev/null
 ${vault_client_config}
 EOF
 

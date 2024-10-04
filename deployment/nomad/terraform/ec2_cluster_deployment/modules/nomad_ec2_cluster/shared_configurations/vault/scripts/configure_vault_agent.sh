@@ -19,9 +19,12 @@ DO_OVERRIDE_CONFIG=${DO_OVERRIDE_CONFIG:-false}
 IS_SERVER=${IS_SERVER:-true}
 CLUSTER_NAME=${CLUSTER_NAME:-"nomad-cluster"}
 
+echo "DO_OVERRIDE_CONFIG is set to ${DO_OVERRIDE_CONFIG}"
+echo "IS_SERVER is set to ${IS_SERVER}"
+echo "CLUSTER_NAME is set to ${CLUSTER_NAME}"
 
-if [ ${DO_OVERRIDE_CONFIG} == true ]; then
-  if [ ${IS_SERVER} == true ]; then
+if [ "${DO_OVERRIDE_CONFIG}" = true ]; then
+  if [ "${IS_SERVER}" = true ]; then
     echo "Use custom Vault agent 'server' config"
     vault_config=${vault_server_config}
   else
@@ -33,7 +36,7 @@ else
   vault_config=${default_vault_config}
 fi
 
-if [ ${DO_OVERRIDE_CONFIG} == true ]; then
+if [ "${DO_OVERRIDE_CONFIG}" = true ]; then
 
   echo "Add custom Vault server override config"
   cat <<CONFIG | sudo tee $vault_config_file > /dev/null
