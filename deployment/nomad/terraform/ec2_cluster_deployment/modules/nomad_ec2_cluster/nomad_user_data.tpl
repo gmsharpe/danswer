@@ -24,42 +24,42 @@ sudo find $work_dir -type f -name "*.sh" -exec chmod +x {} \; #/{vault,nomad,con
 
 # write the configuration for Consul, Vault & Nomad (provided as variables in the Terraform module)
 
-echo "Consul agent config" # todo - distinguish between server and clients?
+# "Consul agent config" # todo - distinguish between server and clients?
 cat <<EOF | sudo tee $work_dir/tmp/consul.hcl > /dev/null
 ${consul_config}
 EOF
 
 consul_config_override_dir="$work_dir/tmp/consul.hcl"
 
-echo "Vault agent 'server' config"
+# "Vault agent 'server' config"
 cat <<EOF | sudo tee $work_dir//tmp/vault_server.hcl > /dev/null
 ${vault_server_config}
 EOF
 
 vault_server_config_override_dir="$work_dir/tmp/vault_server.hcl"
 
-echo "Vault agent 'client' config"
+# "Vault agent 'client' config"
 cat <<EOF | sudo tee $work_dir//tmp/vault_client.hcl > /dev/null
 ${vault_client_config}
 EOF
 
 vault_client_config_override_dir="$work_dir/tmp/vault_client.hcl"
 
-echo "Nomad agent 'server' config"
+# "Nomad agent 'server' config"
 cat <<EOF | sudo tee $work_dir/tmp/nomad_server.hcl > /dev/null
 ${nomad_server_config}
 EOF
 
 nomad_server_config_override_dir="$work_dir/tmp/nomad_server.hcl"
 
-echo "Nomad agent 'server' and 'client' config"
+# "Nomad agent 'server' and 'client' config"
 cat <<EOF | sudo tee $work_dir/tmp/nomad_server_and_client.hcl > /dev/null
 ${nomad_server_and_client_config}
 EOF
 
 nomad_server_and_client_config_override_dir="$work_dir/tmp/nomad_server_and_client.hcl"
 
-echo "Use custom Nomad agent 'client' config"
+# "Use custom Nomad agent 'client' config"
 cat <<EOF | sudo tee $work_dir/tmp/nomad_client.hcl > /dev/null
 ${nomad_client_config}
 EOF

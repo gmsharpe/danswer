@@ -16,6 +16,9 @@ vault_tls_dir=/opt/vault/tls
 vault_env_vars=${vault_config_dir}/vault.conf
 vault_profile_script=/etc/profile.d/vault.sh
 
+
+sudo mkdir -pm 0755 ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}
+
 echo "Downloading Vault ${vault_version} from ${vault_url}"
 [ 200 -ne $(curl --write-out %{http_code} --silent --output /tmp/${vault_zip} ${vault_url}) ] && exit 1
 
@@ -23,8 +26,6 @@ sudo unzip -o /tmp/${vault_zip} -d ${vault_dir}
 sudo chmod 0755 ${vault_path}
 sudo chown ${USER}:${GROUP} ${vault_path}
 echo "$(${vault_path} --version)"
-
-sudo mkdir -pm 0755 ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}
 
 # Update directory permissions
 sudo chown -R ${USER}:${GROUP} ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}

@@ -102,6 +102,7 @@ sudo find $work_dir -type f -name "*.sh" -exec chmod +x {} \;
 # =====================================
 #        Installing Consul
 # =====================================
+
 if [ "${install_consul}" = true ]; then
 
   cd $work_dir
@@ -121,6 +122,7 @@ fi
 # =====================================
 #        Installing Vault
 # =====================================
+
 if [ "${install_vault}" = true ]; then
 
   # Steps loosely modeled after
@@ -150,6 +152,7 @@ fi
 # =====================================
 #        Installing Nomad
 # =====================================
+
 if [ "${install_nomad}" = true ]; then
 
   # todo - should likely be running nomad as a non-root user in future iterations
