@@ -23,17 +23,24 @@ while [[ $# -gt 0 ]]; do
       server_ip="$2"
       shift 2
       ;;
+    -consul_override)
+      server_ip="$2"
+      shift 2
+      ;;
+    -vault_override)
+      server_ip="$2"
+      shift 2
+      ;;
+    -nomad_override)
+      server_ip="$2"
+      shift 2
+      ;;
     *)
       echo "Invalid argument: $1"
       usage
       ;;
   esac
 done
-
-consul_override=${consul_override:-false}
-vault_override=${vault_override:-false}
-nomad_override=${nomad_override:-false}
-
 
 echo "Preparing to install Nomad, Vault & Consul agents (server and/or client) on instance"
 
@@ -44,6 +51,7 @@ consul_group="consul"
 consul_user="consul"
 consul_comment="Consul"
 consul_home="/opt/consul"
+consul_override=${consul_override:-false}
 
 # Vault variables
 vault_host_port=${VAULT_HOST_PORT:-8200} # todo - not used at the moment. use it.
@@ -54,6 +62,7 @@ vault_user="vault"
 vault_comment="Vault"
 vault_home="/opt/vault"
 vault_id=${VAULT_ID:-}
+vault_override=${vault_override:-false}
 
 # Nomad variables
 nomad_host_port=${NOMAD_HOST_PORT:-4646}
@@ -61,6 +70,7 @@ nomad_version=${NOMAD_VERSION:-"1.8.4"}
 # todo - should this be changed to something like 'nomad' in production?
 nomad_group="root"
 nomad_user="root"
+nomad_override=${nomad_override:-false}
 
 cluster_name=${CLUSTER_NAME:-"nomad-cluster"}
 work_dir=${WORK_DIR:-~/tmp/nomad}

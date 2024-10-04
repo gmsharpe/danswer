@@ -68,8 +68,8 @@ nomad_client_config_override_dir="$work_dir/tmp/nomad_client.hcl"
 
 # everything below should be moved to 'setup_agents_on_instance.sh' script
 sudo WORK_DIR=$work_dir \
-  install_consul=true install_nomad=true install_vault=true \
-  nomad_override=true consul_override=true vault_override=true \
+  install_consul=true install_vault=true install_nomad=true  \
+  consul_override=${consul_override} vault_override=${vault_override} nomad_override=${nomad_override} \
   consul_config_override_dir=$consul_config_override_dir \
   vault_server_config_override_dir=$vault_server_config_override_dir \
   vault_client_config_override_dir=$vault_client_config_override_dir \
