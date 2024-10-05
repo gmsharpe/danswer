@@ -146,7 +146,7 @@ if [ "${install_vault}" = true ]; then
   # Install Vault as a systemd service and start it
   sudo ./vault/scripts/initialize_vault.sh \
                           -vault_id $vault_id \
-                          -save_keys_externally "true" \
+                          -save_keys_externally true \
                           -num_key_shares 1 \
                           -num_key_threshold 1 \
                           -is_server $is_server

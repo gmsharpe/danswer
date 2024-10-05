@@ -67,6 +67,11 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo "is_server = $is_server"
+echo "vault_id = $vault_id"
+echo "num_key_shares = $num_key_shares"
+echo "num_key_threshold = $num_key_threshold"
+echo "save_keys_externally = $save_keys_externally"
+
 
 # todo - should adjust to identify a 'leader' rather than use 'server' as the default
 if [ "$is_server" = true ]; then
