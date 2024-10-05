@@ -19,13 +19,21 @@ while [[ $# -gt 0 ]]; do
 done
 
 vault_server_ip=${vault_server_ip:-"10.0.1.10"}
-vault_token=${vault_token:-$(grep 'Initial Root Token' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')}
+vault_token=${vault_token:-}
 vault_policy_name=${vault_policy_name:-"nomad-cluster"}
 # Set the Vault role name if not already set
 vault_role_name=${vault_role_name:-"nomad-cluster"}
 vault_id=${vault_id:-"nomad-cluster"}
 task_token_ttl=${task_token_ttl:-"1h"}
 $vault_policy_template=${$vault_policy_template:-"default_vault_policy_template.hcl"}
+
+if [ -z "$vault_token" ]; then
+  vault_token = $(grep 'Initial Root Token' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')
+  if [ -z "$vault_token" ]; then
+    echo "Error: Vault token not provided and not found in /opt/vault/data/vault-init-output.txt."
+    exit 1
+  fi
+fi
 
 export VAULT_ADDR="http://$vault_server_ip:8200"
 export VAULT_TOKEN=$vault_token
