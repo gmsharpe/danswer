@@ -188,7 +188,11 @@ if [ "${install_nomad}" = true ]; then
 
   sudo DO_OVERRIDE_CONFIG=${nomad_override} NODE_POOL=$node_pool ./nomad/scripts/configure_nomad_agent.sh $nomad_config_file_source_dir
 
-  sudo ./nomad/scripts/add_vault_config.sh -vault_token $vault_token -vault_server_ip $server_ip
+  # get Vault Token from ssm parameter store
+  vault_token=$(aws ssm get-parameter --name /${vault_id}/root-key --with-decryption --query Parameter.Value --output text)
+  echo "Vault Token: $vault_token" # todo - comment this out or remove later!
+
+  sudo ./nomad/scripts/add_vault_config.sh -vault_token $vault_token -vault_server_ip ${server_ip}
 
   sudo ./nomad/scripts/install_nomad_systemd.sh
 

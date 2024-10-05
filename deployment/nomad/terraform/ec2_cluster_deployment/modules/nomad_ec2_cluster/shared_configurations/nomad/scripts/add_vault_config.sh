@@ -31,7 +31,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 vault_server_ip=${vault_server_ip:-"10.0.1.10"}
-vault_token=${vault_token:-}
 vault_policy_name=${vault_policy_name:-"nomad-cluster"}
 # Set the Vault role name if not already set
 vault_role_name=${vault_role_name:-"nomad-cluster"}
