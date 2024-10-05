@@ -1,5 +1,17 @@
 #!/bin/bash
 
+usage() {
+    echo "Usage: $0 [options]"
+    echo
+    echo "Options:"
+    echo "  -vault_token        Vault token for authentication (required)"
+    echo "  -vault_server_ip    IP address of the Vault server (required)"
+    echo
+    echo "Example:"
+    echo "  $0 -vault_token your-vault-token -vault_server_ip 192.168.1.10"
+    exit 1
+}
+
 # Parse the named arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in

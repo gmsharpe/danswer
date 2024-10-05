@@ -76,7 +76,7 @@ sudo WORK_DIR=$work_dir \
   nomad_server_config_override_dir=$nomad_server_config_override_dir \
   nomad_server_and_client_config_override_dir=$nomad_server_and_client_config_override_dir \
   nomad_client_config_override_dir=$nomad_client_config_override_dir \
-  ./setup_agents_on_instance.sh -instance_ip $ip_address -server_ip $server_ip -is_server $is_server -is_client $is_client
+  ./setup_agents_on_instance.sh -instance_ip ${ip_address} -server_ip ${server_ip} -is_server ${is_server} -is_client ${is_client}
 
 # Execute 'setup_nomad.sh' script
 #sudo VAULT_TOKEN=$VAULT_TOKEN $work_dir/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $is_server

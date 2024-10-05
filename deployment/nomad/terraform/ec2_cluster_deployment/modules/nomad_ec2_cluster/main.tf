@@ -249,7 +249,7 @@ resource "aws_instance" "nomad_instance" {
 
   user_data = templatefile("${path.module}/nomad_user_data.tpl", {
     count           = count.index
-    private_ip      = "10.0.1.${count.index + 10}"
+    ip_address      = "10.0.1.${count.index + 10}"
     server_ip       = "10.0.1.10"
     install_consul  = var.install_consul
     install_nomad = var.install_nomad
