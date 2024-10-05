@@ -10,7 +10,7 @@ else
 fi
 
 for plugin in "${plugins[@]}"; do
-    case "$plugins" in
+    case "$plugin" in
         "java")
             echo "Installing and configuring Java plugin!"
             ;;
@@ -21,7 +21,7 @@ for plugin in "${plugins[@]}"; do
             echo "Configuring 'raw_exec' plugin!"
             ;;
         *)
-            echo "Unknown item!"
+            echo "Unknown item! ($plugin) Skipping..."
             ;;
     esac
 done

@@ -26,12 +26,12 @@ nomad_profile_script=/etc/profile.d/nomad.sh
 echo "Downloading Nomad ${nomad_version} from ${nomad_url}"
 [ 200 -ne $(curl --write-out %{http_code} --silent --output /tmp/${nomad_zip} ${nomad_url}) ] && exit 1
 
+sudo mkdir -pm 0755 ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
+
 sudo unzip -o /tmp/${nomad_zip} -d ${nomad_dir}
 sudo chmod 0755 ${nomad_path}
 sudo chown ${USER}:${GROUP} ${nomad_path}
 echo "$(${nomad_path} --version)"
 
-sudo mkdir -pm 0755 ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
-
 sudo chown -R ${USER}:${GROUP} ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
-sudo chmod -R 0644 ${nomad_config_dir}/*
+sudo chmod -R 0644 ${nomad_config_dir}
