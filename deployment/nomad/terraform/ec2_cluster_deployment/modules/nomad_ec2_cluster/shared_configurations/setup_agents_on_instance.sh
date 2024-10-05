@@ -61,7 +61,7 @@ vault_group="vault"
 vault_user="vault"
 vault_comment="Vault"
 vault_home="/opt/vault"
-vault_id=${VAULT_ID:-}
+vault_id=${VAULT_ID:-"nomad-cluster-$(date +'%m-%d-%Y')"}
 vault_override=${vault_override:-false}
 
 # Nomad variables
@@ -77,7 +77,7 @@ work_dir=${WORK_DIR:-~/tmp/nomad}
 is_server=${is_server:-false}
 is_client=${is_client:-false} # is BOTH server and client
 
-nomad_plugins=("docker", "raw_exec", "java")
+nomad_plugins=("docker" "raw_exec" "java")
 
 is_server=${is_server:-false}
 
@@ -148,7 +148,7 @@ if [ "${install_vault}" = true ]; then
   # Install Vault as a systemd service and start it
   sudo ./vault/scripts/initialize_vault.sh \
                           -vault_id $vault_id \
-                          -save_keys_externally true \
+                          -save_keys_externally "true" \
                           -num_key_shares 1 \
                           -num_key_threshold 1 \
                           -is_server $is_server
@@ -160,6 +160,8 @@ fi
 echo "install_nomad is set to ${install_nomad}"
 
 if [ "${install_nomad}" = true ]; then
+
+  cd $work_dir
 
   # todo - should likely be running nomad as a non-root user in future iterations
   #sudo ./scripts/create_user.sh $nomad_user $nomad_group $nomad_home $nomad_comment
