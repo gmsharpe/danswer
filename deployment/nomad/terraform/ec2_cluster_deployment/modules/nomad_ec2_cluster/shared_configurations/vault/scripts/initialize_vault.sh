@@ -22,6 +22,20 @@ usage() {
   exit 1
 }
 
+is_server=${is_server:-true}
+VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
+
+# Get the current date in 'MM-DD-YYYY' format
+current_date=$(date +'%m-%d-%Y')
+default_vault_id="vault-${current_date}"
+
+# Check if vault_id is provided as an argument, otherwise default
+vault_id="${1:-$default_vault_id}"
+num_key_shares=${num_key_shares:-1}
+num_key_threshold=${num_key_threshold:-1}
+save_keys_externally=${save_keys_externally:-false}
+
+
 # Parse the named arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -52,19 +66,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-is_server=${is_server:-true}
 echo "is_server = $is_server"
-VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
-
-# Get the current date in 'MM-DD-YYYY' format
-current_date=$(date +'%m-%d-%Y')
-default_vault_id="vault-${current_date}"
-
-# Check if vault_id is provided as an argument, otherwise default
-vault_id="${1:-$default_vault_id}"
-num_key_shares=${num_key_shares:-1}
-num_key_threshold=${num_key_threshold:-1}
-save_keys_externally=${save_keys_externally:-false}
 
 # todo - should adjust to identify a 'leader' rather than use 'server' as the default
 if [ "$is_server" = true ]; then

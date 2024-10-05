@@ -79,8 +79,6 @@ is_client=${is_client:-false} # is BOTH server and client
 
 nomad_plugins=("docker" "raw_exec" "java")
 
-is_server=${is_server:-false}
-
 # todo - replace with more appropriate logic for determining node pool
 if [ ${is_server} == true ]; then
   node_pool="primary"
