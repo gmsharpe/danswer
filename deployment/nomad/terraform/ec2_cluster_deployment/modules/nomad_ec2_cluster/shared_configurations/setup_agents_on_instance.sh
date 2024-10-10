@@ -24,15 +24,15 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     -consul_override)
-      server_ip="$2"
+      consul_override="$2"
       shift 2
       ;;
     -vault_override)
-      server_ip="$2"
+      vault_override="$2"
       shift 2
       ;;
     -nomad_override)
-      server_ip="$2"
+      nomad_override="$2"
       shift 2
       ;;
     *)
