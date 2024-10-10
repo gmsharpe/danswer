@@ -40,6 +40,10 @@ if [ ${DO_OVERRIDE_CONFIG} == true ]; then
 ${nomad_config}
 CONFIG
 
+  sudo tee ${nomad_env_vars} > /dev/null <<ENVVARS
+NOMAD_ADDR=http://127.0.0.1:4646
+ENVVARS
+
   fi
 else
   echo "nomad_override_config is not set. Starting Nomad in -dev mode."
