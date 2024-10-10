@@ -101,6 +101,7 @@ nomad_config_default=""
 nomad_config_file="/etc/nomad.d/nomad.hcl"
 nomad_config_dir="/etc/nomad.d"
 nomad_env_vars=$nomad_config_dir/nomad.conf
+nomad_profile_script=/etc/profile.d/nomad.sh
 
 NOMAD_OVERRIDE_ENABLED=${NOMAD_OVERRIDE_ENABLED:-false}
 

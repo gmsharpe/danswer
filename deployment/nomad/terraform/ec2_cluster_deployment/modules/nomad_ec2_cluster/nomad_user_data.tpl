@@ -70,12 +70,12 @@ nomad_client_config_override_dir="$work_dir/tmp/nomad_client.hcl"
 sudo WORK_DIR=$work_dir \
   install_consul=true install_vault=true install_nomad=true  \
   consul_override=${consul_override} vault_override=${vault_override} nomad_override=${nomad_override} \
-  consul_config_override_dir=$consul_config_override_dir \
-  vault_server_config_override_dir=$vault_server_config_override_dir \
-  vault_client_config_override_dir=$vault_client_config_override_dir \
-  nomad_server_config_override_dir=$nomad_server_config_override_dir \
-  nomad_server_and_client_config_override_dir=$nomad_server_and_client_config_override_dir \
-  nomad_client_config_override_dir=$nomad_client_config_override_dir \
+  consul_config_override_file=$consul_config_override_dir \
+  vault_server_config_file=$vault_server_config_override_dir \
+  vault_client_config_file=$vault_client_config_override_dir \
+  nomad_server_and_config_file=$nomad_server_config_override_dir \
+  nomad_server_and_client_config_file=$nomad_server_and_client_config_override_dir \
+  nomad_client_config_file=$nomad_client_config_override_dir \
   ./setup_agents_on_instance.sh -instance_ip ${ip_address} -server_ip ${server_ip} -is_server ${is_server} -is_client ${is_client}
 
 # Execute 'setup_nomad.sh' script

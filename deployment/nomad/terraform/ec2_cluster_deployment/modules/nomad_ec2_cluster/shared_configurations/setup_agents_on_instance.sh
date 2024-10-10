@@ -94,6 +94,7 @@ nomad_group="root"
 nomad_user="root"
 nomad_override=${nomad_override:-false}
 
+
 cluster_name=${CLUSTER_NAME:-"nomad-cluster"}
 work_dir=${WORK_DIR:-~/tmp/nomad}
 is_server=${is_server:-false}
@@ -131,7 +132,7 @@ if [ "${install_consul}" = true ]; then
 
   sudo VERSION=$consul_version USER=$consul_user GROUP=$consul_group ./consul/scripts/install_consul.sh
 
-  consul_config_file=${consul_config_override_dir:-$work_dir/consul/config/consul.hcl}
+  consul_config_file=${consul_config_override_file:-$work_dir/consul/config/consul.hcl}
 
   sudo CONSUL_OVERRIDE_ENABLED=${consul_override} ./consul/scripts/configure_consul_agent.sh $consul_config_file
 
@@ -155,8 +156,8 @@ if [ "${install_vault}" = true ]; then
 
   sudo VERSION=$vault_version URL=$vault_ent_url USER=$vault_user GROUP=$vault_group ./vault/scripts/install_vault.sh
 
-  vault_server_config_file=${vault_server_config_override_dir:-$work_dir/vault/config/vault_server.hcl}
-  vault_client_config_file=${vault_client_config_override_dir:-$work_dir/vault/config/vault_client.hcl}
+  vault_server_config_file=${vault_server_config_file:-$work_dir/vault/config/vault_server.hcl}
+  vault_client_config_file=${vault_client_config_file:-$work_dir/vault/config/vault_client.hcl}
 
   # Pass the file paths as arguments to the script
   sudo DO_OVERRIDE_CONFIG=${vault_override} is_server=$is_server cluster_name=$cluster_name \
