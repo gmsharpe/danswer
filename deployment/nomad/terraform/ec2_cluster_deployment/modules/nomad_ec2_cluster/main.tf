@@ -259,7 +259,7 @@ resource "aws_instance" "nomad_instance" {
     consul_override = true
     nomad_override  = true
     is_server       = count.index == 0 ? true : false # update this with more appropriate logic
-    is_client       = count.index == 0 ? false : true # update this with more appropriate logic
+    is_client       = true # update this with more appropriate logic
     name            = "danswer-vault"
     nomad_server_config   = templatefile("${path.module}/shared_configurations/nomad/config/nomad.hcl", {
       ip_address   = "10.0.1.${count.index + 10}"
