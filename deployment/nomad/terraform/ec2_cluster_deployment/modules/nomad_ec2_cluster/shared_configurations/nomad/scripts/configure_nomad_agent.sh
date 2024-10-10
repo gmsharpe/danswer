@@ -140,6 +140,6 @@ fi
 
   # todo - using https in production
   echo "Set Nomad profile script"
-  sudo tee ${NOMAD_PROFILE_SCRIPT} > /dev/null <<PROFILE
+  sudo tee ${nomad_profile_script} > /dev/null <<PROFILE
 export NOMAD_ADDR=http://127.0.0.1:4646
 PROFILE
