@@ -109,10 +109,9 @@ if [ "${install_consul}" = true ]; then
 
   sudo VERSION=$consul_version USER=$consul_user GROUP=$consul_group ./consul/scripts/install_consul.sh
 
-  consul_config_file_source_dir=${consul_config_override_dir:-$work_dir/consul/config/consul.hcl}
-  echo "consul_config_file_source_dir: $consul_config_file_source_dir"
+  consul_config_file=${consul_config_override_dir:-$work_dir/consul/config/consul.hcl}
 
-  sudo CONSUL_OVERRIDE_ENABLED=${consul_override} ./consul/scripts/configure_consul_agent.sh $consul_config_file_source_dir
+  sudo CONSUL_OVERRIDE_ENABLED=${consul_override} ./consul/scripts/configure_consul_agent.sh $consul_config_file
 
   sudo ./consul/scripts/install_consul_systemd.sh
 
@@ -134,12 +133,12 @@ if [ "${install_vault}" = true ]; then
 
   sudo VERSION=$vault_version URL=$vault_ent_url USER=$vault_user GROUP=$vault_group ./vault/scripts/install_vault.sh
 
-  vault_server_config_file_source_dir=${vault_server_config_override_dir:-$work_dir/vault/config/vault_server.hcl}
-  vault_client_config_file_source_dir=${vault_client_config_override_dir:-$work_dir/vault/config/vault_client.hcl}
+  vault_server_config_file=${vault_server_config_override_dir:-$work_dir/vault/config/vault_server.hcl}
+  vault_client_config_file=${vault_client_config_override_dir:-$work_dir/vault/config/vault_client.hcl}
 
   # Pass the file paths as arguments to the script
   sudo DO_OVERRIDE_CONFIG=${vault_override} is_server=$is_server cluster_name=$cluster_name \
-    ./vault/scripts/configure_vault_agent.sh $vault_server_config_file_source_dir $vault_client_config_file_source_dir
+    ./vault/scripts/configure_vault_agent.sh $vault_server_config_file $vault_client_config_file
 
   # Install Vault as a systemd service and start it
   sudo ./vault/scripts/install_vault_systemd.sh
@@ -172,24 +171,24 @@ if [ "${install_nomad}" = true ]; then
   # Determine the configuration file based on server and client roles
   if [ "${is_server}" = true ] && [ "${is_client}" = true ]; then
     # Server and client
-    nomad_config_file_source_dir=${nomad_server_and_client_config_override_dir:-$work_dir/nomad/config/nomad_server_and_client.hcl}
+    nomad_config_file=${nomad_server_and_client_config_file:-$work_dir/nomad/config/nomad_server_and_client.hcl}
   elif [ "${is_server}" = true ]; then
     # Server only
-    nomad_config_file_source_dir=${nomad_server_config_override_dir:-$work_dir/nomad/config/nomad_server.hcl}
+    nomad_config_file=${nomad_server_config_file:-$work_dir/nomad/config/nomad_server.hcl}
   else
     # Client only
-    nomad_config_file_source_dir=${nomad_client_config_override_dir:-$work_dir/nomad/config/nomad_client.hcl}
+    nomad_config_file=${nomad_client_config_file:-$work_dir/nomad/config/nomad_client.hcl}
   fi
 
   # Verify if the config file exists
-  if [ ! -f "$nomad_config_file_source_dir" ]; then
-    echo "Error: Configuration file $nomad_config_file_source_dir does not exist."
+  if [ ! -f "$nomad_config_file" ]; then
+    echo "Error: Configuration file $nomad_config_file does not exist."
     exit 1
   fi
 
   sudo NOMAD_OVERRIDE_ENABLED=${nomad_override} NODE_POOL=$node_pool
     ./nomad/scripts/configure_nomad_agent.sh \
-    -config_override_file $nomad_config_file_source_dir \
+    -config_override_file $nomad_config_file \
     -instance_ip $instance_ip \
     -is_server $is_server \
     -is_client $is_client \
