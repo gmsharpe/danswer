@@ -20,10 +20,10 @@ nomad_config_file="/etc/nomad.d/nomad.hcl"
 nomad_config_dir="/etc/nomad.d"
 nomad_env_vars=$nomad_config_dir/nomad.conf
 
-DO_OVERRIDE_CONFIG=${DO_OVERRIDE_CONFIG:-false}
+NOMAD_OVERRIDE_ENABLED=${NOMAD_OVERRIDE_ENABLED:-false}
 
 # If override is true, use the custom config if set; otherwise, use the default config file
-if [ ${DO_OVERRIDE_CONFIG} == true ]; then
+if [ ${NOMAD_OVERRIDE_ENABLED} == true ]; then
   echo "Use custom nomad agent config (nomad_override_config)"
   nomad_config=${nomad_override_config}
 else
@@ -31,9 +31,9 @@ else
   nomad_config=${nomad_config_default}
 fi
 
-if [ ${DO_OVERRIDE_CONFIG} == true ]; then
+if [ ${NOMAD_OVERRIDE_ENABLED} == true ]; then
   if [ ${#nomad_config} -eq 0 ]; then
-    echo "Error: DO_OVERRIDE_CONFIG is set to true, but no nomad_config is provided. Exiting."
+    echo "Error: NOMAD_OVERRIDE_ENABLED is set to true, but no nomad_config is provided. Exiting."
     exit 1
   else
     cat <<CONFIG | sudo tee $nomad_config_file
