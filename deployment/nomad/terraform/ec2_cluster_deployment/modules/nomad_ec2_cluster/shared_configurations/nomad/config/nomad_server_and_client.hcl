@@ -21,7 +21,7 @@ ui {
 # enable the server
 server {
   enabled = true
-  bootstrap_expect = "${server_count}"
+  bootstrap_expect = ${server_count}
 }
 
 name = "nomad@${ip_address}"
