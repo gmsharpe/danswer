@@ -29,7 +29,7 @@ echo "$(${vault_path} --version)"
 
 # Update directory permissions
 sudo chown -R ${USER}:${GROUP} ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}
-sudo chmod -R 0644 ${vault_config_dir}/*
+sudo chmod -R 0644 ${vault_config_dir}
 
 echo "Granting mlock syscall to vault binary"
 # todo check if necessary here or if it should be conditionally set  based on environment

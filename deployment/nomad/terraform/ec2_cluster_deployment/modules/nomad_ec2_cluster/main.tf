@@ -261,7 +261,7 @@ resource "aws_instance" "nomad_instance" {
     is_server       = count.index == 0 ? true : false # update this with more appropriate logic
     is_client       = true # update this with more appropriate logic
     name            = "danswer-vault"
-    nomad_server_config   = templatefile("${path.module}/shared_configurations/nomad/config/nomad.hcl", {
+    nomad_server_config   = templatefile("${path.module}/shared_configurations/nomad/config/nomad_server.hcl", {
       ip_address   = "10.0.1.${count.index + 10}"
       server_count = 3
       vault_ip_address     = "10.0.1.10"
