@@ -110,6 +110,7 @@ if [ "${install_consul}" = true ]; then
   sudo VERSION=$consul_version USER=$consul_user GROUP=$consul_group ./consul/scripts/install_consul.sh
 
   consul_config_file_source_dir=${consul_config_override_dir:-$work_dir/consul/config/consul.hcl}
+  echo "consul_config_file_source_dir: $consul_config_file_source_dir"
 
   sudo DO_OVERRIDE_CONFIG=${consul_override} ./consul/scripts/configure_consul_agent.sh $consul_config_file_source_dir
 

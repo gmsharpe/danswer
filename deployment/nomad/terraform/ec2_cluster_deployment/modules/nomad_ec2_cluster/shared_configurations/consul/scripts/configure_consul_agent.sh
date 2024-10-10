@@ -17,7 +17,7 @@ echo "DO_OVERRIDE_CONFIG is set to ${DO_OVERRIDE_CONFIG}"
 
 # If override is true, use the custom config if set; otherwise, use the default config file
 if [ "${DO_OVERRIDE_CONFIG}" = true ]; then
-  echo "Use custom Consul agent config (consul_override_config)"
+  echo "Use custom Consul agent config (consul_override_config): \n ${consul_override_config} \n"
   consul_config=${consul_override_config}
 else
   echo "Use default Consul agent config"
