@@ -64,10 +64,10 @@ done
 
 
 # Check if NOMAD_OVERRIDE_ENABLED is true
-if [[ "$NOMAD_OVERRIDE_ENABLED" == true ]]; then
+if [ "$NOMAD_OVERRIDE_ENABLED" = true ]; then
 
   # Read the nomad_override_config file if it exists
-  if [ -f "$nomad_override_config_file" ]; then
+  if [ -f "$config_override_file" ]; then
     nomad_override_config=$(cat "$config_override_file")
     echo "Nomad override configuration loaded from $config_override_file"
   else
