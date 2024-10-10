@@ -1,5 +1,27 @@
 #!/bin/bash
 
+# This script automates the installation and configuration of Nomad, Vault, and Consul agents
+# on an Amazon Linux instance. It handles both server and client configurations based on user
+# inputs. Key features include:
+#
+# - Updating the system and installing necessary packages.
+# - Parsing command-line arguments for instance IP, server/client roles, and override flags.
+# - Setting up user, group, and home directories for Nomad, Vault, and Consul.
+# - Installing and configuring Consul, Vault, and Nomad using versioned scripts.
+# - Handling role-based configurations (server/client) for each tool.
+# - Optionally overriding default configuration files based on user-provided overrides.
+# - Initializing Vault, generating Vault tokens, and integrating Vault with Nomad.
+#
+# Arguments include:
+# - -instance_ip: IP address of the instance.
+# - -is_server: Boolean flag to designate this instance as a server.
+# - -is_client: Boolean flag to designate this instance as a client.
+# - -server_ip: IP address of the Nomad server (used for clients).
+# - -consul_override, -vault_override, -nomad_override: Flags to override default configurations.
+#
+# The script also manages temporary working directories, ensures scripts are executable,
+# and verifies the existence of configuration files before applying them.
+
 sudo yum update -y
 sudo yum install -y yum-utils shadow-utils
 sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
