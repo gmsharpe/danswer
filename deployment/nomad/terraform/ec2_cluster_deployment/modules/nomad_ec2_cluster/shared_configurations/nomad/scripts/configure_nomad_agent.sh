@@ -1,4 +1,29 @@
 #!/bin/bash
+
+# This script is designed to configure and start a Nomad agent, with support for optional override configurations.
+# The script accepts several command-line arguments, including instance IPs and configuration files, and
+# checks whether an override is enabled using the NOMAD_OVERRIDE_ENABLED environment variable. If true, it reads
+# a custom configuration file and applies it. Otherwise, it defaults to the standard configuration.
+#
+# The script ensures required parameters are provided and supports both client and server modes for the Nomad agent.
+# It also generates necessary environment variables for the Nomad agent and writes them to a profile script.
+#
+# Usage:
+# ./script.sh -config_override_file <config_override_file_path> -instance_ip <IP> -is_server <true|false>
+#             -is_client <true|false> -server_ip <IP>
+#
+# Example:
+# ./script.sh -config_override_file /etc/nomad.d/override.hcl -instance_ip 10.0.1.100 -is_server true
+#             -is_client false -server_ip 10.0.1.101
+#
+# Arguments:
+#   -config_override_file: Path to the custom configuration file to override Nomad's default settings.
+#   -instance_ip: The IP address of the instance where Nomad is running.
+#   -is_server: Flag to determine if the node is running as a server (true) or not (false).
+#   -is_client: Flag to determine if the node is running as a client (true) or not (false).
+#   -server_ip: The IP address of the server to connect to when running in client mode.
+
+
 set -euo pipefail
 
 # Function to display usage
@@ -6,7 +31,6 @@ usage() {
   echo "Usage: $0 -config_override_file <config_override_file_path> -instance_ip <IP> -is_server <true|false> -is_client <true|false> -server_ip <IP>"
   exit 1
 }
-
 
 # Parse the remaining named arguments
 while [[ $# -gt 0 ]]; do
