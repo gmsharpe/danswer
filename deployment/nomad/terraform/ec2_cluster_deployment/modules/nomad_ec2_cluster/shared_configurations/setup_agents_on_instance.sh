@@ -186,7 +186,7 @@ if [ "${install_nomad}" = true ]; then
     exit 1
   fi
 
-  sudo NOMAD_OVERRIDE_ENABLED=${nomad_override} NODE_POOL=$node_pool
+  sudo NOMAD_OVERRIDE_ENABLED=${nomad_override} NODE_POOL=$node_pool \
     ./nomad/scripts/configure_nomad_agent.sh \
     -config_override_file $nomad_config_file \
     -instance_ip ${instance_ip} \
