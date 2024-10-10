@@ -1,7 +1,65 @@
 #!/bin/bash
+set -euo pipefail
 
-nomad_override_config_temp_file=$1
-nomad_override_config=$(cat "$nomad_override_config_temp_file")
+# Function to display usage
+usage() {
+  echo "Usage: $0 -config_override_file <config_override_file_path> -instance_ip <IP> -is_server <true|false> -is_client <true|false> -server_ip <IP>"
+  exit 1
+}
+
+
+# Parse the remaining named arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -config_override_file)
+      config_override_file="$2"
+      shift 2
+      ;;
+    -instance_ip)
+      instance_ip="$2"
+      shift 2
+      ;;
+    -is_server)
+      is_server="$2"
+      shift 2
+      ;;
+    -is_client)
+      is_client="$2"
+      shift 2
+      ;;
+    -server_ip)
+      server_ip="$2"
+      shift 2
+      ;;
+    *)
+      echo "Invalid argument: $1"
+      usage
+      ;;
+  esac
+done
+
+
+# Check if NOMAD_OVERRIDE_ENABLED is true
+if [[ "$NOMAD_OVERRIDE_ENABLED" == true ]]; then
+
+  # Read the nomad_override_config file if it exists
+  if [ -f "$nomad_override_config_file" ]; then
+    nomad_override_config=$(cat "$config_override_file")
+    echo "Nomad override configuration loaded from $config_override_file"
+  else
+    echo "Error: NOMAD_OVERRIDE_ENABLED is true, but $config_override_file does not exist."
+    exit 1
+  fi
+else
+  echo "NOMAD_OVERRIDE_ENABLED is false, skipping override configuration."
+fi
+
+
+# Check for required arguments
+if [[ -z "$instance_ip" || -z "$server_ip" ]]; then
+  echo "Error: instance_ip and server_ip are required."
+  usage
+fi
 
 # Set the default values for the Nomad configuration
 ip_address=${IP_ADDRESS:-"10.0.1.10"}

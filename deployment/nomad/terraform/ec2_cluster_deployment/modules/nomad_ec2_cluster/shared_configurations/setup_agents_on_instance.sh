@@ -112,7 +112,7 @@ if [ "${install_consul}" = true ]; then
   consul_config_file_source_dir=${consul_config_override_dir:-$work_dir/consul/config/consul.hcl}
   echo "consul_config_file_source_dir: $consul_config_file_source_dir"
 
-  sudo DO_OVERRIDE_CONFIG=${consul_override} ./consul/scripts/configure_consul_agent.sh $consul_config_file_source_dir
+  sudo CONSUL_OVERRIDE_ENABLED=${consul_override} ./consul/scripts/configure_consul_agent.sh $consul_config_file_source_dir
 
   sudo ./consul/scripts/install_consul_systemd.sh
 
@@ -187,7 +187,12 @@ if [ "${install_nomad}" = true ]; then
     exit 1
   fi
 
-  sudo DO_OVERRIDE_CONFIG=${nomad_override} NODE_POOL=$node_pool ./nomad/scripts/configure_nomad_agent.sh $nomad_config_file_source_dir
+  sudo NOMAD_OVERRIDE_ENABLED=${nomad_override} NODE_POOL=$node_pool
+    ./nomad/scripts/configure_nomad_agent.sh $nomad_config_file_source_dir \
+    -instance_ip $instance_ip \
+    -is_server $is_server \
+    -is_client $is_client \
+    -server_ip $server_ip
 
   # get Vault Token from ssm parameter store
   vault_token=$(aws ssm get-parameter --name /${vault_id}/root-key --with-decryption --query Parameter.Value --output text)
