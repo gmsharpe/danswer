@@ -191,8 +191,7 @@ if [ "${install_nomad}" = true ]; then
     -config_override_file $nomad_config_file \
     -instance_ip ${instance_ip} \
     -is_server ${is_server} \
-    -is_client ${is_cl
-    ient} \
+    -is_client ${is_client} \
     -server_ip ${server_ip} # todo - should be passed as an array
 
   # get Vault Token from ssm parameter store
