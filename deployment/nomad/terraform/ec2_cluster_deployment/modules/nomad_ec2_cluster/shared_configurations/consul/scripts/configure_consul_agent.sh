@@ -24,7 +24,7 @@ else
   consul_config=${consul_config_default}
 fi
 
-if ["${DO_OVERRIDE_CONFIG}" = true ]; then
+if [ "${DO_OVERRIDE_CONFIG}" = true ]; then
   if [ ${#consul_config} -eq 0 ]; then
     echo "Error: DO_OVERRIDE_CONFIG is set to true, but no consul_config is provided. Exiting."
     exit 1
