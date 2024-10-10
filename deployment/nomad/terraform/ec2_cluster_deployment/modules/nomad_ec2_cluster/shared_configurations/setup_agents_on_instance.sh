@@ -188,11 +188,12 @@ if [ "${install_nomad}" = true ]; then
   fi
 
   sudo NOMAD_OVERRIDE_ENABLED=${nomad_override} NODE_POOL=$node_pool
-    ./nomad/scripts/configure_nomad_agent.sh $nomad_config_file_source_dir \
+    ./nomad/scripts/configure_nomad_agent.sh \
+    -config_override_file $nomad_config_file_source_dir \
     -instance_ip $instance_ip \
     -is_server $is_server \
     -is_client $is_client \
-    -server_ip $server_ip
+    -server_ip $server_ip # todo - should be passed as an array
 
   # get Vault Token from ssm parameter store
   vault_token=$(aws ssm get-parameter --name /${vault_id}/root-key --with-decryption --query Parameter.Value --output text)
