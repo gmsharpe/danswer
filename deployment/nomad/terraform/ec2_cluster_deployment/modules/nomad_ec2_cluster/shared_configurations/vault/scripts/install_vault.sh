@@ -31,10 +31,14 @@ sudo chmod 0755 ${vault_path}
 sudo chown ${vault_user}:${vault_group} ${vault_path}
 echo "The Vault 'version' installed is:  $(${vault_path} --version)"
 
+echo "before updating permissions (remove later)"
+ls -lh ${vault_config_dir}
+
 # Update directory permissions
 echo "sudo chown -R ${vault_user}:${vault_group} ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}"
 sudo chown -R ${vault_user}:${vault_group} ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}
 sudo chmod -R 0640 ${vault_config_dir}
+sudo chmod 750 ${vault_config_dir}
 
 ls -lh ${vault_config_dir}
 

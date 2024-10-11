@@ -65,9 +65,13 @@ CONFIG
   echo '' | sudo tee /etc/vault.d/vault.conf
 fi
 
-echo "sudo chown -R ${vault_user}:${vault_group} ${vault_config_dir}"
+echo "before updating permissions (remove later)"
+ls -lh /etc/vault.d
+
+# do I need this?
 sudo chown -R ${vault_user}:${vault_group} ${vault_config_dir}
 sudo chmod -R 0640 ${vault_config_dir}
+sudo chmod 750 ${vault_config_dir}
 
 ls -lh /etc/vault.d
 
