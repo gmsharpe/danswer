@@ -8,8 +8,8 @@ echo "#        Installing Nomad"
 echo -e "# =====================================\n"
 
 
-USER="${USER:-root}"
-GROUP="${GROUP:-root}"
+nomad_user="${NOMAD_USER:-root}"
+nomad_group="${NOMAD_GROUP:-root}"
 VERSION="${1:-1.8.4}" # most recent as of 09/27/24
 
 nomad_version=${VERSION}
@@ -30,10 +30,10 @@ sudo mkdir -pm 0755 ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
 
 sudo unzip -o /tmp/${nomad_zip} -d ${nomad_dir}
 sudo chmod 0755 ${nomad_path}
-sudo chown ${USER}:${GROUP} ${nomad_path}
+sudo chown ${nomad_user}:${nomad_GROUP} ${nomad_path}
 echo "$(${nomad_path} --version)"
 
-sudo chown -R ${USER}:${GROUP} ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
-sudo chmod -R 0644 ${nomad_config_dir}
+sudo chown -R ${nomad_user}:${nomad_GROUP} ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
+sudo chmod -R 0640 ${nomad_config_dir}
 
 echo

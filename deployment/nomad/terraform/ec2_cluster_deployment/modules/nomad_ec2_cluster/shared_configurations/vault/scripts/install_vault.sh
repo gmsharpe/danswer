@@ -17,8 +17,8 @@ vault_tls_dir=/opt/vault/tls
 vault_env_vars=${vault_config_dir}/vault.conf
 vault_profile_script=/etc/profile.d/vault.sh
 
-user=${USER:-"vault"}
-group=${GROUP:-"vault"}
+vault_user=${VAULT_USER:-"vault"}
+vault_group=${VAULT_GROUP:-"vault"}
 
 
 sudo mkdir -pm 0755 ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}
@@ -28,11 +28,11 @@ echo "Downloading Vault ${vault_version} from ${vault_url}"
 
 sudo unzip -o /tmp/${vault_zip} -d ${vault_dir}
 sudo chmod 0755 ${vault_path}
-sudo chown ${user}:${group} ${vault_path}
+sudo chown ${vault_user}:${group} ${vault_path}
 echo "The Vault 'version' installed is:  $(${vault_path} --version)"
 
 # Update directory permissions
-sudo chown -R ${user}:${group} ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}
+sudo chown -R ${vault_user}:${group} ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}
 sudo chmod -R 0640 ${vault_config_dir}
 
 echo "Granting mlock syscall to vault binary"

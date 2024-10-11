@@ -130,7 +130,7 @@ if [ "${install_consul}" = true ]; then
 
   sudo ./scripts/create_user.sh $consul_user $consul_group $consul_home $consul_comment
 
-  sudo VERSION=$consul_version USER=$consul_user GROUP=$consul_group ./consul/scripts/install_consul.sh
+  sudo VERSION=$consul_version CONSUL_USER=$consul_user CONSUL_GROUP=$consul_group ./consul/scripts/install_consul.sh
 
   consul_config_file=${consul_config_override_file:-$work_dir/consul/config/consul.hcl}
 
@@ -154,7 +154,7 @@ if [ "${install_vault}" = true ]; then
 
   sudo ./scripts/create_user.sh $vault_user $vault_group $vault_home $vault_comment
 
-  sudo VERSION=$vault_version URL=$vault_ent_url USER=$vault_user GROUP=$vault_group ./vault/scripts/install_vault.sh
+  sudo VERSION=$vault_version URL=$vault_ent_url VAULT_USER=$vault_user VAULT_GROUP=$vault_group ./vault/scripts/install_vault.sh
 
   vault_server_config_file=${vault_server_config_file:-$work_dir/vault/config/vault_server.hcl}
   vault_client_config_file=${vault_client_config_file:-$work_dir/vault/config/vault_client.hcl}
@@ -187,7 +187,7 @@ if [ "${install_nomad}" = true ]; then
   # todo - should likely be running nomad as a non-root user in future iterations
   #sudo ./scripts/create_user.sh $nomad_user $nomad_group $nomad_home $nomad_comment
 
-  sudo ./nomad/scripts/install_nomad.sh $nomad_version
+  sudo NOMAD_USER=$nomad_user NOMAD_GROUP=$nomad_group ./nomad/scripts/install_nomad.sh $nomad_version
 
   sudo ./nomad/scripts/configure_plugins.sh "${nomad_plugins[@]}"
 

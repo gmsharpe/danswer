@@ -24,13 +24,15 @@ vault_env_vars=${vault_config_dir}/vault.conf
 OVERRIDE_VAULT_ENABLED=${OVERRIDE_VAULT_ENABLED:-false}
 IS_SERVER=${IS_SERVER:-true}
 CLUSTER_NAME=${CLUSTER_NAME:-"nomad-cluster"}
-user=${USER:-"vault"}
-group=${GROUP:-"vault"}
+vault_user=${VAULT_USER:-"vault"}
+vault_group=${VAULT_GROUP:-"vault"}
 
 
 echo "OVERRIDE_VAULT_ENABLED is set to ${OVERRIDE_VAULT_ENABLED}"
 echo "IS_SERVER is set to ${IS_SERVER}"
 echo "CLUSTER_NAME is set to ${CLUSTER_NAME}"
+echo "vault_user is set to ${vault_user}"
+echo "vault_group is set to ${vault_group}"
 
 if [ "${OVERRIDE_VAULT_ENABLED}" = true ]; then
   if [ "${IS_SERVER}" = true ]; then
@@ -62,7 +64,7 @@ CONFIG
   echo '' | sudo tee /etc/vault.d/vault.conf
 fi
 
-sudo chown -R ${user}:${group} ${vault_config_dir}
+sudo chown -R ${vault_user}:${vault_group} ${vault_config_dir}
 sudo chmod -R 0640 ${vault_config_dir}
 
 ls -lh /etc/vault.d
