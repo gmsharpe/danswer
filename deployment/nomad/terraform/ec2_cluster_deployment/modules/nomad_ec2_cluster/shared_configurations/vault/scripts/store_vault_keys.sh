@@ -8,7 +8,7 @@ usage() {
 }
 
 # Initialize variables
-LOCATION=""
+LOCATION="ssm"
 ROOT_KEY=""
 UNSEAL_KEYS_JSON=""
 VAULT_ID=""

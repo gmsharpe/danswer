@@ -178,6 +178,7 @@ if [ "${install_vault}" = true ]; then
                           -save_keys_externally true \
                           -num_key_shares 1 \
                           -num_key_threshold 1 \
+                          -server_ip $server_ip \
                           -is_server $is_server
 fi
 

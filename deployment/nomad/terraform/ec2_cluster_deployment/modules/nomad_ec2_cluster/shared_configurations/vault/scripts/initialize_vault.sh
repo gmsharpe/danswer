@@ -15,12 +15,33 @@ usage() {
   echo "  -num_key_shares        Number of key shares."
   echo "  -num_key_threshold     Number of key shares required to unseal."
   echo "  -save_keys_externally  Specify if keys should be saved externally (true/false)."
+  echo "  -server_ip             Specify the server IP address."
   echo
   echo "Example:"
   echo "  $0 -vault_id 1234 -is_server true -num_key_shares 5 -num_key_threshold 3 -save_keys_externally false"
   echo
   exit 1
 }
+
+# wait for the vault service to start by checking the status with systemd
+# fail after 1 minute
+wait_for_vault_service() {
+  local timeout=60
+  local interval=5
+  local count=0
+  while [ $count -lt $timeout ]; do
+    if sudo systemctl is-active vault.service &> /dev/null; then
+      echo "Vault service is active."
+      return 0
+    fi
+    sleep $interval
+    count=$((count + interval))
+  done
+  echo "Error: Vault service did not start within the timeout period."
+  return 1
+}
+
+wait_for_vault_service
 
 is_server=${is_server:-true}
 VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
@@ -47,6 +68,10 @@ while [[ $# -gt 0 ]]; do
       is_server="$2"
       shift 2
       ;;
+    -server_ip
+      server_ip="$2"
+      shift 2
+      ;;
     -num_key_shares)
       num_key_shares="$2"
       shift 2
@@ -67,6 +92,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo "is_server = $is_server"
+echo "server_ip = $server_ip"
 echo "vault_id = $vault_id"
 echo "num_key_shares = $num_key_shares"
 echo "num_key_threshold = $num_key_threshold"
@@ -86,7 +112,7 @@ if [ "$is_server" = true ]; then
 
   # Set VAULT_ADDR for further operations
   # todo - should use 'https' later
-  VAULT_ADDR=http://127.0.0.1:8200
+  VAULT_ADDR=http://${server_ip}:8200
 
   # Initialize Vault with multiple key shares and threshold for better security
   echo "Initialize Vault with key shares = $num_key_shares and key threshold = $num_key_threshold."
@@ -112,7 +138,7 @@ EOT
   # todo - should adjust for tls and other security measures later
   echo "Set Vault profile script"
   sudo tee ${VAULT_PROFILE_SCRIPT} > /dev/null <<PROFILE
-export VAULT_ADDR=http://127.0.0.1:8200
+export VAULT_ADDR=http://${server_ip}:8200
 export VAULT_TOKEN=$VAULT_TOKEN
 PROFILE
 
