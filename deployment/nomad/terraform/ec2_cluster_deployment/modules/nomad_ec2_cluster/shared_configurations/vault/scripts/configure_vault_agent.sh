@@ -55,10 +55,6 @@ if [ "${DO_OVERRIDE_CONFIG}" = true ]; then
 ${vault_config}
 CONFIG
 
-  # todo - check if necessary?
-  echo "Update Vault configuration file permissions"
-  sudo chown vault:vault $vault_config_file
-
   echo "If Vault config is overridden, don't start Vault in -dev mode"
   echo '' | sudo tee /etc/vault.d/vault.conf
 fi

@@ -27,11 +27,11 @@ echo "Downloading Vault ${vault_version} from ${vault_url}"
 
 sudo unzip -o /tmp/${vault_zip} -d ${vault_dir}
 sudo chmod 0755 ${vault_path}
-sudo chown ${USER}:${GROUP} ${vault_path}
-echo "$(${vault_path} --version)"
+sudo chown ${user}:${group} ${vault_path}
+echo "The Vault 'version' installed is:  $(${vault_path} --version)"
 
 # Update directory permissions
-sudo chown -R ${USER}:${GROUP} ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}
+sudo chown -R ${user}:${group} ${vault_config_dir} ${vault_data_dir} ${vault_tls_dir}
 sudo chmod -R 0640 ${vault_config_dir}
 
 echo "Granting mlock syscall to vault binary"
