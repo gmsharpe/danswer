@@ -23,33 +23,6 @@ usage() {
   exit 1
 }
 
-# wait for vault by calling the http://<server_ip>:8200/v1/sys/seal-status endpoint
-# fail after 5 attempts with 6 seconds between each attempt
-function wait_for_vault_service() {
-  local attempts=0
-  local max_attempts=20
-  local wait_time=6
-  local server_ip=$1
-
-  while [ $attempts -lt $max_attempts ]; do
-    echo "Checking if Vault is ready..."
-    response=$(curl -s -o /dev/null -w "%{http_code}" http://${server_ip}:8200/v1/sys/seal-status)
-    if [ "$response" -eq 200 ]; then
-      echo "Vault is ready."
-      break
-    fi
-    attempts=$((attempts + 1))
-    sleep $wait_time
-  done
-
-  if [ $attempts -eq $max_attempts ]; then
-    echo "Vault is not ready. Exiting."
-    exit 1
-  fi
-}
-
-wait_for_vault_service
-
 is_server=${is_server:-true}
 VAULT_PROFILE_SCRIPT=/etc/profile.d/vault.sh
 
@@ -104,6 +77,36 @@ echo "vault_id = $vault_id"
 echo "num_key_shares = $num_key_shares"
 echo "num_key_threshold = $num_key_threshold"
 echo "save_keys_externally = $save_keys_externally"
+
+
+# wait for vault by calling the http://<server_ip>:8200/v1/sys/seal-status endpoint
+# fail after 5 attempts with 6 seconds between each attempt
+function wait_for_vault_service() {
+  local attempts=0
+  local max_attempts=20
+  local wait_time=6
+  local server_ip=${server_ip}
+
+  while [ $attempts -lt $max_attempts ]; do
+    echo "Checking if Vault is ready... curl http://${server_ip}:8200/v1/sys/seal-status"
+    response=$(curl -s -o /dev/null -w "%{http_code}" http://${server_ip}:8200/v1/sys/seal-status)
+    if [ "$response" -eq 200 ]; then
+      echo "Vault is ready."
+      break
+    else
+      echo "Vault is not ready (status_code=$response).  Waiting..."
+    fi
+    attempts=$((attempts + 1))
+    sleep $wait_time
+  done
+
+  if [ $attempts -eq $max_attempts ]; then
+    echo "Vault is not ready.  Exiting."
+    exit 1
+  fi
+}
+
+wait_for_vault_service
 
 
 # todo - should adjust to identify a 'leader' rather than use 'server' as the default
