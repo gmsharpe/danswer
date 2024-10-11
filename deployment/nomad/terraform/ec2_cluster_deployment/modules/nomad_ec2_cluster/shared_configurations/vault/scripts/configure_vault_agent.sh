@@ -7,7 +7,7 @@ echo -e "# =====================================\n"
 
 # Function to display usage
 usage() {
-  echo "Usage: $0 -vault_server_config_file <vault_server_config_file_path> -vault_client_config_file <vault_client_config_file_path> -instance_ip <IP> -is_server <true|false> -is_client <true|false> -server_ip <IP> -override_vault_config_enabled <true|false>"
+  echo "Usage: $0 -vault_server_config_file <vault_server_config_file_path> -vault_client_config_file <vault_client_config_file_path> -instance_ip <IP> -is_server <true|false> -is_client <true|false> -server_ip <IP> -override_vault_config_enabled <true|false> -cluster_name <cluster_name> -vault_user <vault_user> -vault_group <vault_group>"
   exit 1
 }
 
@@ -40,6 +40,18 @@ while [[ $# -gt 0 ]]; do
       ;;
     -override_vault_config_enabled)
       override_vault_config_enabled="$2"
+      shift 2
+      ;;
+    -cluster_name)
+      cluster_name="$2"
+      shift 2
+      ;;
+    -vault_user)
+      vault_user="$2"
+      shift 2
+      ;;
+    -vault_group)
+      vault_group="$2"
       shift 2
       ;;
     *)
