@@ -64,7 +64,6 @@ aws ssm put-parameter \
   --name "/${VAULT_ID}/root-key" \
   --value "$ROOT_KEY" \
   --type "SecureString" \
-  --key-id "$KMS_KEY_ALIAS" \
   --overwrite
 
 if [ $? -eq 0 ]; then
