@@ -322,7 +322,66 @@ resource "aws_instance" "nomad_instance" {
     volume_type = "gp2" # General Purpose SSD
     delete_on_termination = true # Ensures volume is deleted when instance is terminated
   }
+
+  iam_instance_profile = aws_iam_instance_profile.ec2_ssm_profile.name
+
 }
+
+# Create IAM Role
+resource "aws_iam_role" "ec2_ssm_role" {
+  name = "ec2-ssm-secrets-role"
+  assume_role_policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": "sts:AssumeRole",
+        "Principal": {
+          "Service": "ec2.amazonaws.com"
+        },
+        "Effect": "Allow",
+        "Sid": ""
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_core_policy" {
+  role       = aws_iam_role.ec2_ssm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+# Attach Policy to IAM Role
+resource "aws_iam_role_policy" "ssm_secrets_policy" {
+  name   = "EC2SSMSecretsPolicy"
+  role   = aws_iam_role.ec2_ssm_role.id
+
+  policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "ssm:PutParameter",
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParameterHistory",
+          "ssm:DeleteParameter",
+        ],
+        "Resource": "arn:aws:ssm:*:*:parameter/*"
+      }
+    ]
+  })
+}
+
+# Create Instance Profile
+resource "aws_iam_instance_profile" "ec2_ssm_profile" {
+  name = "ec2-ssm-instance-profile"
+  role = aws_iam_role.ec2_ssm_role.name
+}
+
+
+
+
 
 # variable "local_port1" {
 #   default = 14646

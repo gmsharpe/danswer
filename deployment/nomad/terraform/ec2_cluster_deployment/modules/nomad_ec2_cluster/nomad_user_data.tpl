@@ -10,6 +10,8 @@ sudo chown -R nobody:nobody $work_dir/{tmp,repo}
 sudo chmod -R 755 $work_dir/{tmp,repo}
 
 sudo yum install -y git
+sudo yum install -y amazon-ssm-agent # should already be installed
+sudo systemctl start amazon-ssm-agent
 
 cd /opt/danswer
 #sudo git clone https://github.com/gmsharpe/danswer.git .

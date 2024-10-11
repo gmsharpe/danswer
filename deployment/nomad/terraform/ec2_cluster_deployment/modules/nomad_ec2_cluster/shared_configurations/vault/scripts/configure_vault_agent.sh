@@ -21,6 +21,9 @@ vault_env_vars=${vault_config_dir}/vault.conf
 DO_OVERRIDE_CONFIG=${DO_OVERRIDE_CONFIG:-false}
 IS_SERVER=${IS_SERVER:-true}
 CLUSTER_NAME=${CLUSTER_NAME:-"nomad-cluster"}
+user=${USER:-"vault"}
+group=${GROUP:-"vault"}
+
 
 echo "DO_OVERRIDE_CONFIG is set to ${DO_OVERRIDE_CONFIG}"
 echo "IS_SERVER is set to ${IS_SERVER}"
@@ -59,3 +62,6 @@ CONFIG
   echo "If Vault config is overridden, don't start Vault in -dev mode"
   echo '' | sudo tee /etc/vault.d/vault.conf
 fi
+
+sudo chown -R ${user}:${group} ${vault_config_dir}
+sudo chmod -R 0640 ${vault_config_dir}
