@@ -5,6 +5,11 @@ echo "# ====================================="
 echo "# ====     Configure Vault Agent   ===="
 echo -e "# =====================================\n"
 
+# Function to display usage
+usage() {
+  echo "Usage: $0 -vault_server_config_file <vault_server_config_file_path> -vault_client_config_file <vault_client_config_file_path> -instance_ip <IP> -is_server <true|false> -is_client <true|false> -server_ip <IP> -override_vault_config_enabled <true|false>"
+  exit 1
+}
 
 # Parse the remaining named arguments
 while [[ $# -gt 0 ]]; do
