@@ -9,7 +9,7 @@ vault_client_config_temp_file=$2
 vault_server_config=$(cat "$vault_server_config_temp_file")
 vault_client_config=$(cat "$vault_client_config_temp_file")
 
-echo "Set variables"
+# setting defaults
 default_vault_config="cluster_name = \"nomad-cluster\""
 vault_config_file=/etc/vault.d/vault.hcl
 # todo - create this?
@@ -18,18 +18,18 @@ vault_profile_script=/etc/profile.d/vault.sh
 vault_config_dir=/etc/vault.d
 vault_env_vars=${vault_config_dir}/vault.conf
 
-DO_OVERRIDE_CONFIG=${DO_OVERRIDE_CONFIG:-false}
+OVERRIDE_VAULT_ENABLED=${OVERRIDE_VAULT_ENABLED:-false}
 IS_SERVER=${IS_SERVER:-true}
 CLUSTER_NAME=${CLUSTER_NAME:-"nomad-cluster"}
 user=${USER:-"vault"}
 group=${GROUP:-"vault"}
 
 
-echo "DO_OVERRIDE_CONFIG is set to ${DO_OVERRIDE_CONFIG}"
+echo "OVERRIDE_VAULT_ENABLED is set to ${OVERRIDE_VAULT_ENABLED}"
 echo "IS_SERVER is set to ${IS_SERVER}"
 echo "CLUSTER_NAME is set to ${CLUSTER_NAME}"
 
-if [ "${DO_OVERRIDE_CONFIG}" = true ]; then
+if [ "${OVERRIDE_VAULT_ENABLED}" = true ]; then
   if [ "${IS_SERVER}" = true ]; then
     echo "Use custom Vault agent 'server' config"
     vault_config=${vault_server_config}
@@ -48,7 +48,7 @@ ENVVARS
 
 fi
 
-if [ "${DO_OVERRIDE_CONFIG}" = true ]; then
+if [ "${OVERRIDE_VAULT_ENABLED}" = true ]; then
 
   echo "Add custom Vault server override config"
   cat <<CONFIG | sudo tee $vault_config_file > /dev/null
