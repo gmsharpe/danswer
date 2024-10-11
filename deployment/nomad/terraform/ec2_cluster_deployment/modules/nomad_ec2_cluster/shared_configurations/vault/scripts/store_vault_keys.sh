@@ -56,7 +56,7 @@ fi
 # Check if the location is 'ssm' and call the corresponding script
 if [ "$LOCATION" == "ssm" ]; then
   # Call the store_vault_keys_ssm_param_store.sh script
-  ./vault/script/store_vault_keys_ssm_param_store.sh -root_key "$ROOT_KEY" -unseal_keys "$UNSEAL_KEYS_JSON" -vault_id "$VAULT_ID"
+  ./vault/scripts/store_vault_keys_ssm_param_store.sh -root_key "$ROOT_KEY" -unseal_keys "$UNSEAL_KEYS_JSON" -vault_id "$VAULT_ID"
 else
   # No alternative is currently defined, so exit with an error
   echo "Error: Unsupported location '$LOCATION'. Currently only 'ssm' is supported."
