@@ -30,6 +30,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+echo -e "\nRunning add_vault_config.sh"
+echo "# =========================================="
+echo "# === Adding Vault Config to Nomad Agent ==="
+echo -e "# ==========================================\n"
+
 vault_server_ip=${vault_server_ip:-"10.0.1.10"}
 vault_policy_name=${vault_policy_name:-"nomad-cluster"}
 # Set the Vault role name if not already set

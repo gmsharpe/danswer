@@ -26,6 +26,11 @@
 
 set -euo pipefail
 
+echo -e "\nRunning configure_nomad_agent.sh"
+echo "# ====================================="
+echo "#        Configuring Nomad Agent"
+echo -e "# =====================================\n"
+
 # Function to display usage
 usage() {
   echo "Usage: $0 -config_override_file <config_override_file_path> -instance_ip <IP> -is_server <true|false> -is_client <true|false> -server_ip <IP>"

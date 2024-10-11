@@ -2,10 +2,10 @@
 
 # Based in part on https://github.com/hashicorp/guides-configuration/blob/master/nomad/scripts/install-nomad.sh
 
-echo "Running install_nomad.sh"
+echo -e "\nRunning install_nomad.sh"
 echo "# ====================================="
 echo "#        Installing Nomad"
-echo "# ====================================="
+echo -e "# =====================================\n"
 
 
 USER="${USER:-root}"
@@ -35,3 +35,5 @@ echo "$(${nomad_path} --version)"
 
 sudo chown -R ${USER}:${GROUP} ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
 sudo chmod -R 0644 ${nomad_config_dir}
+
+echo
