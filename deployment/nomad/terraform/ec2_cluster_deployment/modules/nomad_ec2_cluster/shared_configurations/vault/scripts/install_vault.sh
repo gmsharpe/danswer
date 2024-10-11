@@ -1,9 +1,10 @@
 #!/bin/bash
 
-echo "Running install_vault.sh"
+
+echo -e "\nRunning install_vault.sh"
 echo "# ====================================="
 echo "#        Installing Vault"
-echo "# ====================================="
+echo -e "# =====================================\n"
 
 vault_version=${VERSION:-"1.17.5"}
 vault_zip=vault_${vault_version}_linux_amd64.zip

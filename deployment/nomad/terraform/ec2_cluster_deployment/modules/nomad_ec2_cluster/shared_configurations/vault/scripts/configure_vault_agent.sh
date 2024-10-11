@@ -1,6 +1,9 @@
 #!/bin/bash
 
-echo "Running configure_vault_agent.sh"
+echo -e "\nRunning configure_vault_agent.sh"
+echo "# ====================================="
+echo "#        Configure Vault Agent"
+echo -e "# =====================================\n"
 
 vault_server_config_temp_file=$1
 vault_client_config_temp_file=$2
@@ -61,3 +64,7 @@ fi
 
 sudo chown -R ${user}:${group} ${vault_config_dir}
 sudo chmod -R 0640 ${vault_config_dir}
+
+ls -lh /etc/vault.d
+
+echo

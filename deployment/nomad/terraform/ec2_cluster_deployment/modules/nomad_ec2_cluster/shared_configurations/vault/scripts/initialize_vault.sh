@@ -1,9 +1,9 @@
 #!/bin/bash
 
-echo "Running initialize-vault.sh"
+echo -e "\nRunning initialize-vault.sh"
 echo "#############################################"
 echo "### Initialize and unseal Vault on leader ###"
-echo "#############################################"
+echo -e "#############################################\n"
 
 # Usage function to display help
 usage() {
@@ -143,3 +143,4 @@ else
   echo "Vault is not initialized and unsealed on the follower nodes.  By default the leader is the 'server' in this configuration."
 fi
 
+echo
