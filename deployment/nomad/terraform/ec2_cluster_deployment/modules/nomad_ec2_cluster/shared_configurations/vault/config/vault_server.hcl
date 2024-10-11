@@ -1,14 +1,14 @@
-storage "raft" {
-  path    = "/opt/vault/data"
-  node_id = "vault-node-${private_ip}"
-
-  retry_join {
-    leader_api_addr = "http://${leader_ip}:8201"
-  }
-}
+# storage "raft" {
+#   path    = "/opt/vault/data"
+#   node_id = "vault-node-${private_ip}"
+#
+#   retry_join {
+#     leader_api_addr = "http://${leader_ip}:8201"
+#   }
+# }
 
 # https://www.vaultproject.io/docs/configuration/storage/consul.html
-backend "consul" {
+storage "consul" {
   scheme  = "http"
   address = "${consul_ip_address}:8500"
   path    = "vault/"

@@ -10,7 +10,7 @@ vault {
   address = "http://${leader_ip}:8200"
 }
 
-backend "consul" {
+storage "consul" {
   scheme  = "http"
   address = "${consul_ip_address}:8500"
   path    = "vault/"
