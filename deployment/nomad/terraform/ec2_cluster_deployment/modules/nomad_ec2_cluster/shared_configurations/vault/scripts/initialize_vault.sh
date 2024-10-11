@@ -23,22 +23,29 @@ usage() {
   exit 1
 }
 
-# wait for the vault service to start by checking the status with systemd
-# fail after 1 minute
-wait_for_vault_service() {
-  local timeout=12
-  local interval=5
-  local count=0
-  while [ $count -lt $timeout ]; do
-    if sudo systemctl is-active vault.service &> /dev/null; then
-      echo "Vault service is active."
-      return 0
+# wait for vault by calling the http://<server_ip>:8200/v1/sys/seal-status endpoint
+# fail after 5 attempts with 6 seconds between each attempt
+function wait_for_vault_service() {
+  local attempts=0
+  local max_attempts=5
+  local wait_time=6
+  local server_ip=$1
+
+  while [ $attempts -lt $max_attempts ]; do
+    echo "Checking if Vault is ready..."
+    response=$(curl -s -o /dev/null -w "%{http_code}" http://${server_ip}:8200/v1/sys/seal-status)
+    if [ "$response" -eq 200 ]; then
+      echo "Vault is ready."
+      break
     fi
-    sleep $interval
-    count=$((count + interval))
+    attempts=$((attempts + 1))
+    sleep $wait_time
   done
-  echo "Error: Vault service did not start within the timeout period."
-  return 1
+
+  if [ $attempts -eq $max_attempts ]; then
+    echo "Vault is not ready. Exiting."
+    exit 1
+  fi
 }
 
 wait_for_vault_service
