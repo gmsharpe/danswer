@@ -23,8 +23,8 @@ vault_config_dir=/etc/vault.d
 vault_env_vars=${vault_config_dir}/vault.conf
 
 override_vault_enabled=${OVERRIDE_VAULT_ENABLED:-false}
-is_server=${IS_SERVER:-true}
-cluster_name=${CLUSTER_NAME:-"nomad-cluster"}
+is_server=${is_server:-true}
+cluster_name=${cluster_name:-"nomad-cluster"}
 vault_user=${VAULT_USER:-"vault"}
 vault_group=${VAULT_GROUP:-"vault"}
 
