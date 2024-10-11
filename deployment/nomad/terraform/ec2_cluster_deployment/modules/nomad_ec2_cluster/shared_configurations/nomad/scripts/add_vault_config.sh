@@ -93,6 +93,7 @@ if [ $? -ne 0 ]; then
   echo "Warning: error storing Nomad Vault token in SSM Parameter Store."
 fi
 
+echo "Adding Vault block to Nomad configuration..."
 # add Vault configuration to Nomad configuration
 cat <<EOT >> /etc/nomad.d/nomad.hcl
 vault {
