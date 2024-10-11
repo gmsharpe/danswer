@@ -5,6 +5,7 @@ echo "# ====================================="
 echo "# ====     Configure Vault Agent   ===="
 echo -e "# =====================================\n"
 
+# todo - read these file paths in as named arguments (e.g. -vault_server_config_file <path> -vault_client_config_file <path>)
 vault_server_config_temp_file=$1
 vault_client_config_temp_file=$2
 
@@ -21,21 +22,21 @@ vault_profile_script=/etc/profile.d/vault.sh
 vault_config_dir=/etc/vault.d
 vault_env_vars=${vault_config_dir}/vault.conf
 
-OVERRIDE_VAULT_ENABLED=${OVERRIDE_VAULT_ENABLED:-false}
-IS_SERVER=${IS_SERVER:-true}
-CLUSTER_NAME=${CLUSTER_NAME:-"nomad-cluster"}
+override_vault_enabled=${OVERRIDE_VAULT_ENABLED:-false}
+is_server=${IS_SERVER:-true}
+cluster_name=${CLUSTER_NAME:-"nomad-cluster"}
 vault_user=${VAULT_USER:-"vault"}
 vault_group=${VAULT_GROUP:-"vault"}
 
 
-echo "OVERRIDE_VAULT_ENABLED is set to ${OVERRIDE_VAULT_ENABLED}"
-echo "IS_SERVER is set to ${IS_SERVER}"
-echo "CLUSTER_NAME is set to ${CLUSTER_NAME}"
+echo "override_vault_enabled is set to ${override_vault_enabled}"
+echo "is_server is set to ${is_server}"
+echo "cluster_name is set to ${cluster_name}"
 echo "vault_user is set to ${vault_user}"
 echo "vault_group is set to ${vault_group}"
 
-if [ "${OVERRIDE_VAULT_ENABLED}" = true ]; then
-  if [ "${IS_SERVER}" = true ]; then
+if [ "${override_vault_enabled}" = true ]; then
+  if [ "${is_server}" = true ]; then
     echo "Use custom Vault agent 'server' config"
     vault_config=${vault_server_config}
   else
@@ -53,7 +54,7 @@ ENVVARS
 
 fi
 
-if [ "${OVERRIDE_VAULT_ENABLED}" = true ]; then
+if [ "${override_vault_enabled}" = true ]; then
 
   echo "Add custom Vault server override config"
   cat <<CONFIG | sudo tee $vault_config_file > /dev/null
