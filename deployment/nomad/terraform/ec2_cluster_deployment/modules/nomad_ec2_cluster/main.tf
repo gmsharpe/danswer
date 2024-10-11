@@ -268,20 +268,23 @@ resource "aws_instance" "nomad_instance" {
       token_for_nomad = ""
       task_token_ttl  = "1h"
       consul_ip_address = "10.0.1.10"
+      datacenter      = "ats-1"
     })
     nomad_client_config = templatefile("${path.module}/shared_configurations/nomad/config/nomad_client.hcl", {
       ip_address = "10.0.1.${count.index + 10}"
-      vault_ip_address  = ""
+      vault_ip_address  = "10.0.1.10"
+      datacenter      = "ats-1"
       node_pool  = "danswer"
       consul_ip_address = "10.0.1.10"
     })
     nomad_server_and_client_config = templatefile("${path.module}/shared_configurations/nomad/config/nomad_server_and_client.hcl", {
       ip_address   = "10.0.1.${count.index + 10}"
-      server_count = 3
+      server_count = 1
       vault_ip_address     = "10.0.1.10"
       token_for_nomad = ""
       task_token_ttl  = "1h"
       node_pool  = "danswer"
+      datacenter      = "ats-1"
       consul_ip_address = "10.0.1.10"
       server_ips = jsonencode(["10.0.1.10", "10.0.1.11", "10.0.1.12"])
     })
@@ -295,10 +298,14 @@ resource "aws_instance" "nomad_instance" {
       leader_ip       = "10.0.1.10"
       private_ip      = "10.0.1.${count.index + 10}"
       consul_ip_address = "10.0.1.10"
+      datacenter      = "ats-1"
       tls_disable     = true
+      consul_ip_address       = "10.0.1.10"
     })
     vault_client_config    = templatefile("${path.module}/shared_configurations/vault/config/vault_client.hcl", {
       leader_ip       = "10.0.1.10"
+      consul_ip_address       = "10.0.1.10"
+      datacenter      = "ats-1"
       tls_disable     = true
     })
   })

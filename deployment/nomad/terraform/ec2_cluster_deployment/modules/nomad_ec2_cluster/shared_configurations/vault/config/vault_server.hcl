@@ -13,6 +13,7 @@ backend "consul" {
   address = "${consul_ip_address}:8500"
   path    = "vault/"
   service = "vault"
+  datacenter = "${datacenter}"
 }
 
 listener "tcp" {

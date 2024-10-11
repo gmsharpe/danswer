@@ -10,6 +10,8 @@ data_dir = "/opt/nomad/data"
 bind_addr = "${ip_address}"
 name = "nomad@${ip_address}"
 
+datacenter = "${datacenter}"
+
 # Enable the client
 client {
   enabled = true
@@ -36,6 +38,8 @@ advertise {
 
 consul {
   address = "${consul_ip_address}:8500"
+  datacenter = "${datacenter}"
+  timeout = "10s"
 }
 
 # vault {

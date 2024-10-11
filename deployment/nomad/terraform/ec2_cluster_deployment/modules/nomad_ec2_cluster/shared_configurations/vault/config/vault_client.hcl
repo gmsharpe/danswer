@@ -10,5 +10,13 @@ vault {
   address = "http://${leader_ip}:8200"
 }
 
+backend "consul" {
+  scheme  = "http"
+  address = "${consul_ip_address}:8500"
+  path    = "vault/"
+  service = "vault"
+  datacenter = "${datacenter}"
+}
+
 # Disable mlock for non-root user environments (for development purposes)
 disable_mlock = true

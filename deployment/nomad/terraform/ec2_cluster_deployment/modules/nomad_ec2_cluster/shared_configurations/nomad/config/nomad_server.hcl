@@ -20,6 +20,8 @@
 data_dir = "/opt/nomad/data"
 bind_addr = "${ip_address}"
 
+datacenter = "${datacenter}"
+
 ui {
   enabled = true
 }
@@ -34,6 +36,8 @@ name = "nomad@${ip_address}"
 
 consul {
   address = "${consul_ip_address}:8500"
+  datacenter = "${datacenter}"
+  timeout = "10s"
 }
 
 # vault {
