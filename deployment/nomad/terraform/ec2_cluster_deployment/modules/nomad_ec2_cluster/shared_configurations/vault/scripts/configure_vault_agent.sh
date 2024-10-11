@@ -5,13 +5,48 @@ echo "# ====================================="
 echo "# ====     Configure Vault Agent   ===="
 echo -e "# =====================================\n"
 
-# todo - read these file paths in as named arguments (e.g. -vault_server_config_file <path> -vault_client_config_file <path>)
-vault_server_config_temp_file=$1
-vault_client_config_temp_file=$2
+
+# Parse the remaining named arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -vault_server_config_file)
+      vault_server_config_file="$2"
+      shift 2
+      ;;
+    -vault_client_config_file)
+      vault_client_config_file="$2"
+      shift 2
+      ;;
+    -instance_ip)
+      instance_ip="$2"
+      shift 2
+      ;;
+    -is_server)
+      is_server="$2"
+      shift 2
+      ;;
+    -is_client)
+      is_client="$2"
+      shift 2
+      ;;
+    -server_ip)
+      server_ip="$2"
+      shift 2
+      ;;
+    -override_vault_config_enabled)
+      override_vault_config_enabled="$2"
+      shift 2
+      ;;
+    *)
+      echo "Invalid argument: $1"
+      usage
+      ;;
+  esac
+done
 
 # Use the config files
-vault_server_config=$(cat "$vault_server_config_temp_file")
-vault_client_config=$(cat "$vault_client_config_temp_file")
+vault_server_config=$(cat "$vault_server_config_file")
+vault_client_config=$(cat "$vault_client_config_file")
 
 # setting defaults
 default_vault_config="cluster_name = \"nomad-cluster\""
@@ -22,20 +57,20 @@ vault_profile_script=/etc/profile.d/vault.sh
 vault_config_dir=/etc/vault.d
 vault_env_vars=${vault_config_dir}/vault.conf
 
-override_vault_enabled=${OVERRIDE_VAULT_ENABLED:-false}
+override_vault_config_enabled=${override_vault_config_enabled:-false}
 is_server=${is_server:-true}
 cluster_name=${cluster_name:-"nomad-cluster"}
-vault_user=${VAULT_USER:-"vault"}
-vault_group=${VAULT_GROUP:-"vault"}
+vault_user=${vault_user:-"vault"}
+vault_group=${vault_group:-"vault"}
 
 
-echo "override_vault_enabled is set to ${override_vault_enabled}"
+echo "override_vault_config_enabled is set to ${override_vault_config_enabled}"
 echo "is_server is set to ${is_server}"
 echo "cluster_name is set to ${cluster_name}"
 echo "vault_user is set to ${vault_user}"
 echo "vault_group is set to ${vault_group}"
 
-if [ "${override_vault_enabled}" = true ]; then
+if [ "${override_vault_config_enabled}" = true ]; then
   if [ "${is_server}" = true ]; then
     echo "Use custom Vault agent 'server' config"
     vault_config=${vault_server_config}
@@ -54,7 +89,7 @@ ENVVARS
 
 fi
 
-if [ "${override_vault_enabled}" = true ]; then
+if [ "${override_vault_config_enabled}" = true ]; then
 
   echo "Add custom Vault server override config"
   cat <<CONFIG | sudo tee $vault_config_file > /dev/null
