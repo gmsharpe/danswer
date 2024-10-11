@@ -24,6 +24,11 @@ ui {
 server {
   enabled = true
   bootstrap_expect = ${server_count}
+  server_join {
+    retry_join     = ${server_ips}
+    retry_max      = 3
+    retry_interval = "15s"
+  }
 }
 
 name = "nomad@${ip_address}"
@@ -34,11 +39,7 @@ consul {
   timeout = "10s"
 }
 
-server_join {
-    retry_join     = ${server_ips}
-    retry_max      = 3
-    retry_interval = "15s"
-}
+
 
 # vault {
 #   enabled = true
