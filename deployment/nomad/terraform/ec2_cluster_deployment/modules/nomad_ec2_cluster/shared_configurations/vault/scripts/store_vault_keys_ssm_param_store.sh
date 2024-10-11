@@ -63,6 +63,7 @@ echo "Storing the root key in SSM Parameter Store with name /${VAULT_ID}/root-ke
 aws ssm put-parameter \
   --name "/${VAULT_ID}/root-key" \
   --value "$ROOT_KEY" \
+  --type "String" \
   --overwrite
 #  --type "SecureString" \
 
@@ -77,6 +78,7 @@ fi
 echo "Storing the unseal keys JSON in SSM Parameter Store with Vault ID $VAULT_ID..."
 aws ssm put-parameter \
   --name "/${VAULT_ID}/unseal-keys" \
+  --type "String" \
   --value "$UNSEAL_KEYS_JSON" \
   --overwrite
 #  --type "SecureString" \

@@ -88,7 +88,7 @@ echo "Vault token for Nomad: $nomad_vault_token"
 
 # save nomad token elsewhere (e.g. SSM Parameter Store)
 echo "Storing Nomad Vault token in SSM Parameter Store..."
-aws ssm put-parameter --name "/${vault_id}/${vault_role_name}/token" --value "$nomad_vault_token" --overwrite # --type "SecureString"
+aws ssm put-parameter --name "/${vault_id}/${vault_role_name}/token" --value "$nomad_vault_token" --type "String" --overwrite # --type "SecureString"
 if [ $? -ne 0 ]; then
   echo "Warning: error storing Nomad Vault token in SSM Parameter Store."
 fi
