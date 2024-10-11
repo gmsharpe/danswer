@@ -26,7 +26,7 @@ usage() {
 # wait for the vault service to start by checking the status with systemd
 # fail after 1 minute
 wait_for_vault_service() {
-  local timeout=60
+  local timeout=12
   local interval=5
   local count=0
   while [ $count -lt $timeout ]; do
