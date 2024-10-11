@@ -68,7 +68,7 @@ while [[ $# -gt 0 ]]; do
       is_server="$2"
       shift 2
       ;;
-    -server_ip
+    -server_ip)
       server_ip="$2"
       shift 2
       ;;
