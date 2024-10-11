@@ -2,7 +2,7 @@
 
 echo -e "\nRunning configure_vault_agent.sh"
 echo "# ====================================="
-echo "#        Configure Vault Agent"
+echo "# ====     Configure Vault Agent   ===="
 echo -e "# =====================================\n"
 
 vault_server_config_temp_file=$1

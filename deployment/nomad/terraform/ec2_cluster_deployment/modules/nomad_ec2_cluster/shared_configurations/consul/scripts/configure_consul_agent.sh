@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+echo -e "\nRunning configure_consul_agent.sh"
+echo "# ====================================="
+echo "# ====    Configure Consul Agent   ===="
+echo -e "# =====================================\n"
+
 # Check if the correct argument is provided
 if [ "$#" -ne 1 ]; then
   echo "Usage: $0 <consul_override_config_temp_file>"
