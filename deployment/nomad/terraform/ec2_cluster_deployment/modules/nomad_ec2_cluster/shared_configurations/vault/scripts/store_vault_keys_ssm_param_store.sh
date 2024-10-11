@@ -59,12 +59,12 @@ if [ -z "$ROOT_KEY" ] || [ -z "$UNSEAL_KEYS_JSON" ] || [ -z "$VAULT_ID" ]; then
 fi
 
 # Store the root key in AWS SSM Parameter Store
-echo "Storing the root key in SSM Parameter Store with Vault ID $VAULT_ID..."
+echo "Storing the root key in SSM Parameter Store with name /${VAULT_ID}/root-key ..."
 aws ssm put-parameter \
   --name "/${VAULT_ID}/root-key" \
   --value "$ROOT_KEY" \
-  --type "SecureString" \
   --overwrite
+#  --type "SecureString" \
 
 if [ $? -eq 0 ]; then
   echo "Root key successfully stored in SSM Parameter Store."
@@ -78,8 +78,9 @@ echo "Storing the unseal keys JSON in SSM Parameter Store with Vault ID $VAULT_I
 aws ssm put-parameter \
   --name "/${VAULT_ID}/unseal-keys" \
   --value "$UNSEAL_KEYS_JSON" \
-  --type "SecureString" \
   --overwrite
+#  --type "SecureString" \
+
 
 if [ $? -eq 0 ]; then
   echo "Unseal keys successfully stored in SSM Parameter Store."
