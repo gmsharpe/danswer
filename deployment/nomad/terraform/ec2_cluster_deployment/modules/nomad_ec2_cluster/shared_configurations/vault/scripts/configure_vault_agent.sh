@@ -65,6 +65,7 @@ CONFIG
   echo '' | sudo tee /etc/vault.d/vault.conf
 fi
 
+echo "sudo chown -R ${vault_user}:${vault_group} ${vault_config_dir}"
 sudo chown -R ${vault_user}:${vault_group} ${vault_config_dir}
 sudo chmod -R 0640 ${vault_config_dir}
 

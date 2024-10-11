@@ -30,10 +30,10 @@ sudo mkdir -pm 0755 ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
 
 sudo unzip -o /tmp/${nomad_zip} -d ${nomad_dir}
 sudo chmod 0755 ${nomad_path}
-sudo chown ${nomad_user}:${nomad_GROUP} ${nomad_path}
+sudo chown ${nomad_user}:${nomad_group} ${nomad_path}
 echo "$(${nomad_path} --version)"
 
-sudo chown -R ${nomad_user}:${nomad_GROUP} ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
+sudo chown -R ${nomad_user}:${nomad_group} ${nomad_config_dir} ${nomad_data_dir} ${nomad_tls_dir}
 sudo chmod -R 0640 ${nomad_config_dir}
 
 echo

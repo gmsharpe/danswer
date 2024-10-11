@@ -160,8 +160,9 @@ if [ "${install_vault}" = true ]; then
   vault_client_config_file=${vault_client_config_file:-$work_dir/vault/config/vault_client.hcl}
 
   # Pass the file paths as arguments to the script
-  sudo OVERRIDE_VAULT_ENABLED=${vault_override} is_server=$is_server cluster_name=$cluster_name \
-    ./vault/scripts/configure_vault_agent.sh $vault_server_config_file $vault_client_config_file
+  sudo VAULT_USER=$vault_user VAULT_GROUP=$vault_group OVERRIDE_VAULT_ENABLED=${vault_override} \
+        is_server=$is_server cluster_name=$cluster_name \
+        ./vault/scripts/configure_vault_agent.sh $vault_server_config_file $vault_client_config_file
 
   # Install Vault as a systemd service and start it
   sudo ./vault/scripts/install_vault_systemd.sh
