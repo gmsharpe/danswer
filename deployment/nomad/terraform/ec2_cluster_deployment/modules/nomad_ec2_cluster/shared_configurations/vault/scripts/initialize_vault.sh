@@ -27,7 +27,7 @@ usage() {
 # fail after 5 attempts with 6 seconds between each attempt
 function wait_for_vault_service() {
   local attempts=0
-  local max_attempts=5
+  local max_attempts=20
   local wait_time=6
   local server_ip=$1
 
