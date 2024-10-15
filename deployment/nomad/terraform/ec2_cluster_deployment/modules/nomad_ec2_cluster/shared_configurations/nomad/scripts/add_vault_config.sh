@@ -35,13 +35,15 @@ echo "# =========================================="
 echo "# === Adding Vault Config to Nomad Agent ==="
 echo -e "# ==========================================\n"
 
+work_dir=${work_dir:-"nomad/config"}
+
 vault_server_ip=${vault_server_ip:-"10.0.1.10"}
 vault_policy_name=${vault_policy_name:-"nomad-cluster"}
 # Set the Vault role name if not already set
 vault_role_name=${vault_role_name:-"nomad-cluster"}
 vault_id=${vault_id:-"nomad-cluster"}
 task_token_ttl=${task_token_ttl:-"1h"}
-vault_policy_template=${vault_policy_template:-"default_vault_policy_template.hcl"}
+vault_policy_template=${vault_policy_template:-"$work_dir/default_vault_policy_template.hcl"}
 
 if [ -z "$vault_token" ]; then
   vault_token = $(grep 'Initial Root Token' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')

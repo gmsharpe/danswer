@@ -9,15 +9,17 @@ else
     plugins=("java" "docker" "raw_exec")
 fi
 
+plugin_scripts_dir=${plugin_scripts_dir:-"nomad/scripts/plugins/"}
+
 for plugin in "${plugins[@]}"; do
     case "$plugin" in
         "java")
             echo "Installing and configuring Java plugin!"
-            plugins/install_java.sh
+            $plugin_scripts_dir/install_java.sh
             ;;
         "docker")
             echo "Installing and configuring Docker plugin!"
-            plugins/install_docker.sh
+            $plugin_scripts_dir/install_docker.sh
             ;;
         "raw_exec")
             echo "Configuring 'raw_exec' plugin!"

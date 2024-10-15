@@ -33,11 +33,11 @@ EOF
 }
 
 data "aws_ssm_parameter" "vault_root_token" {
-  name = "/nomad-cluster-10-15-2024/root-key"
+  name = "/vault-for-nomad-cluster/root-key"
 }
 
 data "aws_ssm_parameter" "vault_unseal_key" {
-  name = "/nomad-cluster-10-15-2024/unseal-keys"
+  name = "/vault-for-nomad-cluster/unseal-keys"
 }
 
 data "aws_ssm_parameter" "nomad_vault_token" {
