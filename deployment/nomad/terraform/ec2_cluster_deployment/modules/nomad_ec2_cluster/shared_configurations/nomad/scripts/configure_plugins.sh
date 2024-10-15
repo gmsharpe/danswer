@@ -13,9 +13,11 @@ for plugin in "${plugins[@]}"; do
     case "$plugin" in
         "java")
             echo "Installing and configuring Java plugin!"
+            plugins/install_java.sh
             ;;
         "docker")
             echo "Installing and configuring Docker plugin!"
+            plugins/install_docker.sh
             ;;
         "raw_exec")
             echo "Configuring 'raw_exec' plugin!"

@@ -2,7 +2,7 @@ job "danswer_web" {
   datacenters = ["dc1"]
   type      = "service"
   namespace = "danswer"
-  node_pool = "primary"
+  node_pool = "default"
 
   vault {
     policies = ["nomad-cluster"]  # Specify the Vault policies to use

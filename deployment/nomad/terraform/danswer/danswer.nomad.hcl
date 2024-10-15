@@ -2,7 +2,7 @@ job "danswer" {
   datacenters = ["dc1"]
   type      = "service"
   namespace = "danswer"
-  node_pool = "secondary"
+  node_pool = "danswer"
 
   vault {
     policies = ["nomad-cluster"]  # Vault policies required for this job

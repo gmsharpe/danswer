@@ -32,6 +32,18 @@ path "secret/data/danswer" {
 EOF
 }
 
+data "aws_ssm_parameter" "vault_root_token" {
+  name = "/nomad-cluster-10-15-2024/root-key"
+}
+
+data "aws_ssm_parameter" "vault_unseal_key" {
+  name = "/nomad-cluster-10-15-2024/unseal-keys"
+}
+
+data "aws_ssm_parameter" "nomad_vault_token" {
+  name = "/nomad-cluster/nomad-cluster/token"
+}
+
 # resource "nomad_acl_policy" "danswer_namespace_read" {
 #   name        = "danswer-namespace-read"
 #   rules_hcl = <<EOR

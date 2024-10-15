@@ -83,7 +83,7 @@ vault_group="vault"
 vault_user="vault"
 vault_comment="Vault"
 vault_home="/opt/vault"
-vault_id=${VAULT_ID:-"nomad-cluster-$(date +'%m-%d-%Y')"}
+vault_id=${VAULT_ID:-"vault-for-nomad-cluster"}
 vault_override=${vault_override:-false}
 
 # Nomad variables

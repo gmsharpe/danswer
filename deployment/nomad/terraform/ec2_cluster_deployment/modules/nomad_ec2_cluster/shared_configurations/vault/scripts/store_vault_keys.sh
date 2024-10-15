@@ -50,7 +50,7 @@ fi
 
 # If no vault_id is provided, set it to the default format 'vault-mm-dd-yyyy'
 if [ -z "$VAULT_ID" ]; then
-  VAULT_ID="vault-${CURRENT_DATE}"
+  VAULT_ID="vault-for-nomad-cluster"
 fi
 
 # Check if the location is 'ssm' and call the corresponding script

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# todo - not currently used (10/14/24)
+
 set -e
 set -o pipefail
 
