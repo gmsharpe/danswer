@@ -18,3 +18,25 @@ sudo mkdir -p /etc/docker
 sudo nano /etc/docker/daemon.json
 
 sudo systemctl restart docker
+
+# Define the content to append
+content=$(cat <<EOF
+
+plugin "docker" {
+  config {
+    allow_privileged = true
+    volumes {
+      enabled = true
+    }
+  }
+}
+EOF
+)
+
+# Append the content to the nomad.hcl file using sudo
+echo "$content" | sudo tee -a /etc/nomad.d/nomad.hcl > /dev/null
+
+# Verify the content was added
+echo "Docker plugin configuration has been appended to /etc/nomad.d/nomad.hcl"
+
+sudo systemctl restart nomad
