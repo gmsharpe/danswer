@@ -1,5 +1,5 @@
 job "danswer_web" {
-  datacenters = ["dc1"]
+  datacenters = ["ats-1"]
   type      = "service"
   namespace = "danswer"
   node_pool = "default"
