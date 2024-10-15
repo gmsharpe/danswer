@@ -5,7 +5,7 @@ job "danswer_web" {
   node_pool = "default"
 
   vault {
-    policies = ["nomad-cluster"]  # Specify the Vault policies to use
+    policies = ["nomad-cluster", "danswer"]  # Specify the Vault policies to use
   }
 
   group "api_group" {
@@ -41,7 +41,7 @@ job "danswer_web" {
       }
 
       vault {
-        policies = ["nomad-cluster"]  # Specify the Vault policies to use
+        policies = ["nomad-cluster", "danswer"]  # Specify the Vault policies to use
       }
 
       resources {
@@ -182,7 +182,7 @@ job "danswer_web" {
       }
 
       vault {
-        policies = ["nomad-cluster"]  # Specify the Vault policies to use
+        policies = ["nomad-cluster", "danswer"]  # Specify the Vault policies to use
       }
 
       # Build arguments (replaced in Nomad by environment variables)

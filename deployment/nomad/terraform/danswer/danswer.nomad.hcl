@@ -5,7 +5,7 @@ job "danswer" {
   node_pool = "danswer"
 
   vault {
-    policies = ["nomad-cluster"]  # Vault policies required for this job
+    policies = ["nomad-cluster", "danswer"]  # Vault policies required for this job
   }
 
   group "background_group" {
@@ -37,7 +37,7 @@ job "danswer" {
       }
 
       vault {
-        policies = ["nomad-cluster"]  # Specify the Vault policies to use
+        policies = ["nomad-cluster", "danswer"]  # Specify the Vault policies to use
       }
       env {
         POSTGRES_HOST = "relational_db"
@@ -239,7 +239,7 @@ job "danswer" {
       }
 
       vault {
-        policies = ["nomad-cluster"]  # Specify the Vault policies to use
+        policies = ["nomad-cluster", "danswer"]  # Specify the Vault policies to use
       }
       # Template block to fetch Vault secrets
       template {
@@ -310,7 +310,7 @@ job "danswer" {
       }
 
       vault {
-        policies = ["nomad-cluster"]  # Specify the Vault policies to use
+        policies = ["nomad-cluster", "danswer"]  # Specify the Vault policies to use
       }
 
       # Environment Variables
@@ -382,7 +382,7 @@ job "danswer" {
       }
 
       vault {
-        policies = ["nomad-cluster"]  # Specify the Vault policies to use
+        policies = ["nomad-cluster", "danswer"]  # Specify the Vault policies to use
       }
 
       # Environment block
@@ -479,7 +479,7 @@ job "danswer" {
       }
 
       vault {
-        policies = ["nomad-cluster"]  # Specify the Vault policies to use
+        policies = ["nomad-cluster", "danswer"]  # Specify the Vault policies to use
       }
 
       env {

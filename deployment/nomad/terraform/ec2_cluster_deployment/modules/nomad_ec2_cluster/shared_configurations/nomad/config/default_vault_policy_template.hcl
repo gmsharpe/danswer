@@ -22,3 +22,9 @@ path "sys/leases/renew" {
 path "sys/leases/revoke" {
   capabilities = ["update"]
 }
+path "sys/policies/acl" {
+  capabilities = ["list"]
+}
+path "sys/policies/acl/*" {
+  capabilities = ["read"]
+}
