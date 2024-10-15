@@ -10,7 +10,7 @@ sudo cp -r /opt/danswer/repo/deployment/data/nginx /var/nomad/volumes/danswer
 
 # Wait for Nomad Server to be ready
 retry_count=0
-max_retries=3
+max_retries=10
 
 echo "Waiting for Nomad to start..."
 while true; do

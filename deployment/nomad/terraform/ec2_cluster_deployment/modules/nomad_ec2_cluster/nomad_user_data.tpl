@@ -84,7 +84,7 @@ sudo WORK_DIR=$work_dir \
 #sudo VAULT_TOKEN=$VAULT_TOKEN $work_dir/scripts/setup_nomad.sh $PRIVATE_IP $SERVER_IP $is_server
 
 # Execute 'create_volumes.sh' script
-sudo VAULT_TOKEN=$VAULT_TOKEN $work_dir/scripts/create_volumes.sh $SERVER_IP
+sudo VAULT_TOKEN=$VAULT_TOKEN ./create_volumes.sh ${server_ip}
 
 # Execute 'post_install_setup.sh' script
 
