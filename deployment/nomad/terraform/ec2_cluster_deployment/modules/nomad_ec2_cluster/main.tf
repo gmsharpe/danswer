@@ -322,13 +322,19 @@ resource "aws_instance" "nomad_instance" {
     ]
   }
 
-  # Add Elastic Block Store (EBS) volume
-  ebs_block_device {
-    device_name = "/dev/xvdf"
-    volume_size = 15 # Size in GB
-    volume_type = "gp2" # General Purpose SSD
-    delete_on_termination = true # Ensures volume is deleted when instance is terminated
+  root_block_device {
+    volume_size           = 15
+    volume_type           = "gp2"
+    delete_on_termination = true
   }
+
+  # Add Elastic Block Store (EBS) volume
+#   ebs_block_device {
+#     device_name = "/dev/xvdf"
+#     volume_size = 15 # Size in GB
+#     volume_type = "gp2" # General Purpose SSD
+#     delete_on_termination = true # Ensures volume is deleted when instance is terminated
+#   }
 
   iam_instance_profile = aws_iam_instance_profile.ec2_ssm_profile.name
 

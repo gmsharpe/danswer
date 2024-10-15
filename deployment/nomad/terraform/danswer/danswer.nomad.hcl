@@ -39,6 +39,10 @@ job "danswer" {
       vault {
         policies = ["nomad-cluster"]  # Specify the Vault policies to use
       }
+      env {
+        POSTGRES_HOST = "relational_db"
+        VESPA_HOST = "index"
+      }
 
 #       env {
 #         IMAGE_TAG                = "${IMAGE_TAG}"
@@ -302,7 +306,7 @@ job "danswer" {
         ]
 
         # Mount the Huggingface cache as a volume
-        volumes = ["model_cache_huggingface:/root/.cache/huggingface/"]
+        #volumes = ["model_cache_huggingface:/root/.cache/huggingface/"]
       }
 
       vault {
@@ -374,7 +378,7 @@ job "danswer" {
         ]
 
         # Mount the Huggingface cache as a volume
-        volumes = ["indexing_model_cache_huggingface:/root/.cache/huggingface/"]
+        #volumes = ["indexing_model_cache_huggingface:/root/.cache/huggingface/"]
       }
 
       vault {
@@ -468,7 +472,7 @@ job "danswer" {
         image = "vespaengine/vespa:8.277.17"
 
         # Mount volume for Vespa data
-        volumes = ["vespa:/opt/vespa/var"]
+        #volumes = ["vespa:/opt/vespa/var"]
 
         # Set the container to run in the background with the appropriate ports
         ports = ["vespa_admin", "vespa_http"]
