@@ -1,0 +1,54 @@
+{
+  "path": {
+    "auth/token/create": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "auth/token/roles/nomad-cluster": {
+      "capabilities": [
+        "read"
+      ]
+    },
+    "auth/token/lookup-self": {
+      "capabilities": [
+        "read"
+      ]
+    },
+    "auth/token/create/nomad-cluster": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "auth/token/revoke-accessor": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "sys/capabilities-self": {
+      "capabilities": [
+        "read"
+      ]
+    },
+    "sys/leases/renew": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "sys/leases/revoke": {
+      "capabilities": [
+        "update"
+      ]
+    },
+    "sys/policies/acl": {
+      "capabilities": [
+        "list"
+      ]
+    },
+    "sys/policies/acl/*": {
+      "capabilities": [
+        "read"
+      ]
+    }
+  }
+}

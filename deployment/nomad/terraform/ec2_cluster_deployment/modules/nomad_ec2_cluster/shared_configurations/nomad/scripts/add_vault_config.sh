@@ -43,7 +43,7 @@ vault_policy_name=${vault_policy_name:-"nomad-cluster"}
 vault_role_name=${vault_role_name:-"nomad-cluster"}
 vault_id=${vault_id:-"nomad-cluster"}
 task_token_ttl=${task_token_ttl:-"1h"}
-vault_policy_template=${vault_policy_template:-"$work_dir/default_vault_policy_template.hcl"}
+vault_policy_template=${vault_policy_template:-"$work_dir/default_vault_policy_template.json"}
 
 if [ -z "$vault_token" ]; then
   vault_token = $(grep 'Initial Root Token' /opt/vault/data/vault-init-output.txt | awk '{print $NF}')

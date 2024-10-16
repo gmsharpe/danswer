@@ -12,7 +12,7 @@ variable "bastion_instance_type" {
   default = "t2.micro"
 }
 variable "nomad_instance_type" {
-  default = "t2.large"
+  default = "t2.xlarge"
 }
 variable "install_consul" {
   default = true

@@ -33,7 +33,8 @@ job "danswer" {
 
       resources {
         cpu    = 500
-        memory = 1024
+        memory = 4096
+        disk   = 4000
       }
 
       vault {
@@ -277,6 +278,11 @@ job "danswer" {
 
   group "model_group" {
     count = 1
+    ephemeral_disk {
+      migrate = true
+      size    = 10000
+      sticky  = true
+    }
     network {
       port "inference_http" {
         static = 9000
@@ -341,7 +347,7 @@ job "danswer" {
       resources {
         cpu    = 500
 
-        memory = 1024
+        memory = 4096
       }
 
       # Restart policy: on-failure
@@ -413,7 +419,7 @@ job "danswer" {
       # Resources allocation
       resources {
         cpu    = 500
-        memory = 2048
+        memory = 4096
       }
 
       # Restart policy: on-failure
@@ -469,6 +475,7 @@ job "danswer" {
         }
       }
       config {
+        # https://hub.docker.com/r/vespaengine/vespa/
         image = "vespaengine/vespa:8.277.17"
 
         # Mount volume for Vespa data
@@ -489,7 +496,7 @@ job "danswer" {
       # Resources for the Vespa task
       resources {
         cpu = 1000   # 1000 MHz (1 core)
-        memory = 2048   # 2 GB of RAM
+        memory = 4096   # 2 GB of RAM
       }
 
       # Restart policy (always restart)
