@@ -15,7 +15,7 @@ sudo systemctl enable docker
 # Configure Docker Daemon - Ensure Docker uses the systemd cgroup driver, which is recommended for
 # compatibility with systemd and Nomad.
 sudo mkdir -p /etc/docker
-sudo nano /etc/docker/daemon.json
+#sudo nano /etc/docker/daemon.json
 
 sudo systemctl restart docker
 
@@ -41,4 +41,4 @@ cat /etc/nomad.d/nomad.hcl
 # Verify the content was added
 echo "Docker plugin configuration has been appended to /etc/nomad.d/nomad.hcl"
 
-sudo systemctl restart nomad
+#sudo systemctl restart nomad
