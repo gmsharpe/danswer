@@ -3,7 +3,7 @@
 SERVER_IP=$1
 
 # Create the directories for the Nomad volumes
-sudo mkdir -p /var/nomad/volumes/danswer/{db,vespa,nginx,indexing_model_cache_huggingface,model_cache_huggingface}
+sudo mkdir -p /var/nomad/volumes/danswer/{db,vespa,nginx,indexing_model_cache_huggingface,model_cache_huggingface,cache}
 
 # Copy nginx files
 sudo cp -r /opt/danswer/repo/deployment/data/nginx /var/nomad/volumes/danswer
