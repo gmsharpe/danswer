@@ -20,7 +20,7 @@ sudo mkdir -p /etc/docker
 sudo systemctl restart docker
 
 # Define the content to append
-content=$(cat <<EOF
+cat <<EOT >> /etc/nomad.d/nomad.hcl
 
 plugin "docker" {
   config {
@@ -30,13 +30,7 @@ plugin "docker" {
     }
   }
 }
-EOF
-)
-
-# Append the content to the nomad.hcl file using sudo
-echo "$content" | sudo tee -a /etc/nomad.d/nomad.hcl > /dev/null
-
-cat /etc/nomad.d/nomad.hcl
+EOT
 
 # Verify the content was added
 echo "Docker plugin configuration has been appended to /etc/nomad.d/nomad.hcl"
