@@ -491,6 +491,7 @@ job "danswer" {
 
       env {
         VESPA_PORT = 19071
+        VESPA_TMP="/opt/vespa/var/tmp"
       }
 
       # Resources for the Vespa task

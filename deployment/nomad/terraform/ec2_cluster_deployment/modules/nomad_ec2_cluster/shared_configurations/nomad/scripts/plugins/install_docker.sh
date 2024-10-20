@@ -36,6 +36,8 @@ EOF
 # Append the content to the nomad.hcl file using sudo
 echo "$content" | sudo tee -a /etc/nomad.d/nomad.hcl > /dev/null
 
+cat /etc/nomad.d/nomad.hcl
+
 # Verify the content was added
 echo "Docker plugin configuration has been appended to /etc/nomad.d/nomad.hcl"
 
