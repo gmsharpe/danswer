@@ -33,7 +33,7 @@ done
 base_path="/var/nomad/volumes/danswer"
 
 # Array of volume names
-volume_names=("db" "vespa" "model_cache_huggingface" "indexing_model_cache_huggingface" "nginx")
+volume_names=("db" "vespa" "model_cache_huggingface" "indexing_model_cache_huggingface" "nginx" "cache")
 
 # Define the Nomad config file path
 nomad_hcl_file="/etc/nomad.d/nomad.hcl"

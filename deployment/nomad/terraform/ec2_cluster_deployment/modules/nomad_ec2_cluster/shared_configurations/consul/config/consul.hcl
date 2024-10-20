@@ -11,3 +11,7 @@ bootstrap_expect = ${server_count}
 ui_config {
   enabled = true
 }
+
+ports {
+  dns = 8600
+}

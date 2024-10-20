@@ -278,7 +278,7 @@ variable "web_domain" {
 variable "document_encoder_model" {
   type        = string
   description = "Model used for document encoding."
-  default     = "default_encoder_model"
+  default     = "nomic-ai/nomic-embed-text-v1"
 }
 
 variable "doc_embedding_dim" {

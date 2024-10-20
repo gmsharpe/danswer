@@ -41,95 +41,13 @@ job "danswer" {
         policies = ["nomad-cluster"]  # Specify the Vault policies to use
       }
       env {
-        POSTGRES_HOST = "relational_db"
-        VESPA_HOST = "index"
+        MODEL_SERVER_HOST = "model-server.service.consul"
+        MODEL_SERVER_PORT = 9000
+        INDEXING_MODEL_SERVER_HOST = "indexing-model-server.service.consul"
+        POSTGRES_HOST = "relational-db.service.consul"
+        VESPA_HOST = "index.service.consul"
       }
 
-#       env {
-#         IMAGE_TAG                = "${IMAGE_TAG}"
-#         ENCRYPTION_KEY_SECRET     = "${ENCRYPTION_KEY_SECRET}"
-#
-#         # Gen AI Settings (Needed by DanswerBot)
-#         GEN_AI_MAX_TOKENS          = "${GEN_AI_MAX_TOKENS}"
-#         QA_TIMEOUT                 = "${QA_TIMEOUT}"
-#         MAX_CHUNKS_FED_TO_CHAT     = "${MAX_CHUNKS_FED_TO_CHAT}"
-#         DISABLE_LLM_CHOOSE_SEARCH  = "${DISABLE_LLM_CHOOSE_SEARCH}"
-#         DISABLE_LLM_QUERY_REPHRASE = "${DISABLE_LLM_QUERY_REPHRASE}"
-#         DISABLE_GENERATIVE_AI      = "${DISABLE_GENERATIVE_AI}"
-#         GENERATIVE_MODEL_ACCESS_CHECK_FREQ = "${GENERATIVE_MODEL_ACCESS_CHECK_FREQ}"
-#         DISABLE_LITELLM_STREAMING  = "${DISABLE_LITELLM_STREAMING}"
-#         LITELLM_EXTRA_HEADERS      = "${LITELLM_EXTRA_HEADERS}"
-#         BING_API_KEY               = "${BING_API_KEY}"
-#
-#         # Query Options
-#         DOC_TIME_DECAY = "${DOC_TIME_DECAY}"
-#         # Recency Bias for search results, decay at 1 / (1 + DOC_TIME_DECAY * x years)
-#         HYBRID_ALPHA = "${HYBRID_ALPHA}"
-#         # Hybrid Search Alpha (0 for entirely keyword, 1 for entirely vector)
-#         EDIT_KEYWORD_QUERY           = "${EDIT_KEYWORD_QUERY}"
-#         MULTILINGUAL_QUERY_EXPANSION = "${MULTILINGUAL_QUERY_EXPANSION}"
-#         LANGUAGE_HINT                = "${LANGUAGE_HINT}"
-#         LANGUAGE_CHAT_NAMING_HINT    = "${LANGUAGE_CHAT_NAMING_HINT}"
-#         QA_PROMPT_OVERRIDE           = "${QA_PROMPT_OVERRIDE}"
-#
-#         # Other Services
-#         POSTGRES_HOST     = "relational_db"
-#         POSTGRES_USER     = "${POSTGRES_USER}"
-#         POSTGRES_PASSWORD = "${POSTGRES_PASSWORD}"
-#         POSTGRES_DB       = "${POSTGRES_DB}"
-#         VESPA_HOST        = "index"
-#         WEB_DOMAIN        = "${WEB_DOMAIN}"  # For frontend redirect auth purpose for OAuth2 connectors
-#
-#         # Don't change the NLP model configs unless you know what you're doing
-#         DOCUMENT_ENCODER_MODEL = "${DOCUMENT_ENCODER_MODEL}"
-#         DOC_EMBEDDING_DIM      = "${DOC_EMBEDDING_DIM}"
-#         NORMALIZE_EMBEDDINGS   = "${NORMALIZE_EMBEDDINGS}"
-#         ASYM_QUERY_PREFIX      = "${ASYM_QUERY_PREFIX}"  # Needed by DanswerBot
-#         ASYM_PASSAGE_PREFIX    = "${ASYM_PASSAGE_PREFIX}"
-#         MODEL_SERVER_HOST      = "${MODEL_SERVER_HOST}"
-#         MODEL_SERVER_PORT      = "${MODEL_SERVER_PORT}"
-#         INDEXING_MODEL_SERVER_HOST = "${INDEXING_MODEL_SERVER_HOST}"
-#
-#         # Indexing Configs
-#         NUM_INDEXING_WORKERS                          = "${NUM_INDEXING_WORKERS}"
-#         ENABLED_CONNECTOR_TYPES                       = "${ENABLED_CONNECTOR_TYPES}"
-#         DISABLE_INDEX_UPDATE_ON_SWAP                  = "${DISABLE_INDEX_UPDATE_ON_SWAP}"
-#         DASK_JOB_CLIENT_ENABLED                       = "${DASK_JOB_CLIENT_ENABLED}"
-#         CONTINUE_ON_CONNECTOR_FAILURE                 = "${CONTINUE_ON_CONNECTOR_FAILURE}"
-#         EXPERIMENTAL_CHECKPOINTING_ENABLED            = "${EXPERIMENTAL_CHECKPOINTING_ENABLED}"
-#         CONFLUENCE_CONNECTOR_LABELS_TO_SKIP           = "${CONFLUENCE_CONNECTOR_LABELS_TO_SKIP}"
-#         JIRA_CONNECTOR_LABELS_TO_SKIP                 = "${JIRA_CONNECTOR_LABELS_TO_SKIP}"
-#         WEB_CONNECTOR_VALIDATE_URLS                   = "${WEB_CONNECTOR_VALIDATE_URLS}"
-#         JIRA_API_VERSION                              = "${JIRA_API_VERSION}"
-#         GONG_CONNECTOR_START_TIME                     = "${GONG_CONNECTOR_START_TIME}"
-#         NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP = "${NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP}"
-#         GITHUB_CONNECTOR_BASE_URL                     = "${GITHUB_CONNECTOR_BASE_URL}"
-#
-#         # Danswer SlackBot Configs
-#         DANSWER_BOT_SLACK_APP_TOKEN          = "${DANSWER_BOT_SLACK_APP_TOKEN}"
-#         DANSWER_BOT_SLACK_BOT_TOKEN          = "${DANSWER_BOT_SLACK_BOT_TOKEN}"
-#         DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER = "${DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER}"
-#         DANSWER_BOT_FEEDBACK_VISIBILITY      = "${DANSWER_BOT_FEEDBACK_VISIBILITY}"
-#         DANSWER_BOT_DISPLAY_ERROR_MSGS       = "${DANSWER_BOT_DISPLAY_ERROR_MSGS}"
-#         DANSWER_BOT_RESPOND_EVERY_CHANNEL    = "${DANSWER_BOT_RESPOND_EVERY_CHANNEL}"
-#         DANSWER_BOT_DISABLE_COT              = "${DANSWER_BOT_DISABLE_COT}"  # Currently unused
-#         NOTIFY_SLACKBOT_NO_ANSWER            = "${NOTIFY_SLACKBOT_NO_ANSWER}"
-#         DANSWER_BOT_MAX_QPM                  = "${DANSWER_BOT_MAX_QPM}"
-#         DANSWER_BOT_MAX_WAIT_TIME            = "${DANSWER_BOT_MAX_WAIT_TIME}"
-#
-#         # Logging
-#         # Leave this on pretty please? Nothing sensitive is collected!
-#         # https://docs.danswer.dev/more/telemetry
-#         DISABLE_TELEMETRY              = "${DISABLE_TELEMETRY}"
-#         LOG_LEVEL                      = "${LOG_LEVEL}"  # Set to debug to get more fine-grained logs
-#         # Log all of Danswer prompts and interactions with the LLM
-#         LOG_ALL_MODEL_INTERACTIONS     = "${LOG_ALL_MODEL_INTERACTIONS}"  # LiteLLM Verbose Logging
-#         LOG_DANSWER_MODEL_INTERACTIONS = "${LOG_DANSWER_MODEL_INTERACTIONS}"
-#         LOG_VESPA_TIMING_INFORMATION   = "${LOG_VESPA_TIMING_INFORMATION}"
-#
-#         # Enterprise Edition stuff
-#         ENABLE_PAID_ENTERPRISE_EDITION_FEATURES = "${ENABLE_PAID_ENTERPRISE_EDITION_FEATURES}"
-#       }
 
       # Template block to fetch Vault secrets
       template {
@@ -163,9 +81,9 @@ job "danswer" {
         NORMALIZE_EMBEDDINGS={{ .Data.data.NORMALIZE_EMBEDDINGS }}
         ASYM_QUERY_PREFIX={{ .Data.data.ASYM_QUERY_PREFIX }}
         ASYM_PASSAGE_PREFIX={{ .Data.data.ASYM_PASSAGE_PREFIX }}
-        MODEL_SERVER_HOST={{ .Data.data.MODEL_SERVER_HOST }}
-        MODEL_SERVER_PORT={{ .Data.data.MODEL_SERVER_PORT }}
-        INDEXING_MODEL_SERVER_HOST={{ .Data.data.INDEXING_MODEL_SERVER_HOST }}
+
+
+
         NUM_INDEXING_WORKERS={{ .Data.data.NUM_INDEXING_WORKERS }}
         ENABLED_CONNECTOR_TYPES={{ .Data.data.ENABLED_CONNECTOR_TYPES }}
         DISABLE_INDEX_UPDATE_ON_SWAP={{ .Data.data.DISABLE_INDEX_UPDATE_ON_SWAP }}
@@ -216,8 +134,8 @@ job "danswer" {
       driver = "docker"
 
       service {
-        name = "danswer-db"
-        tags = ["danswer-db"]
+        name = "relational-db"
+        tags = ["relational-db"]
         port = "db_port"
         check {
           type     = "tcp"
@@ -232,6 +150,19 @@ job "danswer" {
         max_files     = 5
         max_file_size = 10
       }
+
+    template {
+      data = <<EOH
+      {{ with secret "secret/data/danswer" }}
+      POSTGRES_USER={{ .Data.data.POSTGRES_USER }}
+      POSTGRES_PASSWORD={{ .Data.data.POSTGRES_PASSWORD }}
+      {{ end }}
+      EOH
+
+      destination = "local/env.sh"
+      env         = true
+    }
+
       config {
         image = "postgres:15.2-alpine"
         command = "postgres"
@@ -242,22 +173,7 @@ job "danswer" {
       vault {
         policies = ["nomad-cluster"]  # Specify the Vault policies to use
       }
-      # Template block to fetch Vault secrets
-      template {
-        data = <<EOH
-        {{ with secret "secret/data/danswer" }}
-        POSTGRES_USER={{ .Data.data.POSTGRES_USER }}
-        POSTGRES_PASSWORD={{ .Data.data.POSTGRES_PASSWORD }}
-        {{ end }}
-        EOH
 
-        destination = "local/env.sh"
-        env         = true
-      }
-#       env {
-#         POSTGRES_USER        = "${POSTGRES_USER}"
-#         POSTGRES_PASSWORD    = "${POSTGRES_PASSWORD}"
-#       }
       resources {
         cpu    = 500
         memory = 1024
@@ -294,6 +210,17 @@ job "danswer" {
     # Inference Model Server
     task "inference_model_server" {
       driver = "docker"
+
+    service {
+      name = "model-server"
+      port = "inference_http"
+      check {
+        type     = "tcp"
+        interval = "10s"
+        timeout  = "2s"
+      }
+    }
+
       logs {
         enabled       = true
         max_files     = 5
@@ -308,7 +235,7 @@ job "danswer" {
         command = "/bin/sh"
         args = [
           "-c",
-          "if [ \"${DISABLE_MODEL_SERVER}\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000; fi"
+          "if [ \"${DISABLE_MODEL_SERVER}\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port ${NOMAD_PORT_inference_http}; fi"
         ]
 
         # Mount the Huggingface cache as a volume
@@ -368,6 +295,17 @@ job "danswer" {
     # Indexing Model Server
     task "indexing_model_server" {
       driver = "docker"
+
+      service {
+        name = "indexing-model-server"
+        port = "indexing_http"
+        check {
+          type     = "tcp"
+          interval = "10s"
+          timeout  = "2s"
+        }
+      }
+
       logs {
         enabled       = true
         max_files     = 5
@@ -380,7 +318,7 @@ job "danswer" {
         command = "/bin/sh"
         args = [
           "-c",
-          "if [ \"${DISABLE_MODEL_SERVER}\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000; fi"
+          "if [ \"${DISABLE_MODEL_SERVER}\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port ${NOMAD_PORT_indexing_http}; fi"
         ]
 
         # Mount the Huggingface cache as a volume
@@ -465,8 +403,9 @@ job "danswer" {
     # Vespa index task
     task "index" {
       driver = "docker"
+      user = "root"
       service {
-        name = "vespa-db"
+        name = "index"
         port = "vespa_admin"
         check {
           type     = "tcp"
@@ -474,12 +413,12 @@ job "danswer" {
           timeout  = "2s"
         }
       }
+
       config {
         # https://hub.docker.com/r/vespaengine/vespa/
         image = "vespaengine/vespa:8.277.17"
 
-        # Mount volume for Vespa data
-        #volumes = ["vespa:/opt/vespa/var"]
+        privileged = true
 
         # Set the container to run in the background with the appropriate ports
         ports = ["vespa_admin", "vespa_http"]
@@ -491,7 +430,7 @@ job "danswer" {
 
       env {
         VESPA_PORT = 19071
-        VESPA_TMP="/opt/vespa/var/tmp"
+        #VESPA_TMP="/opt/vespa/var"
       }
 
       # Resources for the Vespa task
