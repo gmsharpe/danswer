@@ -15,12 +15,10 @@ from danswer.db.engine import get_session
 from danswer.db.models import User
 from danswer.db.notification import create_notification
 from danswer.db.notification import dismiss_all_notifications
-from danswer.db.notification import dismiss_notification
-from danswer.db.notification import get_notification_by_id
 from danswer.db.notification import get_notifications
 from danswer.db.notification import update_notification_last_shown
-from danswer.dynamic_configs.factory import get_dynamic_config_store
-from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.key_value_store.factory import get_kv_store
+from danswer.key_value_store.interface import KvKeyNotFoundError
 from danswer.server.settings.models import Notification
 from danswer.server.settings.models import Settings
 from danswer.server.settings.models import UserSettings
@@ -55,12 +53,12 @@ def fetch_settings(
     """Settings and notifications are stuffed into this single endpoint to reduce number of
     Postgres calls"""
     general_settings = load_settings()
-    user_notifications = get_user_notifications(user, db_session)
+    user_notifications = get_reindex_notification(user, db_session)
 
     try:
-        kv_store = get_dynamic_config_store()
+        kv_store = get_kv_store()
         needs_reindexing = cast(bool, kv_store.load(KV_REINDEX_KEY))
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         needs_reindexing = False
 
     return UserSettings(
@@ -70,25 +68,7 @@ def fetch_settings(
     )
 
 
-@basic_router.post("/notifications/{notification_id}/dismiss")
-def dismiss_notification_endpoint(
-    notification_id: int,
-    user: User | None = Depends(current_user),
-    db_session: Session = Depends(get_session),
-) -> None:
-    try:
-        notification = get_notification_by_id(notification_id, user, db_session)
-    except PermissionError:
-        raise HTTPException(
-            status_code=403, detail="Not authorized to dismiss this notification"
-        )
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Notification not found")
-
-    dismiss_notification(notification, db_session)
-
-
-def get_user_notifications(
+def get_reindex_notification(
     user: User | None, db_session: Session
 ) -> list[Notification]:
     """Get notifications for the user, currently the logic is very specific to the reindexing flag"""
@@ -97,7 +77,7 @@ def get_user_notifications(
         # Reindexing flag should only be shown to admins, basic users can't trigger it anyway
         return []
 
-    kv_store = get_dynamic_config_store()
+    kv_store = get_kv_store()
     try:
         needs_index = cast(bool, kv_store.load(KV_REINDEX_KEY))
         if not needs_index:
@@ -105,7 +85,7 @@ def get_user_notifications(
                 notif_type=NotificationType.REINDEX, db_session=db_session
             )
             return []
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         # If something goes wrong and the flag is gone, better to not start a reindexing
         # it's a heavyweight long running job and maybe this flag is cleaned up later
         logger.warning("Could not find reindex flag")
@@ -121,7 +101,7 @@ def get_user_notifications(
 
         if not reindex_notifs:
             notif = create_notification(
-                user=user,
+                user_id=user.id if user else None,
                 notif_type=NotificationType.REINDEX,
                 db_session=db_session,
             )

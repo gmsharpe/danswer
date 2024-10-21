@@ -1,9 +1,16 @@
-import React, { Dispatch, forwardRef, SetStateAction, useState } from "react";
+import React, {
+  Dispatch,
+  forwardRef,
+  SetStateAction,
+  useContext,
+  useState,
+} from "react";
 import { Formik, Form, FormikProps } from "formik";
 import * as Yup from "yup";
 import {
   RerankerProvider,
   RerankingDetails,
+  RerankingModel,
   rerankingModels,
 } from "./interfaces";
 import { FiExternalLink } from "react-icons/fi";
@@ -15,6 +22,7 @@ import {
 import { Modal } from "@/components/Modal";
 import { Button } from "@tremor/react";
 import { TextFormField } from "@/components/admin/connectors/Field";
+import { SettingsContext } from "@/components/settings/SettingsProvider";
 
 interface RerankingDetailsFormProps {
   setRerankingDetails: Dispatch<SetStateAction<RerankingDetails>>;
@@ -38,9 +46,14 @@ const RerankingDetailsForm = forwardRef<
     },
     ref
   ) => {
+    const [showGpuWarningModalModel, setShowGpuWarningModalModel] =
+      useState<RerankingModel | null>(null);
     const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
     const [showLiteLLMConfigurationModal, setShowLiteLLMConfigurationModal] =
       useState(false);
+
+    const combinedSettings = useContext(SettingsContext);
+    const gpuEnabled = combinedSettings?.settings.gpu_enabled;
 
     return (
       <Formik
@@ -67,13 +80,12 @@ const RerankingDetailsForm = forwardRef<
         {({ values, setFieldValue, resetForm }) => {
           const resetRerankingValues = () => {
             setRerankingDetails({
-              ...values,
-              rerank_provider_type: null!,
+              rerank_api_key: null,
+              rerank_provider_type: null,
               rerank_model_name: null,
+              rerank_api_url: null,
             });
-            setFieldValue("rerank_provider_type", null);
-            setFieldValue("rerank_model_name", null);
-            setFieldValue("rerank_api_key", null);
+            resetForm();
           };
 
           return (
@@ -175,6 +187,11 @@ const RerankingDetailsForm = forwardRef<
                             RerankerProvider.LITELLM
                           ) {
                             setShowLiteLLMConfigurationModal(true);
+                          } else if (
+                            !card.rerank_provider_type &&
+                            !gpuEnabled
+                          ) {
+                            setShowGpuWarningModalModel(card);
                           }
 
                           if (!isSelected) {
@@ -198,7 +215,8 @@ const RerankingDetailsForm = forwardRef<
                             {card.rerank_provider_type ===
                             RerankerProvider.LITELLM ? (
                               <LiteLLMIcon size={24} className="mr-2" />
-                            ) : RerankerProvider.COHERE ? (
+                            ) : card.rerank_provider_type ===
+                              RerankerProvider.COHERE ? (
                               <CohereIcon size={24} className="mr-2" />
                             ) : (
                               <MixedBreadIcon size={24} className="mr-2" />
@@ -230,6 +248,33 @@ const RerankingDetailsForm = forwardRef<
                   })}
                 </div>
 
+                {showGpuWarningModalModel && (
+                  <Modal
+                    onOutsideClick={() => setShowGpuWarningModalModel(null)}
+                    width="w-[500px] flex flex-col"
+                    title="GPU Not Enabled"
+                  >
+                    <>
+                      <p className="text-error font-semibold">Warning:</p>
+                      <p>
+                        Local reranking models require significant computational
+                        resources and may perform slowly without GPU
+                        acceleration. Consider switching to GPU-enabled
+                        infrastructure or using a cloud-based alternative for
+                        better performance.
+                      </p>
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={() => setShowGpuWarningModalModel(null)}
+                          color="blue"
+                          size="xs"
+                        >
+                          Understood
+                        </Button>
+                      </div>
+                    </>
+                  </Modal>
+                )}
                 {showLiteLLMConfigurationModal && (
                   <Modal
                     onOutsideClick={() => {
@@ -346,7 +391,7 @@ const RerankingDetailsForm = forwardRef<
                         }}
                         type="password"
                         label="Cohere API Key"
-                        name="api_key"
+                        name="rerank_api_key"
                       />
                       <div className="flex w-full justify-end mt-4">
                         <Button

@@ -8,8 +8,11 @@ Edition features outside of personal development or testing purposes. Please rea
 founders@danswer.ai for more information. Please visit https://github.com/danswer-ai/danswer"
 
 # Default DANSWER_VERSION, typically overriden during builds by GitHub Actions.
-ARG DANSWER_VERSION=0.3-dev
-ENV DANSWER_VERSION=${DANSWER_VERSION}
+ARG DANSWER_VERSION=0.8-dev
+ENV DANSWER_VERSION=${DANSWER_VERSION} \
+    DANSWER_RUNNING_IN_DOCKER="true"
+
+ARG CA_CERT_CONTENT=""
 
 RUN echo "DANSWER_VERSION: ${DANSWER_VERSION}"
 # Install system dependencies
@@ -35,11 +38,24 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
+
+# Conditionally write the CA certificate and update certificates
+RUN if [ -n "$CA_CERT_CONTENT" ]; then \
+    echo "Adding custom CA certificate"; \
+    echo "$CA_CERT_CONTENT" > /usr/local/share/ca-certificates/my-ca.crt && \
+    chmod 644 /usr/local/share/ca-certificates/my-ca.crt && \
+    update-ca-certificates; \
+else \
+    echo "No custom CA certificate provided"; \
+fi
+
 # Install Python dependencies
 # Remove py which is pulled in by retry, py is not needed and is a CVE
 COPY ./requirements/default.txt /tmp/requirements.txt
 COPY ./requirements/ee.txt /tmp/ee-requirements.txt
 RUN pip install --no-cache-dir --upgrade \
+        --retries 5 \
+        --timeout 30 \
         -r /tmp/requirements.txt \
         -r /tmp/ee-requirements.txt && \
     pip uninstall -y py && \
@@ -89,6 +105,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY ./danswer /app/danswer
 COPY ./shared_configs /app/shared_configs
 COPY ./alembic /app/alembic
+COPY ./alembic_tenants /app/alembic_tenants
 COPY ./alembic.ini /app/alembic.ini
 COPY supervisord.conf /usr/etc/supervisord.conf
 
@@ -98,7 +115,7 @@ COPY ./scripts/force_delete_connector_by_id.py /app/scripts/force_delete_connect
 # Put logo in assets
 COPY ./assets /app/assets
 
-ENV PYTHONPATH /app
+ENV PYTHONPATH=/app
 
 # Default command which does nothing
 # This container is used by api server and background which specify their own CMD

@@ -5,7 +5,7 @@ import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrap
 import { ChatProvider } from "@/components/context/ChatContext";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import WrappedChat from "./WrappedChat";
-import { ProviderContextProvider } from "@/components/chat_search/ProviderContext";
+import { AssistantsProvider } from "@/components/context/AssistantsContext";
 
 export default async function Page({
   searchParams,
@@ -25,7 +25,6 @@ export default async function Page({
     chatSessions,
     availableSources,
     documentSets,
-    assistants,
     tags,
     llmProviders,
     folders,
@@ -33,33 +32,38 @@ export default async function Page({
     openedFolders,
     defaultAssistantId,
     shouldShowWelcomeModal,
+    assistants,
     userInputPrompts,
+    hasAnyConnectors,
+    hasImageCompatibleModel,
   } = data;
 
   return (
     <>
       <InstantSSRAutoRefresh />
       {shouldShowWelcomeModal && <WelcomeModal user={user} />}
-
-      <ChatProvider
-        value={{
-          chatSessions,
-          availableSources,
-          availableDocumentSets: documentSets,
-          availableAssistants: assistants,
-          availableTags: tags,
-          llmProviders,
-          folders,
-          openedFolders,
-          userInputPrompts,
-          shouldShowWelcomeModal,
-          defaultAssistantId,
-        }}
+      <AssistantsProvider
+        initialAssistants={assistants}
+        hasAnyConnectors={hasAnyConnectors}
+        hasImageCompatibleModel={hasImageCompatibleModel}
       >
-        <ProviderContextProvider>
+        <ChatProvider
+          value={{
+            chatSessions,
+            availableSources,
+            availableDocumentSets: documentSets,
+            availableTags: tags,
+            llmProviders,
+            folders,
+            openedFolders,
+            userInputPrompts,
+            shouldShowWelcomeModal,
+            defaultAssistantId,
+          }}
+        >
           <WrappedChat initiallyToggled={toggleSidebar} />
-        </ProviderContextProvider>
-      </ChatProvider>
+        </ChatProvider>
+      </AssistantsProvider>
     </>
   );
 }

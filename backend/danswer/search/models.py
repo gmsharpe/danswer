@@ -84,6 +84,7 @@ class SavedSearchSettings(InferenceSettings, IndexingSetting):
             # Multilingual Expansion
             multilingual_expansion=search_settings.multilingual_expansion,
             rerank_api_url=search_settings.rerank_api_url,
+            disable_rerank_for_streaming=search_settings.disable_rerank_for_streaming,
         )
 
 
@@ -101,6 +102,7 @@ class BaseFilters(BaseModel):
 
 class IndexFilters(BaseFilters):
     access_control_list: list[str] | None
+    tenant_id: str | None = None
 
 
 class ChunkMetric(BaseModel):

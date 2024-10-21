@@ -2,7 +2,7 @@
 
 import { generateRandomIconShape, createSVG } from "@/lib/assistantIconUtils";
 
-import { CCPairBasicInfo, DocumentSet, User, UserRole } from "@/lib/types";
+import { CCPairBasicInfo, DocumentSet, User } from "@/lib/types";
 import { Button, Divider, Italic } from "@tremor/react";
 import { IsPublicGroupSelector } from "@/components/IsPublicGroupSelector";
 import {
@@ -25,9 +25,7 @@ import { usePopup } from "@/components/admin/connectors/Popup";
 import { getDisplayNameForModel } from "@/lib/hooks";
 import { DocumentSetSelectable } from "@/components/documentSet/DocumentSetSelectable";
 import { Option } from "@/components/Dropdown";
-import { usePaidEnterpriseFeaturesEnabled } from "@/components/settings/usePaidEnterpriseFeaturesEnabled";
 import { addAssistantToList } from "@/lib/assistants/updateAssistantPreferences";
-import { useUserGroups } from "@/lib/hooks";
 import { checkLLMSupportsImageInput, destructureValue } from "@/lib/llm/utils";
 import { ToolSnapshot } from "@/lib/tools/interfaces";
 import { checkUserIsNoAuthUser } from "@/lib/user";
@@ -47,7 +45,12 @@ import { FullLLMProvider } from "../configuration/llm/interfaces";
 import CollapsibleSection from "./CollapsibleSection";
 import { SuccessfulPersonaUpdateRedirectType } from "./enums";
 import { Persona, StarterMessage } from "./interfaces";
-import { buildFinalPrompt, createPersona, updatePersona } from "./lib";
+import {
+  buildFinalPrompt,
+  createPersona,
+  providersContainImageGeneratingSupport,
+  updatePersona,
+} from "./lib";
 import { Popover } from "@/components/popover/Popover";
 import {
   CameraIcon,
@@ -103,6 +106,7 @@ export function AssistantEditor({
   admin?: boolean;
 }) {
   const router = useRouter();
+
   const { popup, setPopup } = usePopup();
 
   const colorOptions = [
@@ -128,14 +132,9 @@ export function AssistantEditor({
     if (defaultIconShape === null) {
       setDefaultIconShape(generateRandomIconShape().encodedGrid);
     }
-  }, []);
+  }, [defaultIconShape]);
 
   const [isIconDropdownOpen, setIsIconDropdownOpen] = useState(false);
-
-  const isPaidEnterpriseFeaturesEnabled = usePaidEnterpriseFeaturesEnabled();
-
-  // EE only
-  const { data: userGroups, isLoading: userGroupsIsLoading } = useUserGroups();
 
   const [finalPrompt, setFinalPrompt] = useState<string | null>("");
   const [finalPromptError, setFinalPromptError] = useState<string>("");
@@ -167,7 +166,7 @@ export function AssistantEditor({
         existingPersona.num_chunks === 0
       );
     }
-  }, []);
+  }, [isUpdate, existingPrompt, existingPersona?.num_chunks]);
 
   const defaultProvider = llmProviders.find(
     (llmProvider) => llmProvider.is_default_provider
@@ -192,16 +191,12 @@ export function AssistantEditor({
     });
     modelOptionsByProvider.set(llmProvider.name, providerOptions);
   });
-  const providerSupportingImageGenerationExists = llmProviders.some(
-    (provider) => provider.provider === "openai"
-  );
 
   const personaCurrentToolIds =
     existingPersona?.tools.map((tool) => tool.id) || [];
+
   const searchTool = findSearchTool(tools);
-  const imageGenerationTool = providerSupportingImageGenerationExists
-    ? findImageGenerationTool(tools)
-    : undefined;
+  const imageGenerationTool = findImageGenerationTool(tools);
   const internetSearchTool = findInternetSearchTool(tools);
 
   const customTools = tools.filter(
@@ -232,6 +227,9 @@ export function AssistantEditor({
       existingPersona?.document_sets?.map((documentSet) => documentSet.id) ??
       ([] as number[]),
     num_chunks: existingPersona?.num_chunks ?? null,
+    search_start_date: existingPersona?.search_start_date
+      ? existingPersona?.search_start_date.toString().split("T")[0]
+      : null,
     include_citations: existingPersona?.prompts[0]?.include_citations ?? true,
     llm_relevance_filter: existingPersona?.llm_relevance_filter ?? false,
     llm_model_provider_override:
@@ -286,6 +284,7 @@ export function AssistantEditor({
                 ),
               })
             ),
+            search_start_date: Yup.date().nullable(),
             icon_color: Yup.string(),
             icon_shape: Yup.number(),
             uploaded_image: Yup.mixed().nullable(),
@@ -346,12 +345,9 @@ export function AssistantEditor({
 
           if (imageGenerationToolEnabled) {
             if (
+              // model must support image input for image generation
+              // to work
               !checkLLMSupportsImageInput(
-                providerDisplayNameToProviderName.get(
-                  values.llm_model_provider_override || ""
-                ) ||
-                  defaultProviderName ||
-                  "",
                 values.llm_model_version_override || defaultModelName || ""
               )
             ) {
@@ -375,6 +371,9 @@ export function AssistantEditor({
               id: existingPersona.id,
               existingPromptId: existingPrompt?.id,
               ...values,
+              search_start_date: values.search_start_date
+                ? new Date(values.search_start_date)
+                : null,
               num_chunks: numChunks,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
@@ -385,7 +384,11 @@ export function AssistantEditor({
           } else {
             [promptResponse, personaResponse] = await createPersona({
               ...values,
+              is_default_persona: admin!,
               num_chunks: numChunks,
+              search_start_date: values.search_start_date
+                ? new Date(values.search_start_date)
+                : null,
               users:
                 user && !checkUserIsNoAuthUser(user.id) ? [user.id] : undefined,
               groups,
@@ -416,10 +419,7 @@ export function AssistantEditor({
               shouldAddAssistantToUserPreferences &&
               user?.preferences?.chosen_assistants
             ) {
-              const success = await addAssistantToList(
-                assistantId,
-                user.preferences.chosen_assistants
-              );
+              const success = await addAssistantToList(assistantId);
               if (success) {
                 setPopup({
                   message: `"${assistant.name}" has been added to your list.`,
@@ -461,6 +461,12 @@ export function AssistantEditor({
               ? true
               : false;
           }
+
+          // model must support image input for image generation
+          // to work
+          const currentLLMSupportsImageOutput = checkLLMSupportsImageInput(
+            values.llm_model_version_override || defaultModelName || ""
+          );
 
           return (
             <Form className="w-full text-text-950">
@@ -766,12 +772,7 @@ export function AssistantEditor({
                         <TooltipTrigger asChild>
                           <div
                             className={`w-fit ${
-                              !checkLLMSupportsImageInput(
-                                providerDisplayNameToProviderName.get(
-                                  values.llm_model_provider_override || ""
-                                ) || "",
-                                values.llm_model_version_override || ""
-                              )
+                              !currentLLMSupportsImageOutput
                                 ? "opacity-70 cursor-not-allowed"
                                 : ""
                             }`}
@@ -783,23 +784,11 @@ export function AssistantEditor({
                               onChange={() => {
                                 toggleToolInValues(imageGenerationTool.id);
                               }}
-                              disabled={
-                                !checkLLMSupportsImageInput(
-                                  providerDisplayNameToProviderName.get(
-                                    values.llm_model_provider_override || ""
-                                  ) || "",
-                                  values.llm_model_version_override || ""
-                                )
-                              }
+                              disabled={!currentLLMSupportsImageOutput}
                             />
                           </div>
                         </TooltipTrigger>
-                        {!checkLLMSupportsImageInput(
-                          providerDisplayNameToProviderName.get(
-                            values.llm_model_provider_override || ""
-                          ) || "",
-                          values.llm_model_version_override || ""
-                        ) && (
+                        {!currentLLMSupportsImageOutput && (
                           <TooltipContent side="top" align="center">
                             <p className="bg-background-900 max-w-[200px] mb-1 text-sm rounded-lg p-1.5 text-white">
                               To use Image Generation, select GPT-4o or another
@@ -889,7 +878,7 @@ export function AssistantEditor({
                                               values.document_set_ids.indexOf(
                                                 documentSet.id
                                               );
-                                            let isSelected = ind !== -1;
+                                            const isSelected = ind !== -1;
                                             return (
                                               <DocumentSetSelectable
                                                 key={documentSet.id}
@@ -924,7 +913,7 @@ export function AssistantEditor({
                                   </Italic>
                                 )}
 
-                                <div className="mt-4 flex flex-col gap-y-4">
+                                <div className="mt-4  flex flex-col gap-y-4">
                                   <TextFormField
                                     small={true}
                                     name="num_chunks"
@@ -940,6 +929,17 @@ export function AssistantEditor({
                                         setFieldValue("num_chunks", value);
                                       }
                                     }}
+                                  />
+
+                                  <TextFormField
+                                    width="max-w-xl"
+                                    type="date"
+                                    small
+                                    subtext="Documents prior to this date will not be referenced by the search tool"
+                                    optional
+                                    label="Search Start Date"
+                                    value={values.search_start_date}
+                                    name="search_start_date"
                                   />
 
                                   <BooleanFormField
@@ -993,7 +993,7 @@ export function AssistantEditor({
                           alignTop={tool.description != null}
                           key={tool.id}
                           name={`enabled_tools_map.${tool.id}`}
-                          label={tool.name}
+                          label={tool.display_name}
                           subtext={tool.description}
                           onChange={() => {
                             toggleToolInValues(tool.id);
@@ -1069,15 +1069,15 @@ export function AssistantEditor({
                                           <Field
                                             name={`starter_messages[${index}].name`}
                                             className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
+                                            border 
+                                            border-border 
+                                            bg-background 
+                                            rounded 
+                                            w-full 
+                                            py-2 
+                                            px-3 
+                                            mr-4
+                                          `}
                                             autoComplete="off"
                                           />
                                           <ErrorMessage
@@ -1099,15 +1099,15 @@ export function AssistantEditor({
                                           <Field
                                             name={`starter_messages.${index}.description`}
                                             className={`
-                                        border 
-                                        border-border 
-                                        bg-background 
-                                        rounded 
-                                        w-full 
-                                        py-2 
-                                        px-3 
-                                        mr-4
-                                      `}
+                                            border 
+                                            border-border 
+                                            bg-background 
+                                            rounded 
+                                            w-full 
+                                            py-2 
+                                            px-3 
+                                            mr-4
+                                          `}
                                             autoComplete="off"
                                           />
                                           <ErrorMessage
@@ -1130,15 +1130,15 @@ export function AssistantEditor({
                                           <Field
                                             name={`starter_messages[${index}].message`}
                                             className={`
-                                          border 
-                                          border-border 
-                                          bg-background 
-                                          rounded 
-                                          w-full 
-                                          py-2 
-                                          px-3 
-                                          mr-4
-                                      `}
+                                              border 
+                                              border-border 
+                                              bg-background 
+                                              rounded 
+                                              w-full 
+                                              py-2 
+                                              px-3 
+                                              mr-4
+                                          `}
                                             as="textarea"
                                             autoComplete="off"
                                           />
@@ -1184,20 +1184,16 @@ export function AssistantEditor({
                     />
                   </div>
 
-                  {isPaidEnterpriseFeaturesEnabled &&
-                    userGroups &&
-                    userGroups.length > 0 && (
-                      <IsPublicGroupSelector
-                        formikProps={{
-                          values,
-                          isSubmitting,
-                          setFieldValue,
-                          ...formikProps,
-                        }}
-                        objectName="assistant"
-                        enforceGroupSelection={false}
-                      />
-                    )}
+                  <IsPublicGroupSelector
+                    formikProps={{
+                      values,
+                      isSubmitting,
+                      setFieldValue,
+                      ...formikProps,
+                    }}
+                    objectName="assistant"
+                    enforceGroupSelection={false}
+                  />
                 </>
               )}
 

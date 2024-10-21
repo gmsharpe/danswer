@@ -15,7 +15,9 @@ from sqlalchemy.orm import Session
 from danswer.auth.users import current_admin_user
 from danswer.auth.users import current_curator_or_admin_user
 from danswer.auth.users import current_user
+from danswer.background.celery.celery_redis import RedisConnectorIndexing
 from danswer.background.celery.celery_utils import get_deletion_attempt_snapshot
+from danswer.background.celery.tasks.indexing.tasks import try_creating_indexing_task
 from danswer.configs.app_configs import ENABLED_CONNECTOR_TYPES
 from danswer.configs.constants import DocumentSource
 from danswer.configs.constants import FileOrigin
@@ -62,17 +64,23 @@ from danswer.db.credentials import delete_gmail_service_account_credentials
 from danswer.db.credentials import delete_google_drive_service_account_credentials
 from danswer.db.credentials import fetch_credential_by_id
 from danswer.db.deletion_attempt import check_deletion_attempt_is_allowed
-from danswer.db.document import get_document_cnts_for_cc_pairs
+from danswer.db.document import get_document_counts_for_cc_pairs
+from danswer.db.engine import get_current_tenant_id
 from danswer.db.engine import get_session
-from danswer.db.index_attempt import create_index_attempt
+from danswer.db.enums import AccessType
 from danswer.db.index_attempt import get_index_attempts_for_cc_pair
 from danswer.db.index_attempt import get_latest_index_attempt_for_cc_pair_id
 from danswer.db.index_attempt import get_latest_index_attempts
+from danswer.db.index_attempt import get_latest_index_attempts_by_status
+from danswer.db.models import IndexingStatus
+from danswer.db.models import SearchSettings
 from danswer.db.models import User
 from danswer.db.models import UserRole
 from danswer.db.search_settings import get_current_search_settings
-from danswer.dynamic_configs.interface import ConfigNotFoundError
+from danswer.db.search_settings import get_secondary_search_settings
 from danswer.file_store.file_store import get_default_file_store
+from danswer.key_value_store.interface import KvKeyNotFoundError
+from danswer.redis.redis_pool import get_redis_client
 from danswer.server.documents.models import AuthStatus
 from danswer.server.documents.models import AuthUrl
 from danswer.server.documents.models import ConnectorCredentialPairIdentifier
@@ -81,6 +89,7 @@ from danswer.server.documents.models import ConnectorSnapshot
 from danswer.server.documents.models import ConnectorUpdateRequest
 from danswer.server.documents.models import CredentialBase
 from danswer.server.documents.models import CredentialSnapshot
+from danswer.server.documents.models import FailedConnectorIndexingStatus
 from danswer.server.documents.models import FileUploadResponse
 from danswer.server.documents.models import GDriveCallback
 from danswer.server.documents.models import GmailCallback
@@ -112,7 +121,7 @@ def check_google_app_gmail_credentials_exist(
 ) -> dict[str, str]:
     try:
         return {"client_id": get_google_app_gmail_cred().web.client_id}
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
 
 
@@ -136,7 +145,7 @@ def delete_google_app_gmail_credentials(
 ) -> StatusResponse:
     try:
         delete_google_app_gmail_cred()
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     return StatusResponse(
@@ -150,7 +159,7 @@ def check_google_app_credentials_exist(
 ) -> dict[str, str]:
     try:
         return {"client_id": get_google_app_cred().web.client_id}
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         raise HTTPException(status_code=404, detail="Google App Credentials not found")
 
 
@@ -174,7 +183,7 @@ def delete_google_app_credentials(
 ) -> StatusResponse:
     try:
         delete_google_app_cred()
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     return StatusResponse(
@@ -188,7 +197,7 @@ def check_google_service_gmail_account_key_exist(
 ) -> dict[str, str]:
     try:
         return {"service_account_email": get_gmail_service_account_key().client_email}
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         raise HTTPException(
             status_code=404, detail="Google Service Account Key not found"
         )
@@ -214,7 +223,7 @@ def delete_google_service_gmail_account_key(
 ) -> StatusResponse:
     try:
         delete_gmail_service_account_key()
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     return StatusResponse(
@@ -228,7 +237,7 @@ def check_google_service_account_key_exist(
 ) -> dict[str, str]:
     try:
         return {"service_account_email": get_service_account_key().client_email}
-    except ConfigNotFoundError:
+    except KvKeyNotFoundError:
         raise HTTPException(
             status_code=404, detail="Google Service Account Key not found"
         )
@@ -254,7 +263,7 @@ def delete_google_service_account_key(
 ) -> StatusResponse:
     try:
         delete_service_account_key()
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     return StatusResponse(
@@ -276,7 +285,7 @@ def upsert_service_account_credential(
             DocumentSource.GOOGLE_DRIVE,
             delegated_user_email=service_account_credential_request.google_drive_delegated_user,
         )
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     # first delete all existing service account credentials
@@ -302,7 +311,7 @@ def upsert_gmail_service_account_credential(
             DocumentSource.GMAIL,
             delegated_user_email=service_account_credential_request.gmail_delegated_user,
         )
-    except ConfigNotFoundError as e:
+    except KvKeyNotFoundError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     # first delete all existing service account credentials
@@ -376,6 +385,95 @@ def upload_files(
     return FileUploadResponse(file_paths=deduped_file_paths)
 
 
+# Retrieves most recent failure cases for connectors that are currently failing
+@router.get("/admin/connector/failed-indexing-status")
+def get_currently_failed_indexing_status(
+    secondary_index: bool = False,
+    user: User = Depends(current_curator_or_admin_user),
+    db_session: Session = Depends(get_session),
+    get_editable: bool = Query(
+        False, description="If true, return editable document sets"
+    ),
+) -> list[FailedConnectorIndexingStatus]:
+    # Get the latest failed indexing attempts
+    latest_failed_indexing_attempts = get_latest_index_attempts_by_status(
+        secondary_index=secondary_index,
+        db_session=db_session,
+        status=IndexingStatus.FAILED,
+    )
+
+    # Get the latest successful indexing attempts
+    latest_successful_indexing_attempts = get_latest_index_attempts_by_status(
+        secondary_index=secondary_index,
+        db_session=db_session,
+        status=IndexingStatus.SUCCESS,
+    )
+
+    # Get all connector credential pairs
+    cc_pairs = get_connector_credential_pairs(
+        db_session=db_session,
+        user=user,
+        get_editable=get_editable,
+    )
+
+    # Filter out failed attempts that have a more recent successful attempt
+    filtered_failed_attempts = [
+        failed_attempt
+        for failed_attempt in latest_failed_indexing_attempts
+        if not any(
+            success_attempt.connector_credential_pair_id
+            == failed_attempt.connector_credential_pair_id
+            and success_attempt.time_updated > failed_attempt.time_updated
+            for success_attempt in latest_successful_indexing_attempts
+        )
+    ]
+
+    # Filter cc_pairs to include only those with failed attempts
+    cc_pairs = [
+        cc_pair
+        for cc_pair in cc_pairs
+        if any(
+            attempt.connector_credential_pair == cc_pair
+            for attempt in filtered_failed_attempts
+        )
+    ]
+
+    # Create a mapping of cc_pair_id to its latest failed index attempt
+    cc_pair_to_latest_index_attempt = {
+        attempt.connector_credential_pair_id: attempt
+        for attempt in filtered_failed_attempts
+    }
+
+    indexing_statuses = []
+
+    for cc_pair in cc_pairs:
+        # Skip DefaultCCPair
+        if cc_pair.name == "DefaultCCPair":
+            continue
+
+        latest_index_attempt = cc_pair_to_latest_index_attempt.get(cc_pair.id)
+
+        indexing_statuses.append(
+            FailedConnectorIndexingStatus(
+                cc_pair_id=cc_pair.id,
+                name=cc_pair.name,
+                error_msg=(
+                    latest_index_attempt.error_msg if latest_index_attempt else None
+                ),
+                connector_id=cc_pair.connector_id,
+                credential_id=cc_pair.credential_id,
+                is_deletable=check_deletion_attempt_is_allowed(
+                    connector_credential_pair=cc_pair,
+                    db_session=db_session,
+                    allow_scheduled=True,
+                )
+                is None,
+            )
+        )
+
+    return indexing_statuses
+
+
 @router.get("/admin/connector/indexing-status")
 def get_connector_indexing_status(
     secondary_index: bool = False,
@@ -386,6 +484,8 @@ def get_connector_indexing_status(
     ),
 ) -> list[ConnectorIndexingStatus]:
     indexing_statuses: list[ConnectorIndexingStatus] = []
+
+    r = get_redis_client()
 
     # NOTE: If the connector is deleting behind the scenes,
     # accessing cc_pairs can be inconsistent and members like
@@ -419,7 +519,7 @@ def get_connector_indexing_status(
         for index_attempt in latest_index_attempts
     }
 
-    document_count_info = get_document_cnts_for_cc_pairs(
+    document_count_info = get_document_counts_for_cc_pairs(
         db_session=db_session,
         cc_pair_identifiers=cc_pair_identifiers,
     )
@@ -438,6 +538,12 @@ def get_connector_indexing_status(
             relationship.user_group_id
         )
 
+    search_settings: SearchSettings | None = None
+    if not secondary_index:
+        search_settings = get_current_search_settings(db_session)
+    else:
+        search_settings = get_secondary_search_settings(db_session)
+
     for cc_pair in cc_pairs:
         # TODO remove this to enable ingestion API
         if cc_pair.name == "DefaultCCPair":
@@ -448,6 +554,12 @@ def get_connector_indexing_status(
         if not connector or not credential:
             # This may happen if background deletion is happening
             continue
+
+        in_progress = False
+        if search_settings:
+            rci = RedisConnectorIndexing(cc_pair.id, search_settings.id)
+            if r.exists(rci.fence_key):
+                in_progress = True
 
         latest_index_attempt = cc_pair_to_latest_index_attempt.get(
             (connector.id, credential.id)
@@ -467,7 +579,7 @@ def get_connector_indexing_status(
                 cc_pair_status=cc_pair.status,
                 connector=ConnectorSnapshot.from_connector_db_model(connector),
                 credential=CredentialSnapshot.from_credential_db_model(credential),
-                public_doc=cc_pair.is_public,
+                access_type=cc_pair.access_type,
                 owner=credential.user.email if credential.user else "",
                 groups=group_cc_pair_relationships_dict.get(cc_pair.id, []),
                 last_finished_status=(
@@ -502,6 +614,7 @@ def get_connector_indexing_status(
                     allow_scheduled=True,
                 )
                 is None,
+                in_progress=in_progress,
             )
         )
 
@@ -576,12 +689,15 @@ def create_connector_with_mock_credential(
         credential = create_credential(
             mock_credential, user=user, db_session=db_session
         )
+        access_type = (
+            AccessType.PUBLIC if connector_data.is_public else AccessType.PRIVATE
+        )
         response = add_credential_to_connector(
             db_session=db_session,
             user=user,
             connector_id=cast(int, connector_response.id),  # will aways be an int
             credential_id=credential.id,
-            is_public=connector_data.is_public or False,
+            access_type=access_type,
             cc_pair_name=connector_data.name,
             groups=connector_data.groups,
         )
@@ -654,7 +770,13 @@ def connector_run_once(
     run_info: RunConnectorRequest,
     _: User = Depends(current_curator_or_admin_user),
     db_session: Session = Depends(get_session),
+    tenant_id: str = Depends(get_current_tenant_id),
 ) -> StatusResponse[list[int]]:
+    """Used to trigger indexing on a set of cc_pairs associated with a
+    single connector."""
+
+    r = get_redis_client()
+
     connector_id = run_info.connector_id
     specified_credential_ids = run_info.credential_ids
 
@@ -685,6 +807,7 @@ def connector_run_once(
             detail="Connector has no valid credentials, cannot create index attempts.",
         )
 
+    # Prevents index attempts for cc pairs that already have an index attempt currently running
     skipped_credentials = [
         credential_id
         for credential_id in credential_ids
@@ -694,29 +817,37 @@ def connector_run_once(
                 credential_id=credential_id,
             ),
             only_current=True,
-            disinclude_finished=True,
             db_session=db_session,
+            disinclude_finished=True,
         )
     ]
 
     search_settings = get_current_search_settings(db_session)
 
     connector_credential_pairs = [
-        get_connector_credential_pair(run_info.connector_id, credential_id, db_session)
+        get_connector_credential_pair(connector_id, credential_id, db_session)
         for credential_id in credential_ids
         if credential_id not in skipped_credentials
     ]
 
-    index_attempt_ids = [
-        create_index_attempt(
-            connector_credential_pair_id=connector_credential_pair.id,
-            search_settings_id=search_settings.id,
-            from_beginning=run_info.from_beginning,
-            db_session=db_session,
-        )
-        for connector_credential_pair in connector_credential_pairs
-        if connector_credential_pair is not None
-    ]
+    index_attempt_ids = []
+    for cc_pair in connector_credential_pairs:
+        if cc_pair is not None:
+            attempt_id = try_creating_indexing_task(
+                cc_pair,
+                search_settings,
+                run_info.from_beginning,
+                db_session,
+                r,
+                tenant_id,
+            )
+            if attempt_id:
+                logger.info(
+                    f"try_creating_indexing_task succeeded: cc_pair={cc_pair.id} attempt_id={attempt_id}"
+                )
+                index_attempt_ids.append(attempt_id)
+            else:
+                logger.info(f"try_creating_indexing_task failed: cc_pair={cc_pair.id}")
 
     if not index_attempt_ids:
         raise HTTPException(
@@ -876,7 +1007,7 @@ def get_basic_connector_indexing_status(
         )
         for cc_pair in cc_pairs
     ]
-    document_count_info = get_document_cnts_for_cc_pairs(
+    document_count_info = get_document_counts_for_cc_pairs(
         db_session=db_session,
         cc_pair_identifiers=cc_pair_identifiers,
     )

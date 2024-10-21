@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   BackendChatSession,
   BackendMessage,
+  BUFFER_COUNT,
   ChatFileType,
   ChatSession,
   ChatSessionSharedStatus,
@@ -48,6 +49,8 @@ import {
   SetStateAction,
   useContext,
   useEffect,
+  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -84,7 +87,6 @@ import {
 import { ChatInputBar } from "./input/ChatInputBar";
 import { useChatContext } from "@/components/context/ChatContext";
 import { v4 as uuidv4 } from "uuid";
-import { orderAssistantsForUser } from "@/lib/assistants/orderAssistants";
 import { ChatPopup } from "./ChatPopup";
 
 import FunctionalHeader from "@/components/chat_search/Header";
@@ -99,6 +101,9 @@ import ExceptionTraceModal from "@/components/modals/ExceptionTraceModal";
 import { SEARCH_TOOL_NAME } from "./tools/constants";
 import { useUser } from "@/components/user/UserProvider";
 import { ApiKeyModal } from "@/components/llm/ApiKeyModal";
+import BlurBackground from "./shared_chat_search/BlurBackground";
+import { NoAssistantModal } from "@/components/modals/NoAssistantModal";
+import { useAssistants } from "@/components/context/AssistantsContext";
 
 const TEMP_USER_MESSAGE_ID = -1;
 const TEMP_ASSISTANT_MESSAGE_ID = -2;
@@ -116,11 +121,10 @@ export function ChatPage({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  let {
+  const {
     chatSessions,
     availableSources,
     availableDocumentSets,
-    availableAssistants,
     llmProviders,
     folders,
     openedFolders,
@@ -130,30 +134,26 @@ export function ChatPage({
     refreshChatSessions,
   } = useChatContext();
 
+  const { assistants: availableAssistants, finalAssistants } = useAssistants();
+
   const [showApiKeyModal, setShowApiKeyModal] = useState(true);
 
-  const { user, refreshUser, isLoadingUser } = useUser();
+  const { user, isAdmin, isLoadingUser } = useUser();
 
-  // chat session
   const existingChatIdRaw = searchParams.get("chatId");
   const currentPersonaId = searchParams.get(SEARCH_PARAM_NAMES.PERSONA_ID);
 
-  const existingChatSessionId = existingChatIdRaw
-    ? parseInt(existingChatIdRaw)
-    : null;
+  const existingChatSessionId = existingChatIdRaw ? existingChatIdRaw : null;
 
   const selectedChatSession = chatSessions.find(
     (chatSession) => chatSession.id === existingChatSessionId
   );
 
-  const chatSessionIdRef = useRef<number | null>(existingChatSessionId);
+  const chatSessionIdRef = useRef<string | null>(existingChatSessionId);
 
   // Only updates on session load (ie. rename / switching chat session)
   // Useful for determining which session has been loaded (i.e. still on `new, empty session` or `previous session`)
-  const loadedIdSessionRef = useRef<number | null>(existingChatSessionId);
-
-  // Assistants
-  const filteredAssistants = orderAssistantsForUser(availableAssistants, user);
+  const loadedIdSessionRef = useRef<string | null>(existingChatSessionId);
 
   const existingChatSessionAssistantId = selectedChatSession?.persona_id;
   const [selectedAssistant, setSelectedAssistant] = useState<
@@ -172,11 +172,11 @@ export function ChatPage({
           )
         : undefined
   );
-
   // Gather default temperature settings
   const search_param_temperature = searchParams.get(
     SEARCH_PARAM_NAMES.TEMPERATURE
   );
+
   const defaultTemperature = search_param_temperature
     ? parseFloat(search_param_temperature)
     : selectedAssistant?.tools.some(
@@ -197,7 +197,7 @@ export function ChatPage({
   };
 
   const llmOverrideManager = useLlmOverride(
-    user?.preferences.default_model,
+    user?.preferences.default_model ?? null,
     selectedChatSession,
     defaultTemperature
   );
@@ -208,8 +208,10 @@ export function ChatPage({
   const liveAssistant =
     alternativeAssistant ||
     selectedAssistant ||
-    filteredAssistants[0] ||
+    finalAssistants[0] ||
     availableAssistants[0];
+
+  const noAssistants = liveAssistant == null || liveAssistant == undefined;
 
   useEffect(() => {
     if (!loadedIdSessionRef.current && !currentPersonaId) {
@@ -228,7 +230,8 @@ export function ChatPage({
         destructureValue(user?.preferences.default_model)
       );
     }
-  }, [liveAssistant]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveAssistant, llmProviders, user?.preferences.default_model]);
 
   const stopGenerating = () => {
     const currentSession = currentSessionId();
@@ -349,6 +352,9 @@ export function ChatPage({
         }
         return;
       }
+      const shouldScrollToBottom =
+        visibleRange.get(existingChatSessionId) === undefined ||
+        visibleRange.get(existingChatSessionId)?.end == 0;
 
       clearSelectedDocuments();
       setIsFetchingChatMessages(true);
@@ -384,10 +390,16 @@ export function ChatPage({
 
       // go to bottom. If initial load, then do a scroll,
       // otherwise just appear at the bottom
-      if (!hasPerformedInitialScroll) {
-        clientScrollToBottom();
-      } else if (isChatSessionSwitch) {
-        clientScrollToBottom(true);
+      if (shouldScrollToBottom) {
+        scrollInitialized.current = false;
+      }
+
+      if (shouldScrollToBottom) {
+        if (!hasPerformedInitialScroll) {
+          clientScrollToBottom();
+        } else if (isChatSessionSwitch) {
+          clientScrollToBottom(true);
+        }
       }
       setIsFetchingChatMessages(false);
 
@@ -412,18 +424,19 @@ export function ChatPage({
     }
 
     initialSessionFetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [existingChatSessionId]);
 
   const [message, setMessage] = useState(
-    searchParams.get(SEARCH_PARAM_NAMES.USER_MESSAGE) || ""
+    searchParams.get(SEARCH_PARAM_NAMES.USER_PROMPT) || ""
   );
 
   const [completeMessageDetail, setCompleteMessageDetail] = useState<
-    Map<number | null, Map<number, Message>>
+    Map<string | null, Map<number, Message>>
   >(new Map());
 
   const updateCompleteMessageDetail = (
-    sessionId: number | null,
+    sessionId: string | null,
     messageMap: Map<number, Message>
   ) => {
     setCompleteMessageDetail((prevState) => {
@@ -434,13 +447,13 @@ export function ChatPage({
   };
 
   const currentMessageMap = (
-    messageDetail: Map<number | null, Map<number, Message>>
+    messageDetail: Map<string | null, Map<number, Message>>
   ) => {
     return (
       messageDetail.get(chatSessionIdRef.current) || new Map<number, Message>()
     );
   };
-  const currentSessionId = (): number => {
+  const currentSessionId = (): string => {
     return chatSessionIdRef.current!;
   };
 
@@ -455,7 +468,7 @@ export function ChatPage({
     // if calling this function repeatedly with short delay, stay may not update in time
     // and result in weird behavipr
     completeMessageMapOverride?: Map<number, Message> | null;
-    chatSessionId?: number;
+    chatSessionId?: string;
     replacementsMap?: Map<number, number> | null;
     makeLatestChildMessage?: boolean;
   }) => {
@@ -530,34 +543,23 @@ export function ChatPage({
 
   const [submittedMessage, setSubmittedMessage] = useState("");
 
-  const [chatState, setChatState] = useState<Map<number | null, ChatState>>(
+  const [chatState, setChatState] = useState<Map<string | null, ChatState>>(
     new Map([[chatSessionIdRef.current, "input"]])
   );
 
-  const [scrollHeight, setScrollHeight] = useState<Map<number | null, number>>(
-    new Map([[chatSessionIdRef.current, 0]])
-  );
-  const currentScrollHeight = () => {
-    return scrollHeight.get(currentSessionId());
-  };
-
-  const retrieveCurrentScrollHeight = (): number | null => {
-    return scrollHeight.get(currentSessionId()) || null;
-  };
-
   const [regenerationState, setRegenerationState] = useState<
-    Map<number | null, RegenerationState | null>
+    Map<string | null, RegenerationState | null>
   >(new Map([[null, null]]));
 
   const [abortControllers, setAbortControllers] = useState<
-    Map<number | null, AbortController>
+    Map<string | null, AbortController>
   >(new Map());
 
   // Updates "null" session values to new session id for
   // regeneration, chat, and abort controller state, messagehistory
-  const updateStatesWithNewSessionId = (newSessionId: number) => {
+  const updateStatesWithNewSessionId = (newSessionId: string) => {
     const updateState = (
-      setState: Dispatch<SetStateAction<Map<number | null, any>>>,
+      setState: Dispatch<SetStateAction<Map<string | null, any>>>,
       defaultValue?: any
     ) => {
       setState((prevState) => {
@@ -592,7 +594,7 @@ export function ChatPage({
     chatSessionIdRef.current = newSessionId;
   };
 
-  const updateChatState = (newState: ChatState, sessionId?: number | null) => {
+  const updateChatState = (newState: ChatState, sessionId?: string | null) => {
     setChatState((prevState) => {
       const newChatState = new Map(prevState);
       newChatState.set(
@@ -617,7 +619,7 @@ export function ChatPage({
 
   const updateRegenerationState = (
     newState: RegenerationState | null,
-    sessionId?: number | null
+    sessionId?: string | null
   ) => {
     setRegenerationState((prevState) => {
       const newRegenerationState = new Map(prevState);
@@ -629,18 +631,18 @@ export function ChatPage({
     });
   };
 
-  const resetRegenerationState = (sessionId?: number | null) => {
+  const resetRegenerationState = (sessionId?: string | null) => {
     updateRegenerationState(null, sessionId);
   };
 
   const currentRegenerationState = (): RegenerationState | null => {
     return regenerationState.get(currentSessionId()) || null;
   };
-  const [canContinue, setCanContinue] = useState<Map<number | null, boolean>>(
+  const [canContinue, setCanContinue] = useState<Map<string | null, boolean>>(
     new Map([[null, false]])
   );
 
-  const updateCanContinue = (newState: boolean, sessionId?: number | null) => {
+  const updateCanContinue = (newState: boolean, sessionId?: string | null) => {
     setCanContinue((prevState) => {
       const newCanContinueState = new Map(prevState);
       newCanContinueState.set(
@@ -679,11 +681,12 @@ export function ChatPage({
 
   useEffect(() => {
     if (messageHistory.length === 0 && chatSessionIdRef.current === null) {
+      // Select from available assistants so shared assistants appear.
       setSelectedAssistant(
-        filteredAssistants.find((persona) => persona.id === defaultAssistantId)
+        availableAssistants.find((persona) => persona.id === defaultAssistantId)
       );
     }
-  }, [defaultAssistantId]);
+  }, [defaultAssistantId, availableAssistants, messageHistory.length]);
 
   const [
     selectedDocuments,
@@ -746,12 +749,24 @@ export function ChatPage({
     setAboveHorizon(scrollDist.current > 500);
   };
 
-  scrollableDivRef?.current?.addEventListener("scroll", updateScrollTracking);
+  useEffect(() => {
+    const scrollableDiv = scrollableDivRef.current;
+    if (scrollableDiv) {
+      scrollableDiv.addEventListener("scroll", updateScrollTracking);
+      return () => {
+        scrollableDiv.removeEventListener("scroll", updateScrollTracking);
+      };
+    }
+  }, []);
 
   const handleInputResize = () => {
     setTimeout(() => {
-      if (inputRef.current && lastMessageRef.current) {
-        let newHeight: number =
+      if (
+        inputRef.current &&
+        lastMessageRef.current &&
+        !waitForScrollRef.current
+      ) {
+        const newHeight: number =
           inputRef.current?.getBoundingClientRect().height!;
         const heightDifference = newHeight - previousHeight.current;
         if (
@@ -779,8 +794,11 @@ export function ChatPage({
   };
 
   const clientScrollToBottom = (fast?: boolean) => {
+    waitForScrollRef.current = true;
+
     setTimeout(() => {
-      if (!endDivRef.current) {
+      if (!endDivRef.current || !scrollableDivRef.current) {
+        console.error("endDivRef or scrollableDivRef not found");
         return;
       }
 
@@ -789,13 +807,45 @@ export function ChatPage({
 
       if (isVisible) return;
 
-      endDivRef.current.scrollIntoView({ behavior: fast ? "auto" : "smooth" });
-      setHasPerformedInitialScroll(true);
+      // Check if all messages are currently rendered
+      if (currentVisibleRange.end < messageHistory.length) {
+        console.log("Updating visible range");
+        // Update visible range to include the last messages
+        updateCurrentVisibleRange({
+          start: Math.max(
+            0,
+            messageHistory.length -
+              (currentVisibleRange.end - currentVisibleRange.start)
+          ),
+          end: messageHistory.length,
+          mostVisibleMessageId: currentVisibleRange.mostVisibleMessageId,
+        });
+
+        // Wait for the state update and re-render before scrolling
+        setTimeout(() => {
+          endDivRef.current?.scrollIntoView({
+            behavior: fast ? "auto" : "smooth",
+          });
+          setHasPerformedInitialScroll(true);
+        }, 100);
+      } else {
+        console.log("All messages are already rendered, scrolling immediately");
+        // If all messages are already rendered, scroll immediately
+        endDivRef.current.scrollIntoView({
+          behavior: fast ? "auto" : "smooth",
+        });
+        setHasPerformedInitialScroll(true);
+      }
     }, 50);
+
+    // Reset waitForScrollRef after 1.5 seconds
+    setTimeout(() => {
+      waitForScrollRef.current = false;
+    }, 1500);
   };
 
   const distance = 500; // distance that should "engage" the scroll
-  const debounce = 100; // time for debouncing
+  const debounceNumber = 100; // time for debouncing
 
   const [hasPerformedInitialScroll, setHasPerformedInitialScroll] = useState(
     existingChatSessionId === null
@@ -937,8 +987,8 @@ export function ChatPage({
 
     setAlternativeGeneratingAssistant(alternativeAssistantOverride);
     clientScrollToBottom();
-    let currChatSessionId: number;
-    let isNewSession = chatSessionIdRef.current === null;
+    let currChatSessionId: string;
+    const isNewSession = chatSessionIdRef.current === null;
     const searchParamBasedChatSessionName =
       searchParams.get(SEARCH_PARAM_NAMES.TITLE) || null;
 
@@ -948,7 +998,7 @@ export function ChatPage({
         searchParamBasedChatSessionName
       );
     } else {
-      currChatSessionId = chatSessionIdRef.current as number;
+      currChatSessionId = chatSessionIdRef.current as string;
     }
     frozenSessionId = currChatSessionId;
 
@@ -964,6 +1014,11 @@ export function ChatPage({
       (message) => message.messageId === messageIdToResend
     );
 
+    updateRegenerationState(
+      regenerationRequest
+        ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
+        : null
+    );
     const messageMap = currentMessageMap(completeMessageDetail);
     const messageToResendParent =
       messageToResend?.parentMessageId !== null &&
@@ -991,12 +1046,6 @@ export function ChatPage({
 
     setSubmittedMessage(currMessage);
 
-    updateRegenerationState(
-      regenerationRequest
-        ? { regenerating: true, finalMessageIndex: messageIdToResend || 0 }
-        : null
-    );
-
     updateChatState("loading");
 
     const currMessageHistory =
@@ -1022,7 +1071,7 @@ export function ChatPage({
 
     let answer = "";
 
-    let stopReason: StreamStopReason | null = null;
+    const stopReason: StreamStopReason | null = null;
     let query: string | null = null;
     let retrievalType: RetrievalType =
       selectedDocuments.length > 0
@@ -1100,9 +1149,11 @@ export function ChatPage({
 
       await delay(50);
       while (!stack.isComplete || !stack.isEmpty()) {
-        await delay(2);
+        if (stack.isEmpty()) {
+          await delay(0.5);
+        }
 
-        if (!stack.isEmpty()) {
+        if (!stack.isEmpty() && !controller.signal.aborted) {
           const packet = stack.nextPacket();
           if (!packet) {
             continue;
@@ -1408,13 +1459,13 @@ export function ChatPage({
   };
 
   const handleImageUpload = (acceptedFiles: File[]) => {
-    const llmAcceptsImages = checkLLMSupportsImageInput(
-      ...getFinalLLM(
-        llmProviders,
-        liveAssistant,
-        llmOverrideManager.llmOverride
-      )
+    const [_, llmModel] = getFinalLLM(
+      llmProviders,
+      liveAssistant,
+      llmOverrideManager.llmOverride
     );
+    const llmAcceptsImages = checkLLMSupportsImageInput(llmModel);
+
     const imageFiles = acceptedFiles.filter((file) =>
       file.type.startsWith("image/")
     );
@@ -1500,6 +1551,7 @@ export function ChatPage({
     toggle(false);
   };
 
+  const waitForScrollRef = useRef(false);
   const sidebarElementRef = useRef<HTMLDivElement>(null);
 
   useSidebarVisibility({
@@ -1517,10 +1569,139 @@ export function ChatPage({
     scrollDist,
     endDivRef,
     distance,
-    debounce,
+    debounceNumber,
+    waitForScrollRef,
   });
 
+  // Virtualization + Scrolling related effects and functions
+  const scrollInitialized = useRef(false);
+  interface VisibleRange {
+    start: number;
+    end: number;
+    mostVisibleMessageId: number | null;
+  }
+
+  const [visibleRange, setVisibleRange] = useState<
+    Map<string | null, VisibleRange>
+  >(() => {
+    const initialRange: VisibleRange = {
+      start: 0,
+      end: BUFFER_COUNT,
+      mostVisibleMessageId: null,
+    };
+    return new Map([[chatSessionIdRef.current, initialRange]]);
+  });
+
+  // Function used to update current visible range. Only method for updating `visibleRange` state.
+  const updateCurrentVisibleRange = (
+    newRange: VisibleRange,
+    forceUpdate?: boolean
+  ) => {
+    if (
+      scrollInitialized.current &&
+      visibleRange.get(loadedIdSessionRef.current) == undefined &&
+      !forceUpdate
+    ) {
+      return;
+    }
+
+    setVisibleRange((prevState) => {
+      const newState = new Map(prevState);
+      newState.set(loadedIdSessionRef.current, newRange);
+      return newState;
+    });
+  };
+
+  //  Set first value for visibleRange state on page load / refresh.
+  const initializeVisibleRange = () => {
+    const upToDatemessageHistory = buildLatestMessageChain(
+      currentMessageMap(completeMessageDetail)
+    );
+
+    if (!scrollInitialized.current && upToDatemessageHistory.length > 0) {
+      const newEnd = Math.max(upToDatemessageHistory.length, BUFFER_COUNT);
+      const newStart = Math.max(0, newEnd - BUFFER_COUNT);
+      const newMostVisibleMessageId =
+        upToDatemessageHistory[newEnd - 1]?.messageId;
+
+      updateCurrentVisibleRange(
+        {
+          start: newStart,
+          end: newEnd,
+          mostVisibleMessageId: newMostVisibleMessageId,
+        },
+        true
+      );
+      scrollInitialized.current = true;
+    }
+  };
+
+  const updateVisibleRangeBasedOnScroll = () => {
+    if (!scrollInitialized.current) return;
+    const scrollableDiv = scrollableDivRef.current;
+    if (!scrollableDiv) return;
+
+    const viewportHeight = scrollableDiv.clientHeight;
+    let mostVisibleMessageIndex = -1;
+
+    messageHistory.forEach((message, index) => {
+      const messageElement = document.getElementById(
+        `message-${message.messageId}`
+      );
+      if (messageElement) {
+        const rect = messageElement.getBoundingClientRect();
+        const isVisible = rect.bottom <= viewportHeight && rect.bottom > 0;
+        if (isVisible && index > mostVisibleMessageIndex) {
+          mostVisibleMessageIndex = index;
+        }
+      }
+    });
+
+    if (mostVisibleMessageIndex !== -1) {
+      const startIndex = Math.max(0, mostVisibleMessageIndex - BUFFER_COUNT);
+      const endIndex = Math.min(
+        messageHistory.length,
+        mostVisibleMessageIndex + BUFFER_COUNT + 1
+      );
+
+      updateCurrentVisibleRange({
+        start: startIndex,
+        end: endIndex,
+        mostVisibleMessageId: messageHistory[mostVisibleMessageIndex].messageId,
+      });
+    }
+  };
+
   useEffect(() => {
+    initializeVisibleRange();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, messageHistory]);
+
+  useLayoutEffect(() => {
+    const scrollableDiv = scrollableDivRef.current;
+
+    const handleScroll = () => {
+      updateVisibleRangeBasedOnScroll();
+    };
+
+    scrollableDiv?.addEventListener("scroll", handleScroll);
+
+    return () => {
+      scrollableDiv?.removeEventListener("scroll", handleScroll);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messageHistory]);
+
+  const currentVisibleRange = visibleRange.get(currentSessionId()) || {
+    start: 0,
+    end: 0,
+    mostVisibleMessageId: null,
+  };
+
+  useEffect(() => {
+    if (noAssistants) {
+      return;
+    }
     const includes = checkAnyAssistantHasSearch(
       messageHistory,
       availableAssistants,
@@ -1530,6 +1711,9 @@ export function ChatPage({
   }, [messageHistory, availableAssistants, liveAssistant]);
 
   const [retrievalEnabled, setRetrievalEnabled] = useState(() => {
+    if (noAssistants) {
+      return false;
+    }
     return checkAnyAssistantHasSearch(
       messageHistory,
       availableAssistants,
@@ -1561,6 +1745,7 @@ export function ChatPage({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
   const [sharedChatSession, setSharedChatSession] =
     useState<ChatSession | null>();
@@ -1599,8 +1784,13 @@ export function ChatPage({
     <>
       <HealthCheckBanner />
 
-      {showApiKeyModal && !shouldShowWelcomeModal && (
-        <ApiKeyModal hide={() => setShowApiKeyModal(false)} />
+      {showApiKeyModal && !shouldShowWelcomeModal ? (
+        <ApiKeyModal
+          hide={() => setShowApiKeyModal(false)}
+          setPopup={setPopup}
+        />
+      ) : (
+        noAssistants && <NoAssistantModal isAdmin={isAdmin} />
       )}
 
       {/* ChatPopup is a custom popup that displays a admin-specified message on initial user visit. 
@@ -1626,9 +1816,9 @@ export function ChatPage({
 
       {settingsToggled && (
         <SetDefaultModelModal
+          setPopup={setPopup}
           setLlmOverride={llmOverrideManager.setGlobalDefault}
           defaultModel={user?.preferences.default_model!}
-          refreshUser={refreshUser}
           llmProviders={llmProviders}
           onClose={() => setSettingsToggled(false)}
         />
@@ -1651,7 +1841,7 @@ export function ChatPage({
               const responseJson = await response.json();
               setPopup({ message: responseJson.detail, type: "error" });
             }
-            router.refresh();
+            refreshChatSessions();
           }}
         />
       )}
@@ -1684,6 +1874,7 @@ export function ChatPage({
           onClose={() => setSharingModalVisible(false)}
         />
       )}
+
       <div className="fixed inset-0 flex flex-col text-default">
         <div className="h-[100dvh] overflow-y-hidden">
           <div className="w-full">
@@ -1693,7 +1884,7 @@ export function ChatPage({
                 flex-none
                 fixed
                 left-0
-                z-30
+                z-40
                 bg-background-100
                 h-screen
                 transition-all
@@ -1727,6 +1918,10 @@ export function ChatPage({
             </div>
           </div>
 
+          <BlurBackground
+            visible={!untoggled && (showDocSidebar || toggledSidebar)}
+          />
+
           <div
             ref={masterFlexboxRef}
             className="flex h-full w-full overflow-x-hidden"
@@ -1743,7 +1938,6 @@ export function ChatPage({
                       : undefined
                   }
                   toggleSidebar={toggleSidebar}
-                  user={user}
                   currentChatSession={selectedChatSession}
                 />
               )}
@@ -1802,7 +1996,18 @@ export function ChatPage({
                               (hasPerformedInitialScroll ? "" : "invisible")
                             }
                           >
-                            {messageHistory.map((message, i) => {
+                            {(messageHistory.length < BUFFER_COUNT
+                              ? messageHistory
+                              : messageHistory.slice(
+                                  currentVisibleRange.start,
+                                  currentVisibleRange.end
+                                )
+                            ).map((message, fauxIndex) => {
+                              const i =
+                                messageHistory.length < BUFFER_COUNT
+                                  ? fauxIndex
+                                  : fauxIndex + currentVisibleRange.start;
+
                               const messageMap = currentMessageMap(
                                 completeMessageDetail
                               );
@@ -1810,17 +2015,21 @@ export function ChatPage({
                               const parentMessage = message.parentMessageId
                                 ? messageMap.get(message.parentMessageId)
                                 : null;
-                              if (
-                                currentSessionRegenerationState?.regenerating &&
-                                message.messageId >
-                                  currentSessionRegenerationState?.finalMessageIndex!
-                              ) {
-                                return <></>;
-                              }
-
                               if (message.type === "user") {
+                                if (
+                                  (currentSessionChatState == "loading" &&
+                                    i == messageHistory.length - 1) ||
+                                  (currentSessionRegenerationState?.regenerating &&
+                                    message.messageId >=
+                                      currentSessionRegenerationState?.finalMessageIndex!)
+                                ) {
+                                  return <></>;
+                                }
                                 return (
-                                  <div key={messageReactComponentKey}>
+                                  <div
+                                    id={`message-${message.messageId}`}
+                                    key={messageReactComponentKey}
+                                  >
                                     <HumanMessage
                                       stopGenerating={stopGenerating}
                                       content={message.message}
@@ -1888,14 +2097,17 @@ export function ChatPage({
                                     : null;
 
                                 if (
-                                  currentSessionRegenerationState?.regenerating &&
-                                  currentSessionChatState == "loading" &&
-                                  message.messageId == messageHistory.length - 1
+                                  (currentSessionChatState == "loading" &&
+                                    i > messageHistory.length - 1) ||
+                                  (currentSessionRegenerationState?.regenerating &&
+                                    message.messageId >
+                                      currentSessionRegenerationState?.finalMessageIndex!)
                                 ) {
                                   return <></>;
                                 }
                                 return (
                                   <div
+                                    id={`message-${message.messageId}`}
                                     key={messageReactComponentKey}
                                     ref={
                                       i == messageHistory.length - 1
@@ -1955,7 +2167,6 @@ export function ChatPage({
                                       query={
                                         messageHistory[i]?.query || undefined
                                       }
-                                      personaName={liveAssistant.name}
                                       citedDocuments={getCitedDocumentsFromMessage(
                                         message
                                       )}
@@ -2017,9 +2228,6 @@ export function ChatPage({
                                             }
                                           : undefined
                                       }
-                                      isCurrentlyShowingRetrieved={
-                                        isShowingRetrieved
-                                      }
                                       handleShowRetrieved={(messageNumber) => {
                                         if (isShowingRetrieved) {
                                           setSelectedMessageForDocDisplay(null);
@@ -2069,7 +2277,6 @@ export function ChatPage({
                                     <AIMessage
                                       currentPersona={liveAssistant}
                                       messageId={message.messageId}
-                                      personaName={liveAssistant.name}
                                       content={
                                         <p className="text-red-700 text-sm my-auto">
                                           {message.message}
@@ -2093,17 +2300,17 @@ export function ChatPage({
                               }
                             })}
 
-                            {currentSessionChatState == "loading" ||
+                            {(currentSessionChatState == "loading" ||
                               (loadingError &&
                                 !currentSessionRegenerationState?.regenerating &&
                                 messageHistory[messageHistory.length - 1]
-                                  ?.type != "user" && (
-                                  <HumanMessage
-                                    key={-2}
-                                    messageId={-1}
-                                    content={submittedMessage}
-                                  />
-                                ))}
+                                  ?.type != "user")) && (
+                              <HumanMessage
+                                key={-2}
+                                messageId={-1}
+                                content={submittedMessage}
+                              />
+                            )}
 
                             {currentSessionChatState == "loading" && (
                               <div
@@ -2117,7 +2324,6 @@ export function ChatPage({
                                     alternativeAssistant
                                   }
                                   messageId={null}
-                                  personaName={liveAssistant.name}
                                   content={
                                     <div
                                       key={"Generating"}
@@ -2137,7 +2343,6 @@ export function ChatPage({
                                 <AIMessage
                                   currentPersona={liveAssistant}
                                   messageId={-1}
-                                  personaName={liveAssistant.name}
                                   content={
                                     <p className="text-red-700 text-sm my-auto">
                                       {loadingError}
@@ -2217,7 +2422,6 @@ export function ChatPage({
                               showDocs={() => setDocumentSelection(true)}
                               selectedDocuments={selectedDocuments}
                               // assistant stuff
-                              assistantOptions={filteredAssistants}
                               selectedAssistant={liveAssistant}
                               setSelectedAssistant={onAssistantChange}
                               setAlternativeAssistant={setAlternativeAssistant}

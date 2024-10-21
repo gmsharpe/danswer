@@ -7,14 +7,21 @@ from typing import cast
 from sqlalchemy.orm import Session
 
 from danswer.chat.chat_utils import create_chat_chain
+from danswer.chat.models import AllCitations
 from danswer.chat.models import CitationInfo
 from danswer.chat.models import CustomToolResponse
 from danswer.chat.models import DanswerAnswerPiece
+from danswer.chat.models import FinalUsedContextDocsResponse
 from danswer.chat.models import ImageGenerationDisplay
 from danswer.chat.models import LLMRelevanceFilterResponse
 from danswer.chat.models import MessageResponseIDInfo
+from danswer.chat.models import MessageSpecificCitations
 from danswer.chat.models import QADocsResponse
 from danswer.chat.models import StreamingError
+from danswer.configs.app_configs import AZURE_DALLE_API_BASE
+from danswer.configs.app_configs import AZURE_DALLE_API_KEY
+from danswer.configs.app_configs import AZURE_DALLE_API_VERSION
+from danswer.configs.app_configs import AZURE_DALLE_DEPLOYMENT_NAME
 from danswer.configs.chat_configs import BING_API_KEY
 from danswer.configs.chat_configs import CHAT_TARGET_CHUNK_PERCENTAGE
 from danswer.configs.chat_configs import DISABLE_LLM_CHOOSE_SEARCH
@@ -70,7 +77,9 @@ from danswer.server.query_and_chat.models import ChatMessageDetail
 from danswer.server.query_and_chat.models import CreateChatMessageRequest
 from danswer.server.utils import get_json_line
 from danswer.tools.built_in_tools import get_built_in_tool_by_id
-from danswer.tools.custom.custom_tool import build_custom_tools_from_openapi_schema
+from danswer.tools.custom.custom_tool import (
+    build_custom_tools_from_openapi_schema_and_headers,
+)
 from danswer.tools.custom.custom_tool import CUSTOM_TOOL_RESPONSE_ID
 from danswer.tools.custom.custom_tool import CustomToolCallSummary
 from danswer.tools.force import ForceUseTool
@@ -85,6 +94,8 @@ from danswer.tools.internet_search.internet_search_tool import (
 )
 from danswer.tools.internet_search.internet_search_tool import InternetSearchResponse
 from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
+from danswer.tools.models import DynamicSchemaInfo
+from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
 from danswer.tools.search.search_tool import SearchTool
@@ -94,15 +105,16 @@ from danswer.tools.tool import ToolResponse
 from danswer.tools.tool_runner import ToolCallFinalResult
 from danswer.tools.utils import compute_all_tool_tokens
 from danswer.tools.utils import explicit_tool_calling_supported
+from danswer.utils.headers import header_dict_to_header_list
 from danswer.utils.logger import setup_logger
 from danswer.utils.timing import log_generator_function_time
 
 logger = setup_logger()
 
 
-def translate_citations(
+def _translate_citations(
     citations_list: list[CitationInfo], db_docs: list[DbSearchDoc]
-) -> dict[int, int]:
+) -> MessageSpecificCitations:
     """Always cites the first instance of the document_id, assumes the db_docs
     are sorted in the order displayed in the UI"""
     doc_id_to_saved_doc_id_map: dict[str, int] = {}
@@ -117,7 +129,7 @@ def translate_citations(
                 citation.citation_num
             ] = doc_id_to_saved_doc_id_map[citation.document_id]
 
-    return citation_to_saved_doc_id_map
+    return MessageSpecificCitations(citation_map=citation_to_saved_doc_id_map)
 
 
 def _handle_search_tool_response_summary(
@@ -239,11 +251,14 @@ ChatPacket = (
     StreamingError
     | QADocsResponse
     | LLMRelevanceFilterResponse
+    | FinalUsedContextDocsResponse
     | ChatMessageDetail
     | DanswerAnswerPiece
+    | AllCitations
     | CitationInfo
     | ImageGenerationDisplay
     | CustomToolResponse
+    | MessageSpecificCitations
     | MessageResponseIDInfo
 )
 ChatPacketStream = Iterator[ChatPacket]
@@ -262,7 +277,9 @@ def stream_chat_message_objects(
     # on the `new_msg_req.message`. Currently, requires a state where the last message is a
     use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
+    custom_tool_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
+    enforce_chat_session_id_for_search_docs: bool = True,
 ) -> ChatPacketStream:
     """Streams in order:
     1. [conditional] Retrieved documents if a search needs to be run
@@ -434,6 +451,7 @@ def stream_chat_message_objects(
                 chat_session=chat_session,
                 user_id=user_id,
                 db_session=db_session,
+                enforce_chat_session_id_for_search_docs=enforce_chat_session_id_for_search_docs,
             )
 
             # Generates full documents currently
@@ -548,7 +566,26 @@ def stream_chat_message_objects(
                         and llm.config.api_key
                         and llm.config.model_provider == "openai"
                     ):
-                        img_generation_llm_config = llm.config
+                        img_generation_llm_config = LLMConfig(
+                            model_provider=llm.config.model_provider,
+                            model_name="dall-e-3",
+                            temperature=GEN_AI_TEMPERATURE,
+                            api_key=llm.config.api_key,
+                            api_base=llm.config.api_base,
+                            api_version=llm.config.api_version,
+                        )
+                    elif (
+                        llm.config.model_provider == "azure"
+                        and AZURE_DALLE_API_KEY is not None
+                    ):
+                        img_generation_llm_config = LLMConfig(
+                            model_provider="azure",
+                            model_name=f"azure/{AZURE_DALLE_DEPLOYMENT_NAME}",
+                            temperature=GEN_AI_TEMPERATURE,
+                            api_key=AZURE_DALLE_API_KEY,
+                            api_base=AZURE_DALLE_API_BASE,
+                            api_version=AZURE_DALLE_API_VERSION,
+                        )
                     else:
                         llm_providers = fetch_existing_llm_providers(db_session)
                         openai_provider = next(
@@ -567,7 +604,7 @@ def stream_chat_message_objects(
                             )
                         img_generation_llm_config = LLMConfig(
                             model_provider=openai_provider.provider,
-                            model_name=openai_provider.default_model_name,
+                            model_name="dall-e-3",
                             temperature=GEN_AI_TEMPERATURE,
                             api_key=openai_provider.api_key,
                             api_base=openai_provider.api_base,
@@ -579,6 +616,7 @@ def stream_chat_message_objects(
                             api_base=img_generation_llm_config.api_base,
                             api_version=img_generation_llm_config.api_version,
                             additional_headers=litellm_additional_headers,
+                            model=img_generation_llm_config.model_name,
                         )
                     ]
                 elif tool_cls.__name__ == InternetSearchTool.__name__:
@@ -597,8 +635,18 @@ def stream_chat_message_objects(
             if db_tool_model.openapi_schema:
                 tool_dict[db_tool_model.id] = cast(
                     list[Tool],
-                    build_custom_tools_from_openapi_schema(
-                        db_tool_model.openapi_schema
+                    build_custom_tools_from_openapi_schema_and_headers(
+                        db_tool_model.openapi_schema,
+                        dynamic_schema_info=DynamicSchemaInfo(
+                            chat_session_id=chat_session_id,
+                            message_id=user_message.id if user_message else None,
+                        ),
+                        custom_headers=(db_tool_model.custom_headers or [])
+                        + (
+                            header_dict_to_header_list(
+                                custom_tool_additional_headers or {}
+                            )
+                        ),
                     ),
                 )
 
@@ -663,9 +711,11 @@ def stream_chat_message_objects(
                         db_session=db_session,
                         selected_search_docs=selected_db_search_docs,
                         # Deduping happens at the last step to avoid harming quality by dropping content early on
-                        dedupe_docs=retrieval_options.dedupe_docs
-                        if retrieval_options
-                        else False,
+                        dedupe_docs=(
+                            retrieval_options.dedupe_docs
+                            if retrieval_options
+                            else False
+                        ),
                     )
                     yield qa_docs_response
                 elif packet.id == SECTION_RELEVANCE_LIST_ID:
@@ -688,8 +738,13 @@ def stream_chat_message_objects(
                             )
 
                         yield LLMRelevanceFilterResponse(
-                            relevant_chunk_indices=llm_indices
+                            llm_selected_doc_indices=llm_indices
                         )
+
+                elif packet.id == FINAL_CONTEXT_DOCUMENTS_ID:
+                    yield FinalUsedContextDocsResponse(
+                        final_context_docs=packet.response
+                    )
 
                 elif packet.id == IMAGE_GENERATION_RESPONSE_ID:
                     img_generation_response = cast(
@@ -727,10 +782,18 @@ def stream_chat_message_objects(
                     tool_result = packet
                 yield cast(ChatPacket, packet)
         logger.debug("Reached end of stream")
-    except Exception as e:
-        error_msg = str(e)
-        logger.exception(f"Failed to process chat message: {error_msg}")
+    except ValueError as e:
+        logger.exception("Failed to process chat message.")
 
+        error_msg = str(e)
+        yield StreamingError(error=error_msg)
+        db_session.rollback()
+        return
+
+    except Exception as e:
+        logger.exception("Failed to process chat message.")
+
+        error_msg = str(e)
         stack_trace = traceback.format_exc()
         client_error_msg = litellm_exception_to_error_msg(e, llm)
         if llm.config.api_key and len(llm.config.api_key) > 2:
@@ -743,12 +806,13 @@ def stream_chat_message_objects(
 
     # Post-LLM answer processing
     try:
-        db_citations = None
+        message_specific_citations: MessageSpecificCitations | None = None
         if reference_db_search_docs:
-            db_citations = translate_citations(
+            message_specific_citations = _translate_citations(
                 citations_list=answer.citations,
                 db_docs=reference_db_search_docs,
             )
+            yield AllCitations(citations=answer.citations)
 
         # Saving Gen AI answer and responding with message info
         tool_name_to_tool_id: dict[str, int] = {}
@@ -765,18 +829,22 @@ def stream_chat_message_objects(
             reference_docs=reference_db_search_docs,
             files=ai_message_files,
             token_count=len(llm_tokenizer_encode_func(answer.llm_answer)),
-            citations=db_citations,
+            citations=message_specific_citations.citation_map
+            if message_specific_citations
+            else None,
             error=None,
-            tool_calls=[
-                ToolCall(
-                    tool_id=tool_name_to_tool_id[tool_result.tool_name],
-                    tool_name=tool_result.tool_name,
-                    tool_arguments=tool_result.tool_args,
-                    tool_result=tool_result.tool_result,
-                )
-            ]
-            if tool_result
-            else [],
+            tool_calls=(
+                [
+                    ToolCall(
+                        tool_id=tool_name_to_tool_id[tool_result.tool_name],
+                        tool_name=tool_result.tool_name,
+                        tool_arguments=tool_result.tool_args,
+                        tool_result=tool_result.tool_result,
+                    )
+                ]
+                if tool_result
+                else []
+            ),
         )
 
         logger.debug("Committing messages")
@@ -801,6 +869,7 @@ def stream_chat_message(
     user: User | None,
     use_existing_user_message: bool = False,
     litellm_additional_headers: dict[str, str] | None = None,
+    custom_tool_additional_headers: dict[str, str] | None = None,
     is_connected: Callable[[], bool] | None = None,
 ) -> Iterator[str]:
     with get_session_context_manager() as db_session:
@@ -810,6 +879,7 @@ def stream_chat_message(
             db_session=db_session,
             use_existing_user_message=use_existing_user_message,
             litellm_additional_headers=litellm_additional_headers,
+            custom_tool_additional_headers=custom_tool_additional_headers,
             is_connected=is_connected,
         )
         for obj in objects:

@@ -4,6 +4,7 @@ from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
 from typing import Literal
+from uuid import UUID
 
 from fastapi import APIRouter
 from fastapi import Depends
@@ -17,6 +18,7 @@ from danswer.auth.users import get_display_email
 from danswer.chat.chat_utils import create_chat_chain
 from danswer.configs.constants import MessageType
 from danswer.configs.constants import QAFeedbackType
+from danswer.configs.constants import SessionType
 from danswer.db.chat import get_chat_session_by_id
 from danswer.db.engine import get_session
 from danswer.db.models import ChatMessage
@@ -82,27 +84,29 @@ class MessageSnapshot(BaseModel):
 
 
 class ChatSessionMinimal(BaseModel):
-    id: int
+    id: UUID
     user_email: str
     name: str | None
     first_user_message: str
     first_ai_message: str
-    persona_name: str
+    persona_name: str | None
     time_created: datetime
     feedback_type: QAFeedbackType | Literal["mixed"] | None
+    flow_type: SessionType
 
 
 class ChatSessionSnapshot(BaseModel):
-    id: int
+    id: UUID
     user_email: str
     name: str | None
     messages: list[MessageSnapshot]
-    persona_name: str
+    persona_name: str | None
     time_created: datetime
+    flow_type: SessionType
 
 
 class QuestionAnswerPairSnapshot(BaseModel):
-    chat_session_id: int
+    chat_session_id: UUID
     # 1-indexed message number in the chat_session
     # e.g. the first message pair in the chat_session is 1, the second is 2, etc.
     message_pair_num: int
@@ -111,9 +115,10 @@ class QuestionAnswerPairSnapshot(BaseModel):
     retrieved_documents: list[AbridgedSearchDoc]
     feedback_type: QAFeedbackType | None
     feedback_text: str | None
-    persona_name: str
+    persona_name: str | None
     user_email: str
     time_created: datetime
+    flow_type: SessionType
 
     @classmethod
     def from_chat_session_snapshot(
@@ -141,11 +146,12 @@ class QuestionAnswerPairSnapshot(BaseModel):
                 persona_name=chat_session_snapshot.persona_name,
                 user_email=get_display_email(chat_session_snapshot.user_email),
                 time_created=user_message.time_created,
+                flow_type=chat_session_snapshot.flow_type,
             )
             for ind, (user_message, ai_message) in enumerate(message_pairs)
         ]
 
-    def to_json(self) -> dict[str, str]:
+    def to_json(self) -> dict[str, str | None]:
         return {
             "chat_session_id": str(self.chat_session_id),
             "message_pair_num": str(self.message_pair_num),
@@ -162,7 +168,18 @@ class QuestionAnswerPairSnapshot(BaseModel):
             "persona_name": self.persona_name,
             "user_email": self.user_email,
             "time_created": str(self.time_created),
+            "flow_type": self.flow_type,
         }
+
+
+def determine_flow_type(chat_session: ChatSession) -> SessionType:
+    return (
+        SessionType.SLACK
+        if chat_session.danswerbot_flow
+        else SessionType.SEARCH
+        if chat_session.one_shot
+        else SessionType.CHAT
+    )
 
 
 def fetch_and_process_chat_session_history_minimal(
@@ -226,6 +243,8 @@ def fetch_and_process_chat_session_history_minimal(
             if feedback_filter == QAFeedbackType.DISLIKE and not has_negative_feedback:
                 continue
 
+        flow_type = determine_flow_type(chat_session)
+
         minimal_sessions.append(
             ChatSessionMinimal(
                 id=chat_session.id,
@@ -235,9 +254,12 @@ def fetch_and_process_chat_session_history_minimal(
                 name=chat_session.description,
                 first_user_message=first_user_message,
                 first_ai_message=first_ai_message,
-                persona_name=chat_session.persona.name,
+                persona_name=chat_session.persona.name
+                if chat_session.persona
+                else None,
                 time_created=chat_session.time_created,
                 feedback_type=feedback_type,
+                flow_type=flow_type,
             )
         )
 
@@ -289,6 +311,8 @@ def snapshot_from_chat_session(
     except RuntimeError:
         return None
 
+    flow_type = determine_flow_type(chat_session)
+
     return ChatSessionSnapshot(
         id=chat_session.id,
         user_email=get_display_email(
@@ -300,8 +324,9 @@ def snapshot_from_chat_session(
             for message in messages
             if message.message_type != MessageType.SYSTEM
         ],
-        persona_name=chat_session.persona.name,
+        persona_name=chat_session.persona.name if chat_session.persona else None,
         time_created=chat_session.time_created,
+        flow_type=flow_type,
     )
 
 
@@ -326,7 +351,7 @@ def get_chat_session_history(
 
 @router.get("/admin/chat-session-history/{chat_session_id}")
 def get_chat_session_admin(
-    chat_session_id: int,
+    chat_session_id: UUID,
     _: User | None = Depends(current_admin_user),
     db_session: Session = Depends(get_session),
 ) -> ChatSessionSnapshot:

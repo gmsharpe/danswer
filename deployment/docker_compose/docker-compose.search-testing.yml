@@ -26,6 +26,9 @@ services:
       - MODEL_SERVER_PORT=${MODEL_SERVER_PORT:-}
       - ENV_SEED_CONFIGURATION=${ENV_SEED_CONFIGURATION:-}
       - ENABLE_PAID_ENTERPRISE_EDITION_FEATURES=True
+      # To enable the LLM for testing, update the value below
+      # NOTE: this is disabled by default since this is a high volume eval that can be costly
+      - DISABLE_GENERATIVE_AI=${DISABLE_GENERATIVE_AI:-true}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     logging:
@@ -138,6 +141,7 @@ services:
       - INDEXING_ONLY=True
       - LOG_LEVEL=${LOG_LEVEL:-debug}
       - index_model_cache_huggingface:/root/.cache/huggingface/
+      - VESPA_SEARCHER_THREADS=${VESPA_SEARCHER_THREADS:-1}
     logging:
       driver: json-file
       options:
@@ -147,7 +151,7 @@ services:
 
   relational_db:
     image: postgres:15.2-alpine
-    command: -c 'max_connections=150'
+    command: -c 'max_connections=250'
     restart: always
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-postgres}
@@ -208,13 +212,12 @@ services:
     restart: always
     ports:
       - '6379:6379'
-    command: redis-server
-    volumes: 
-      - cache_volume:/data
+    # docker silently mounts /data even without an explicit volume mount, which enables
+    # persistence. explicitly setting save and appendonly forces ephemeral behavior.
+    command: redis-server --save "" --appendonly no
 
 
 volumes:
-  cache_volume:
   db_volume:
     driver: local
     driver_opts:

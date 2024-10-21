@@ -1,4 +1,3 @@
-import { WelcomeModal } from "@/components/initialSetup/welcome/WelcomeModalWrapper";
 import { fetchChatData } from "@/lib/chat/fetchChatData";
 import { unstable_noStore as noStore } from "next/cache";
 import { redirect } from "next/navigation";
@@ -17,15 +16,7 @@ export default async function GalleryPage({
     redirect(data.redirect);
   }
 
-  const {
-    user,
-    chatSessions,
-    assistants,
-    folders,
-    openedFolders,
-    shouldShowWelcomeModal,
-    toggleSidebar,
-  } = data;
+  const { chatSessions, folders, openedFolders, toggleSidebar } = data;
 
   return (
     <WrappedPrompts
@@ -33,8 +24,6 @@ export default async function GalleryPage({
       chatSessions={chatSessions}
       folders={folders}
       openedFolders={openedFolders}
-      user={user}
-      assistants={assistants}
     />
   );
 }

@@ -1,3 +1,4 @@
+import itertools
 from collections.abc import Callable
 from collections.abc import Iterator
 from typing import Any
@@ -52,7 +53,7 @@ from danswer.tools.images.prompt import build_image_generation_user_prompt
 from danswer.tools.internet_search.internet_search_tool import InternetSearchTool
 from danswer.tools.message import build_tool_message
 from danswer.tools.message import ToolCallSummary
-from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS
+from danswer.tools.search.search_tool import FINAL_CONTEXT_DOCUMENTS_ID
 from danswer.tools.search.search_tool import SEARCH_DOC_CONTENT_ID
 from danswer.tools.search.search_tool import SEARCH_RESPONSE_SUMMARY_ID
 from danswer.tools.search.search_tool import SearchResponseSummary
@@ -179,6 +180,7 @@ class Answer:
                         if self.answer_style_config.citation_config
                         else False
                     ),
+                    history_message=self.single_message_history or "",
                 )
             )
         elif self.answer_style_config.quotes_config:
@@ -309,13 +311,15 @@ class Answer:
                     )
                 )
             yield tool_runner.tool_final_result()
+            if not self.skip_gen_ai_answer_generation:
+                prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
 
-            prompt = prompt_builder.build(tool_call_summary=tool_call_summary)
-
-            yield from self._process_llm_stream(
-                prompt=prompt,
-                tools=[tool.tool_definition() for tool in self.tools],
-            )
+                yield from self._process_llm_stream(
+                    prompt=prompt,
+                    # as of now, we don't support multiple tool calls in sequence, which is why
+                    # we don't need to pass this in here
+                    # tools=[tool.tool_definition() for tool in self.tools],
+                )
 
             return
 
@@ -411,6 +415,10 @@ class Answer:
             logger.notice(f"Chosen tool: {chosen_tool_and_args}")
 
         if not chosen_tool_and_args:
+            if self.skip_gen_ai_answer_generation:
+                raise ValueError(
+                    "skip_gen_ai_answer_generation is True, but no tool was chosen; no answer will be generated"
+                )
             prompt_builder.update_system_prompt(
                 default_build_system_message(self.prompt_config)
             )
@@ -433,7 +441,7 @@ class Answer:
         if tool.name in {SearchTool._NAME, InternetSearchTool._NAME}:
             final_context_documents = None
             for response in tool_runner.tool_responses():
-                if response.id == FINAL_CONTEXT_DOCUMENTS:
+                if response.id == FINAL_CONTEXT_DOCUMENTS_ID:
                     final_context_documents = cast(list[LlmDoc], response.response)
                 yield response
 
@@ -475,10 +483,10 @@ class Answer:
         final = tool_runner.tool_final_result()
 
         yield final
+        if not self.skip_gen_ai_answer_generation:
+            prompt = prompt_builder.build()
 
-        prompt = prompt_builder.build()
-
-        yield from self._process_llm_stream(prompt=prompt, tools=None)
+            yield from self._process_llm_stream(prompt=prompt, tools=None)
 
     @property
     def processed_streamed_output(self) -> AnswerStream:
@@ -501,12 +509,10 @@ class Answer:
             message = None
 
             # special things we need to keep track of for the SearchTool
-            search_results: list[
-                LlmDoc
-            ] | None = None  # raw results that will be displayed to the user
-            final_context_docs: list[
-                LlmDoc
-            ] | None = None  # processed docs to feed into the LLM
+            # raw results that will be displayed to the user
+            search_results: list[LlmDoc] | None = None
+            # processed docs to feed into the LLM
+            final_context_docs: list[LlmDoc] | None = None
 
             for message in stream:
                 if isinstance(message, ToolCallKickoff) or isinstance(
@@ -525,8 +531,9 @@ class Answer:
                                 SearchResponseSummary, message.response
                             ).top_sections
                         ]
-                    elif message.id == FINAL_CONTEXT_DOCUMENTS:
+                    elif message.id == FINAL_CONTEXT_DOCUMENTS_ID:
                         final_context_docs = cast(list[LlmDoc], message.response)
+                        yield message
 
                     elif (
                         message.id == SEARCH_DOC_CONTENT_ID
@@ -554,12 +561,19 @@ class Answer:
 
                 def _stream() -> Iterator[str]:
                     nonlocal stream_stop_info
-                    yield cast(str, message)
-                    for item in stream:
+                    for item in itertools.chain([message], stream):
                         if isinstance(item, StreamStopInfo):
                             stream_stop_info = item
                             return
-                        yield cast(str, item)
+
+                        # this should never happen, but we're seeing weird behavior here so handling for now
+                        if not isinstance(item, str):
+                            logger.error(
+                                f"Received non-string item in answer stream: {item}. Skipping."
+                            )
+                            continue
+
+                        yield item
 
                 yield from process_answer_stream_fn(_stream())
 

@@ -2,8 +2,10 @@ from fastapi import FastAPI
 from httpx_oauth.clients.openid import OpenID
 
 from danswer.auth.users import auth_backend
+from danswer.auth.users import create_danswer_oauth_router
 from danswer.auth.users import fastapi_users
 from danswer.configs.app_configs import AUTH_TYPE
+from danswer.configs.app_configs import MULTI_TENANT
 from danswer.configs.app_configs import OAUTH_CLIENT_ID
 from danswer.configs.app_configs import OAUTH_CLIENT_SECRET
 from danswer.configs.app_configs import USER_AUTH_SECRET
@@ -23,6 +25,8 @@ from ee.danswer.server.enterprise_settings.api import (
 from ee.danswer.server.enterprise_settings.api import (
     basic_router as enterprise_settings_router,
 )
+from ee.danswer.server.manage.standard_answer import router as standard_answer_router
+from ee.danswer.server.middleware.tenant_tracking import add_tenant_id_middleware
 from ee.danswer.server.query_and_chat.chat_backend import (
     router as chat_router,
 )
@@ -33,6 +37,7 @@ from ee.danswer.server.query_history.api import router as query_history_router
 from ee.danswer.server.reporting.usage_export_api import router as usage_export_router
 from ee.danswer.server.saml import router as saml_router
 from ee.danswer.server.seeding import seed_db
+from ee.danswer.server.tenants.api import router as tenants_router
 from ee.danswer.server.token_rate_limits.api import (
     router as token_rate_limit_settings_router,
 )
@@ -51,10 +56,13 @@ def get_application() -> FastAPI:
 
     application = get_application_base()
 
+    if MULTI_TENANT:
+        add_tenant_id_middleware(application, logger)
+
     if AUTH_TYPE == AuthType.OIDC:
         include_router_with_global_prefix_prepended(
             application,
-            fastapi_users.get_oauth_router(
+            create_danswer_oauth_router(
                 OpenID(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OPENID_CONFIG_URL),
                 auth_backend,
                 USER_AUTH_SECRET,
@@ -86,6 +94,7 @@ def get_application() -> FastAPI:
     # EE only backend APIs
     include_router_with_global_prefix_prepended(application, query_router)
     include_router_with_global_prefix_prepended(application, chat_router)
+    include_router_with_global_prefix_prepended(application, standard_answer_router)
     # Enterprise-only global settings
     include_router_with_global_prefix_prepended(
         application, enterprise_settings_admin_router
@@ -96,6 +105,10 @@ def get_application() -> FastAPI:
     )
     include_router_with_global_prefix_prepended(application, enterprise_settings_router)
     include_router_with_global_prefix_prepended(application, usage_export_router)
+
+    if MULTI_TENANT:
+        # Tenant management
+        include_router_with_global_prefix_prepended(application, tenants_router)
 
     # Ensure all routes have auth enabled or are explicitly marked as public
     check_ee_router_auth(application)
