@@ -134,6 +134,7 @@ job "danswer" {
       driver = "docker"
 
       service {
+
         name = "relational-db"
         tags = ["relational-db"]
         port = "db_port"
@@ -165,7 +166,6 @@ job "danswer" {
 
       config {
         image = "postgres:15.2-alpine"
-        command = "postgres"
         args = ["-c", "max_connections=150"]
         ports = ["db_port"]
       }
@@ -183,6 +183,14 @@ job "danswer" {
         volume      = "db"
         destination = "/var/lib/postgresql/data"
       }
+
+      restart {
+        attempts = 10
+        interval = "3m"
+        delay    = "25s"
+        mode     = "delay"
+      }
+
     }
     volume "db" {
       type      = "host"
