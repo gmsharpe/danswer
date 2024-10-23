@@ -1,0 +1,267 @@
+{
+  "family": "background-task",
+  "networkMode": "awsvpc",
+  "cpu": "512",
+  "memory": "4096",
+  "requiresCompatibilities": ["FARGATE"],
+  "executionRoleArn": "arn:aws:iam::${aws_acct_id}:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${aws_acct_id}:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "background",
+      "image": "danswer/danswer-backend:${IMAGE_TAG}",
+      "command": [
+        "/usr/bin/supervisord",
+        "-c",
+        "/etc/supervisor/conf.d/supervisord.conf"
+      ],
+      "essential": true,
+      "environment": [
+        {"name": "MODEL_SERVER_HOST", "value": "${model_server_host}"},
+        {"name": "MODEL_SERVER_PORT", "value": "9000"},
+        {"name": "INDEXING_MODEL_SERVER_HOST", "value": "${indexing_model_server_host}"},
+        {"name": "POSTGRES_HOST", "value": "${postgres_host}"},
+        {"name": "VESPA_HOST", "value": "${vespa_host}"}
+      ],
+      "secrets": [
+        {
+          "name": "IMAGE_TAG",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:IMAGE_TAG"
+        },
+        {
+          "name": "ENCRYPTION_KEY_SECRET",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:ENCRYPTION_KEY_SECRET"
+        },
+        {
+          "name": "GEN_AI_MAX_TOKENS",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:GEN_AI_MAX_TOKENS"
+        },
+        {
+          "name": "QA_TIMEOUT",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:QA_TIMEOUT"
+        },
+        {
+          "name": "MAX_CHUNKS_FED_TO_CHAT",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:MAX_CHUNKS_FED_TO_CHAT"
+        },
+        {
+          "name": "DISABLE_LLM_CHOOSE_SEARCH",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DISABLE_LLM_CHOOSE_SEARCH"
+        },
+        {
+          "name": "DISABLE_LLM_QUERY_REPHRASE",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DISABLE_LLM_QUERY_REPHRASE"
+        },
+        {
+          "name": "DISABLE_GENERATIVE_AI",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DISABLE_GENERATIVE_AI"
+        },
+        {
+          "name": "GENERATIVE_MODEL_ACCESS_CHECK_FREQ",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:GENERATIVE_MODEL_ACCESS_CHECK_FREQ"
+        },
+        {
+          "name": "DISABLE_LITELLM_STREAMING",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DISABLE_LITELLM_STREAMING"
+        },
+        {
+          "name": "LITELLM_EXTRA_HEADERS",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:LITELLM_EXTRA_HEADERS"
+        },
+        {
+          "name": "BING_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:BING_API_KEY"
+        },
+        {
+          "name": "DOC_TIME_DECAY",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DOC_TIME_DECAY"
+        },
+        {
+          "name": "HYBRID_ALPHA",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:HYBRID_ALPHA"
+        },
+        {
+          "name": "EDIT_KEYWORD_QUERY",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:EDIT_KEYWORD_QUERY"
+        },
+        {
+          "name": "MULTILINGUAL_QUERY_EXPANSION",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:MULTILINGUAL_QUERY_EXPANSION"
+        },
+        {
+          "name": "LANGUAGE_HINT",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:LANGUAGE_HINT"
+        },
+        {
+          "name": "LANGUAGE_CHAT_NAMING_HINT",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:LANGUAGE_CHAT_NAMING_HINT"
+        },
+        {
+          "name": "QA_PROMPT_OVERRIDE",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:QA_PROMPT_OVERRIDE"
+        },
+        {
+          "name": "POSTGRES_USER",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:POSTGRES_USER"
+        },
+        {
+          "name": "POSTGRES_PASSWORD",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:POSTGRES_PASSWORD"
+        },
+        {
+          "name": "POSTGRES_DB",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:POSTGRES_DB"
+        },
+        {
+          "name": "WEB_DOMAIN",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:WEB_DOMAIN"
+        },
+        {
+          "name": "DOCUMENT_ENCODER_MODEL",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DOCUMENT_ENCODER_MODEL"
+        },
+        {
+          "name": "DOC_EMBEDDING_DIM",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DOC_EMBEDDING_DIM"
+        },
+        {
+          "name": "NORMALIZE_EMBEDDINGS",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:NORMALIZE_EMBEDDINGS"
+        },
+        {
+          "name": "ASYM_QUERY_PREFIX",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:ASYM_QUERY_PREFIX"
+        },
+        {
+          "name": "ASYM_PASSAGE_PREFIX",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:ASYM_PASSAGE_PREFIX"
+        },
+        {
+          "name": "NUM_INDEXING_WORKERS",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:NUM_INDEXING_WORKERS"
+        },
+        {
+          "name": "ENABLED_CONNECTOR_TYPES",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:ENABLED_CONNECTOR_TYPES"
+        },
+        {
+          "name": "DISABLE_INDEX_UPDATE_ON_SWAP",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DISABLE_INDEX_UPDATE_ON_SWAP"
+        },
+        {
+          "name": "DASK_JOB_CLIENT_ENABLED",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DASK_JOB_CLIENT_ENABLED"
+        },
+        {
+          "name": "CONTINUE_ON_CONNECTOR_FAILURE",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:CONTINUE_ON_CONNECTOR_FAILURE"
+        },
+        {
+          "name": "EXPERIMENTAL_CHECKPOINTING_ENABLED",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:EXPERIMENTAL_CHECKPOINTING_ENABLED"
+        },
+        {
+          "name": "CONFLUENCE_CONNECTOR_LABELS_TO_SKIP",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:CONFLUENCE_CONNECTOR_LABELS_TO_SKIP"
+        },
+        {
+          "name": "JIRA_CONNECTOR_LABELS_TO_SKIP",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:JIRA_CONNECTOR_LABELS_TO_SKIP"
+        },
+        {
+          "name": "WEB_CONNECTOR_VALIDATE_URLS",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:WEB_CONNECTOR_VALIDATE_URLS"
+        },
+        {
+          "name": "JIRA_API_VERSION",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:JIRA_API_VERSION"
+        },
+        {
+          "name": "GONG_CONNECTOR_START_TIME",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:GONG_CONNECTOR_START_TIME"
+        },
+        {
+          "name": "NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:NOTION_CONNECTOR_ENABLE_RECURSIVE_PAGE_LOOKUP"
+        },
+        {
+          "name": "GITHUB_CONNECTOR_BASE_URL",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:GITHUB_CONNECTOR_BASE_URL"
+        },
+        {
+          "name": "DANSWER_BOT_SLACK_APP_TOKEN",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DANSWER_BOT_SLACK_APP_TOKEN"
+        },
+        {
+          "name": "DANSWER_BOT_SLACK_BOT_TOKEN",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DANSWER_BOT_SLACK_BOT_TOKEN"
+        },
+        {
+          "name": "DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DANSWER_BOT_DISABLE_DOCS_ONLY_ANSWER"
+        },
+        {
+          "name": "DANSWER_BOT_FEEDBACK_VISIBILITY",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DANSWER_BOT_FEEDBACK_VISIBILITY"
+        },
+        {
+          "name": "DANSWER_BOT_DISPLAY_ERROR_MSGS",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DANSWER_BOT_DISPLAY_ERROR_MSGS"
+        },
+        {
+          "name": "DANSWER_BOT_RESPOND_EVERY_CHANNEL",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DANSWER_BOT_RESPOND_EVERY_CHANNEL"
+        },
+        {
+          "name": "DANSWER_BOT_DISABLE_COT",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DANSWER_BOT_DISABLE_COT"
+        },
+        {
+          "name": "NOTIFY_SLACKBOT_NO_ANSWER",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:NOTIFY_SLACKBOT_NO_ANSWER"
+        },
+        {
+          "name": "DANSWER_BOT_MAX_QPM",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DANSWER_BOT_MAX_QPM"
+        },
+        {
+          "name": "DANSWER_BOT_MAX_WAIT_TIME",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DANSWER_BOT_MAX_WAIT_TIME"
+        },
+        {
+          "name": "DISABLE_TELEMETRY",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DISABLE_TELEMETRY"
+        },
+        {
+          "name": "LOG_LEVEL",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:LOG_LEVEL"
+        },
+        {
+          "name": "LOG_ALL_MODEL_INTERACTIONS",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:LOG_ALL_MODEL_INTERACTIONS"
+        },
+        {
+          "name": "LOG_DANSWER_MODEL_INTERACTIONS",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:LOG_DANSWER_MODEL_INTERACTIONS"
+        },
+        {
+          "name": "LOG_VESPA_TIMING_INFORMATION",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:LOG_VESPA_TIMING_INFORMATION"
+        },
+        {
+          "name": "ENABLE_PAID_ENTERPRISE_EDITION_FEATURES",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:ENABLE_PAID_ENTERPRISE_EDITION_FEATURES"
+        }
+      ]
+    ,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/background-task",
+          "awslogs-region": "${aws_region}",
+          "awslogs-stream-prefix": "background"
+        }
+      }
+    }
+  ]
+}

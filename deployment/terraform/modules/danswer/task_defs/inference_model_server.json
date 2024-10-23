@@ -1,0 +1,53 @@
+{
+  "family": "inference-model-server",
+  "networkMode": "awsvpc",
+  "cpu": "512",
+  "memory": "4096",
+  "requiresCompatibilities": ["FARGATE"],
+  "executionRoleArn": "arn:aws:iam::${aws_acct_id}:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${aws_acct_id}:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "inference_model_server",
+      "image": "danswer/danswer-model-server:${IMAGE_TAG}",
+      "command": [
+        "/bin/sh",
+        "-c",
+        "if [ \"$DISABLE_MODEL_SERVER\" = \"True\" ]; then echo 'Skipping service...'; exit 0; else exec uvicorn model_server.main:app --host 0.0.0.0 --port 9000; fi"
+      ],
+      "essential": true,
+      "secrets": [
+        {
+          "name": "IMAGE_TAG",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:IMAGE_TAG"
+        },
+        {
+          "name": "LOG_LEVEL",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:LOG_LEVEL"
+        },
+        {
+          "name": "MIN_THREADS_ML_MODELS",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:MIN_THREADS_ML_MODELS"
+        },
+        {
+          "name": "DISABLE_MODEL_SERVER",
+          "valueFrom": "arn:aws:secretsmanager:${aws_region}:${aws_acct_id}:secret:DISABLE_MODEL_SERVER"
+        }
+      ],
+      "portMappings": [
+        {
+          "containerPort": 9000,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/inference-model-server",
+          "awslogs-region": "${aws_region}",
+          "awslogs-stream-prefix": "inference"
+        }
+      }
+    }
+  ]
+}

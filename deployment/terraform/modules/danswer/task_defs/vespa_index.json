@@ -1,0 +1,55 @@
+{
+  "family": "vespa-index",
+  "networkMode": "bridge",
+  "cpu": "1024",
+  "memory": "4096",
+  "requiresCompatibilities": ["EC2"],
+  "executionRoleArn": "arn:aws:iam::${aws_acct_id}:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${aws_acct_id}:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "vespa-index",
+      "image": "vespaengine/vespa:8.277.17",
+      "essential": true,
+      "environment": [
+        {"name": "VESPA_PORT", "value": "19071"}
+      ],
+      "portMappings": [
+        {
+          "containerPort": 19071,
+          "hostPort": 19071,
+          "protocol": "tcp"
+        },
+        {
+          "containerPort": 8081,
+          "hostPort": 8081,
+          "protocol": "tcp"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "vespa-data",
+          "containerPath": "/opt/vespa/var",
+          "readOnly": false
+        }
+      ],
+      "privileged": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/vespa-index",
+          "awslogs-region": "${aws_region}",
+          "awslogs-stream-prefix": "vespa"
+        }
+      }
+    }
+  ],
+  "volumes": [
+    {
+      "name": "vespa-data",
+      "host": {
+        "sourcePath": "/ecs/vespa-data"
+      }
+    }
+  ]
+}

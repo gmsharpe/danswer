@@ -1,0 +1,55 @@
+[
+  {
+    "name": "relational_db",
+    "image": "postgres:15.2-alpine",
+    "cpu": 512,
+    "memory": 1024,
+    "essential": true,
+    "command": [
+      "-c",
+      "max_connections=150"
+    ],
+    "secrets": [
+      {
+        "name": "POSTGRES_USER",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/DANSWER_POSTGRES_USER"
+      },
+      {
+        "name": "POSTGRES_PASSWORD",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/DANSWER_POSTGRES_PASSWORD"
+      }
+    ],
+    "portMappings": [
+      {
+        "containerPort": 5432,
+        "hostPort": 5432,
+        "protocol": "tcp"
+      }
+    ],
+    "mountPoints": [
+      {
+        "sourceVolume": "db",
+        "containerPath": "/var/lib/postgresql/data",
+        "readOnly": false
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/hybrid-cluster",
+        "awslogs-region": "${aws_region}",
+        "awslogs-stream-prefix": "relational_db"
+      }
+    },
+    "healthCheck": {
+      "command": [
+        "CMD-SHELL",
+        "pg_isready -U $POSTGRES_USER"
+      ],
+      "interval": 10,
+      "timeout": 2,
+      "retries": 3,
+      "startPeriod": 30
+    }
+  }
+]

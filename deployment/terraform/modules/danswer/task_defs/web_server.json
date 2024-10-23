@@ -1,0 +1,74 @@
+[
+  {
+    "name": "web_server",
+    "image": "danswer/danswer-web-server:latest",
+    "cpu": 512,
+    "memory": 1024,
+    "portMappings": [
+      {
+        "containerPort": 3000,
+        "hostPort": 3000,
+        "protocol": "tcp"
+      }
+    ],
+    "secrets": [
+      {
+        "name": "NEXT_PUBLIC_DISABLE_STREAMING",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/NEXT_PUBLIC_DISABLE_STREAMING"
+      },
+      {
+        "name": "NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/NEXT_PUBLIC_NEW_CHAT_DIRECTS_TO_SAME_PERSONA"
+      },
+      {
+        "name": "NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/NEXT_PUBLIC_POSITIVE_PREDEFINED_FEEDBACK_OPTIONS"
+      },
+      {
+        "name": "NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/NEXT_PUBLIC_NEGATIVE_PREDEFINED_FEEDBACK_OPTIONS"
+      },
+      {
+        "name": "NEXT_PUBLIC_DISABLE_LOGOUT",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/NEXT_PUBLIC_DISABLE_LOGOUT"
+      },
+      {
+        "name": "NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/NEXT_PUBLIC_DEFAULT_SIDEBAR_OPEN"
+      },
+      {
+        "name": "NEXT_PUBLIC_THEME",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/NEXT_PUBLIC_THEME"
+      },
+      {
+        "name": "NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/NEXT_PUBLIC_DO_NOT_USE_TOGGLE_OFF_DANSWER_POWERED"
+      },
+      {
+        "name": "WEB_DOMAIN",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/WEB_DOMAIN"
+      },
+      {
+        "name": "THEME_IS_DARK",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/THEME_IS_DARK"
+      },
+      {
+        "name": "DISABLE_LLM_DOC_RELEVANCE",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/DISABLE_LLM_DOC_RELEVANCE"
+      },
+      {
+        "name": "ENABLE_PAID_ENTERPRISE_EDITION_FEATURES",
+        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/ENABLE_PAID_ENTERPRISE_EDITION_FEATURES"
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/hybrid-cluster",
+        "awslogs-region": "${aws_region}",
+        "awslogs-stream-prefix": "web_service"
+      }
+    }
+  }
+]
+
