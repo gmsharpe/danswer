@@ -14,7 +14,7 @@ resource "aws_ecs_task_definition" "web_service" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   network_mode       = "bridge"
-  requires_compatibilities = ["EXTERNAL", "EC2"]
+  requires_compatibilities = ["EC2"]
 
   placement_constraints {
     type = "memberOf"
