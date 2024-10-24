@@ -22,8 +22,6 @@ resource "aws_instance" "ecs_optimized_instance" {
   }
 
   root_block_device {
-    volume_size           = 25
-    volume_type           = "gp2"
     delete_on_termination = true
   }
 
