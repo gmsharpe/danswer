@@ -3,7 +3,7 @@ resource "aws_ecs_service" "web_service" {
   cluster         = var.cluster_arn
   task_definition = aws_ecs_task_definition.web_service.arn
   desired_count   = 1
-  launch_type     = "EXTERNAL"
+  launch_type     = "EC2"
 
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
@@ -14,7 +14,7 @@ resource "aws_ecs_task_definition" "web_service" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   network_mode       = "bridge"
-  requires_compatibilities = ["EXTERNAL"]
+  requires_compatibilities = ["EXTERNAL", "EC2"]
 
   placement_constraints {
     type = "memberOf"

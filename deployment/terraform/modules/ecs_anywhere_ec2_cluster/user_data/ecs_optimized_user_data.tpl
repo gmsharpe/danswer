@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo yum update -y
+
 # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_container_instance.html
 
 echo "Starting user data script for ECS-optimized Amazon Linux 2023..."
