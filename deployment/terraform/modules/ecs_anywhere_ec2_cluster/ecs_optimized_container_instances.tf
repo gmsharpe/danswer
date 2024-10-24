@@ -17,12 +17,18 @@ resource "aws_instance" "ecs_optimized_instance" {
   user_data_replace_on_change = true
 
   tags = {
-    Name    = "ecsAnywhereInstance-${count.index}"
+    Name    = "ecsOptimizedEc2Instance-${count.index}"
     Project = "Danswer"
   }
 
   root_block_device {
     delete_on_termination = true
+  }
+
+  lifecycle {
+    ignore_changes = [
+      security_groups
+    ]
   }
 
   iam_instance_profile = aws_iam_instance_profile.ecs_cluster_instance_profile.name

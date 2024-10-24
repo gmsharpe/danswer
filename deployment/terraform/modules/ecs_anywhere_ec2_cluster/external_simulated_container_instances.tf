@@ -32,7 +32,7 @@ resource "aws_security_group" "ecs_anywhere_sg" {
 }
 
 resource "aws_instance" "ecs_anywhere_instance" {
-  count         = 0
+  count         = 2
   ami           = data.aws_ssm_parameter.amazon_linux_2023.value
   instance_type = var.node_instance_type
   subnet_id     = aws_subnet.ecs_anywhere_subnet.id
