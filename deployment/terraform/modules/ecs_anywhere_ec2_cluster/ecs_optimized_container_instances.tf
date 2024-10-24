@@ -3,6 +3,7 @@ data "aws_ssm_parameter" "ecs_al2023_ami" {
 }
 
 resource "aws_instance" "ecs_optimized_instance" {
+  count = 1
   ami           = data.aws_ssm_parameter.ecs_al2023_ami.value  # Use ECS-optimized AL2023 AMI
   instance_type = var.node_instance_type
   subnet_id     = aws_subnet.ecs_anywhere_subnet.id
