@@ -28,3 +28,9 @@ resource "aws_instance" "ecs_anywhere_instance" {
 
   iam_instance_profile = aws_iam_instance_profile.ecs_cluster_instance_profile.name
 }
+
+# Create Instance Profile
+resource "aws_iam_instance_profile" "ecs_cluster_instance_profile" {
+  name = "ecs-anywhere-instance-profile"
+  role = aws_iam_role.ecs_anywhere_mngmt_role.name
+}
