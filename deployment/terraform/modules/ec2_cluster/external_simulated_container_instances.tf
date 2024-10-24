@@ -43,7 +43,7 @@ resource "aws_instance" "ecs_anywhere_instance" {
   #     http_endpoint = "enabled"       # Ensure the metadata service is enabled
   #   }
 
-  user_data = templatefile("${path.module}/user_data.tpl", {
+  user_data = templatefile("${path.module}/external_simulated_user_data.tpl", {
     count           = count.index
     ip_address      = "10.0.1.${count.index + 10}"
     server_ip       = "10.0.1.10"
