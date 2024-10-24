@@ -7,7 +7,7 @@ sudo yum update -y
 
 # needed to run gpg-agent on Amazon Linux
 echo "installing gnupg2"
-sudo yum install gnupg2 -y --allowerasing \
+sudo yum install gnupg2 -y --allowerasing
 sudo gpg-agent --daemon
 
 # The latest install scripts fails when trying to touch the /etc/ecs/ecs.config file
