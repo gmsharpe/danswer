@@ -9,9 +9,9 @@ resource "aws_instance" "ecs_optimized_instance" {
   subnet_id     = aws_subnet.ecs_anywhere_subnet.id
   security_groups = [aws_security_group.ecs_anywhere_sg.id]
   key_name      = var.key_name
-  private_ip    = "10.0.2.${count.index + 10}"
+  private_ip    = "10.0.1.${count.index + 20}"
 
-  user_data = templatefile("${path.module}/ecs_optimized_user_data.tpl", {
+  user_data = templatefile("${path.module}/user_data/ecs_optimized_user_data.tpl", {
     cluster_name    = aws_ecs_cluster.hybrid_cluster.name
   })
   user_data_replace_on_change = true
