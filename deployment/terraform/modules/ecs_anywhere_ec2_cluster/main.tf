@@ -2,6 +2,9 @@ provider "aws" {
   region = "us-west-1"
 }
 
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
 data "aws_availability_zones" "available" {}
 
 data "aws_ssm_parameter" "amazon_linux_2023" {
@@ -62,10 +65,6 @@ resource "aws_ecs_cluster" "hybrid_cluster" {
   name = "hybrid-ecs-cluster"
 
 }
-
-
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
 
 
 

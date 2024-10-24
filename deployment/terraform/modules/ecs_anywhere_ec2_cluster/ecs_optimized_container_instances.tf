@@ -2,7 +2,7 @@ data "aws_ssm_parameter" "ecs_al2023_ami" {
   name = "/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id"
 }
 
-resource "aws_instance" "ecs_anywhere_instance" {
+resource "aws_instance" "ecs_optimized_instance" {
   ami           = data.aws_ssm_parameter.ecs_al2023_ami.value  # Use ECS-optimized AL2023 AMI
   instance_type = var.node_instance_type
   subnet_id     = aws_subnet.ecs_anywhere_subnet.id
