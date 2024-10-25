@@ -11,6 +11,12 @@
         "protocol": "tcp"
       }
     ],
+    "environment" :[
+      {
+        "name": "INTERNAL_URL",
+        "value": "http://api_server:8080"
+      }
+    ],
     "secrets": [
       {
         "name": "NEXT_PUBLIC_DISABLE_STREAMING",
