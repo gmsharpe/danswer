@@ -17,10 +17,23 @@ resource "aws_ecs_task_definition" "api_server" {
   requires_compatibilities = ["EXTERNAL", "EC2"]
 
   # Reading the container definition from the file
-  container_definitions = templatefile("${path.module}/task_defs/api_server.json", {
-    aws_region = data.aws_region.current.name
-    aws_acct_id = data.aws_caller_identity.current.account_id
-  })
+  container_definitions = jsonencode([
+    jsondecode(templatefile("${path.module}/task_defs/api_server.json", {
+      aws_region  = data.aws_region.current.name
+      aws_acct_id = data.aws_caller_identity.current.account_id
+    })),
+    jsondecode(templatefile("${path.module}/task_defs/envoy_sidecar.json", {
+      aws_region       = data.aws_region.current.name
+      aws_acct_id      = data.aws_caller_identity.current.account_id
+      consul_server_ip = "127.0.0.1"
+      extra = "delete_me"
+    }))
+  ])
+
+  volume {
+    name      = "envoy-config"
+    host_path = "/etc/envoy"
+  }
 }
 
 # api_server ssm parameters

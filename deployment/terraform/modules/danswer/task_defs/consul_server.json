@@ -1,0 +1,61 @@
+{
+  "name": "consul_server",
+  "image": "hashicorp/consul:1.12.0",
+  "cpu": 512,
+  "memory": 1024,
+  "portMappings": [
+    {
+      "containerPort": 8500,
+      "hostPort": 8500,
+      "protocol": "tcp"
+    },
+    {
+      "containerPort": 8502,
+      "hostPort": 8502,
+      "protocol": "tcp"
+    },
+    {
+      "containerPort": 8600,
+      "hostPort": 8600,
+      "protocol": "tcp"
+    },
+    {
+      "containerPort": 8600,
+      "hostPort": 8600,
+      "protocol": "udp"
+    }
+  ],
+  "command": [
+    "agent",
+    "-server",
+    "-bootstrap-expect=1",
+    "-client=0.0.0.0",
+    "-ui",
+    "-bind=0.0.0.0",
+    "-advertise=$(AWS_EC2_LOCAL_IPV4)"
+  ],
+  "environment": [
+    {
+      "name": "CONSUL_BIND_INTERFACE",
+      "value": "eth0"
+    }
+  ],
+  "logConfiguration": {
+    "logDriver": "awslogs",
+    "options": {
+      "awslogs-group": "/ecs/consul-server",
+      "awslogs-region": "${aws_region}",
+      "awslogs-stream-prefix": "consul_server"
+    }
+  },
+  "mountPoints": [
+    {
+      "sourceVolume": "consul-data",
+      "containerPath": "/consul/data"
+    },
+    {
+      "sourceVolume": "consul-config",
+      "containerPath": "/consul/config"
+    }
+  ]
+}

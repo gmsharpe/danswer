@@ -1,60 +1,59 @@
-[
-  {
-    "name": "api_server",
-    "image": "danswer/danswer-backend:latest",
-    "cpu": 512,
-    "memory": 1024,
-    "portMappings": [
-      {
-        "containerPort": 8080,
-        "hostPort": 8080,
-        "protocol": "tcp"
-      }
-    ],
-    "command": [
-      "/bin/sh",
-      "-c",
-      "alembic upgrade head && echo \"Starting Danswer API Server\" && uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
-    ],
-    "environment": [
-      {
-        "name": "INDEXING_MODEL_SERVER_HOST",
-        "value": "indexing_model_server"
-      },
-      {
-        "name": "POSTGRES_HOST",
-        "value": "relational_db"
-      },
-      {
-        "name": "VESPA_HOST",
-        "value": "index"
-      },
-      {
-        "name": "REDIS_HOST",
-        "value": "redis"
-      }
-    ],
-    "secrets": [
-      {
-        "name": "MIN_THREADS_ML_MODELS",
-        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/MIN_THREADS_ML_MODELS"
-      },
-      {
-        "name": "LOG_LEVEL",
-        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/LOG_LEVEL"
-      },
-      {
-        "name": "DISABLE_MODEL_SERVER",
-        "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/DISABLE_MODEL_SERVER"
-      }
-    ],
-    "logConfiguration": {
-      "logDriver": "awslogs",
-      "options": {
-        "awslogs-group": "/ecs/hybrid-cluster",
-        "awslogs-region": "${aws_region}",
-        "awslogs-stream-prefix": "api_server"
-      }
+{
+  "name": "api_server",
+  "image": "danswer/danswer-backend:latest",
+  "cpu": 512,
+  "memory": 1024,
+  "portMappings": [
+    {
+      "containerPort": 8080,
+      "hostPort": 8080,
+      "protocol": "tcp"
+    }
+  ],
+  "command": [
+    "/bin/sh",
+    "-c",
+    "alembic upgrade head && echo \"Starting Danswer API Server\" && uvicorn danswer.main:app --host 0.0.0.0 --port 8080"
+  ],
+  "environment": [
+    {
+      "name": "INDEXING_MODEL_SERVER_HOST",
+      "value": "indexing_model_server"
+    },
+    {
+      "name": "POSTGRES_HOST",
+      "value": "relational_db"
+    },
+    {
+      "name": "VESPA_HOST",
+      "value": "index"
+    },
+    {
+      "name": "REDIS_HOST",
+      "value": "redis"
+    }
+  ],
+  "secrets": [
+    {
+      "name": "MIN_THREADS_ML_MODELS",
+      "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/MIN_THREADS_ML_MODELS"
+    },
+    {
+      "name": "LOG_LEVEL",
+      "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/LOG_LEVEL"
+    },
+    {
+      "name": "DISABLE_MODEL_SERVER",
+      "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/DISABLE_MODEL_SERVER"
+    }
+  ],
+  "logConfiguration": {
+    "logDriver": "awslogs",
+    "options": {
+      "awslogs-group": "/ecs/hybrid-cluster",
+      "awslogs-region": "${aws_region}",
+      "awslogs-stream-prefix": "api_server"
     }
   }
-]
+}
+

@@ -27,5 +27,51 @@ sudo bash ecs-anywhere-install.sh \
   --activation-id "${ssm_activation_id}" \
   --activation-code "${ssm_activation_code}"
 
+# Extra for Consul & Envoy
+sudo mkdir -p /etc/consul/data
+sudo mkdir -p /etc/consul/config
+sudo mkdir -p /etc/envoy
 
+# Write the envoy_bootstrap.json file located in ../modules/config/envoy_bootstrap.json
+cat <<EOF > /etc/envoy/envoy_bootstrap.json
+{
+  "name": "envoy",
+  "image": "envoyproxy/envoy:v1.18.3",
+  "cpu": 256,
+  "memory": 512,
+  "essential": true,
+  "portMappings": [
+    {
+      "containerPort": 19000,
+      "hostPort": 19000,
+      "protocol": "tcp"
+    }
+  ],
+  "environment": [
+    {
+      "name": "CONSUL_HTTP_ADDR",
+      "value": "http://${consul_server_ip}:8500"
+    }
+  ],
+  "command": [
+    "envoy",
+    "-c",
+    "/etc/envoy/envoy_bootstrap.json"
+  ],
+  "mountPoints": [
+    {
+      "sourceVolume": "envoy-config",
+      "containerPath": "/etc/envoy"
+    }
+  ],
+  "logConfiguration": {
+    "logDriver": "awslogs",
+    "options": {
+      "awslogs-group": "/ecs/hybrid-cluster",
+      "awslogs-region": "${aws_region}",
+      "awslogs-stream-prefix": "envoy"
+    }
+  }
+}
+EOF
 

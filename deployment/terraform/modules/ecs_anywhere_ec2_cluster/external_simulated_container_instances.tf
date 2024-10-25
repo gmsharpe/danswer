@@ -57,7 +57,9 @@ resource "aws_instance" "ecs_anywhere_instance" {
     ssm_activation_id = aws_ssm_activation.activation.id
     ssm_activation_code = aws_ssm_activation.activation.activation_code
     cluster_name    = aws_ecs_cluster.hybrid_cluster.name
-    #ecs_version = "1.87.0-1"
+
+    # testing with a consul server deployed as a sidecar - this will be removed
+    consul_server_ip = "127.0.0.1"
   })
   user_data_replace_on_change = true
 

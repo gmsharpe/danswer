@@ -1,0 +1,39 @@
+{
+  "name": "envoy",
+  "image": "envoyproxy/envoy:v1.18.3",
+  "cpu": 256,
+  "memory": 512,
+  "essential": true,
+  "portMappings": [
+    {
+      "containerPort": 19000,
+      "hostPort": 19000,
+      "protocol": "tcp"
+    }
+  ],
+  "environment": [
+    {
+      "name": "CONSUL_HTTP_ADDR",
+      "value": "http://${consul_server_ip}:8500"
+    }
+  ],
+  "command": [
+    "envoy",
+    "-c",
+    "/etc/envoy/envoy_bootstrap.json"
+  ],
+  "mountPoints": [
+    {
+      "sourceVolume": "envoy-config",
+      "containerPath": "/etc/envoy"
+    }
+  ],
+  "logConfiguration": {
+    "logDriver": "awslogs",
+    "options": {
+      "awslogs-group": "/ecs/hybrid-cluster",
+      "awslogs-region": "${aws_region}",
+      "awslogs-stream-prefix": "envoy"
+    }
+  }
+}
