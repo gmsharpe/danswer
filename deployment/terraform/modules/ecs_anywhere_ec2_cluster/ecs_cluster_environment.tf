@@ -1,3 +1,10 @@
+# ECS Cluster
+
+resource "aws_ecs_cluster" "hybrid_cluster" {
+  name = "hybrid-ecs-cluster"
+
+}
+
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.ecs_anywhere_vpc.id
 
@@ -42,13 +49,6 @@ resource "aws_subnet" "ecs_anywhere_subnet" {
 resource "aws_route_table_association" "ecs_anywhere_public_rta" {
   subnet_id      = aws_subnet.ecs_anywhere_subnet.id
   route_table_id = aws_route_table.public_rt.id
-}
-
-# ECS Cluster
-
-resource "aws_ecs_cluster" "hybrid_cluster" {
-  name = "hybrid-ecs-cluster"
-
 }
 
 resource "aws_iam_role" "ecs_anywhere_mngmt_role" {
