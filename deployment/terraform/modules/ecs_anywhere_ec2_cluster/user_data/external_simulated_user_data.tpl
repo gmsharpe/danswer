@@ -32,7 +32,11 @@ sudo mkdir -p /etc/consul/data
 sudo mkdir -p /etc/consul/config
 sudo mkdir -p /etc/envoy
 
-# Write the envoy_bootstrap.json file located in ../modules/config/envoy_bootstrap.json
+################################################
+### Consul and Envoy Config (Will Remove) ######
+################################################
+
+# Write the envoy_bootstrap.json file
 cat <<EOF > /etc/envoy/envoy_bootstrap.json
 {
   "name": "envoy",
