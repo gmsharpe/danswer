@@ -1,3 +1,12 @@
+resource "aws_route53_record" "bastion_route53_record" {
+  count   = var.use_route53_domain ? 1 : 0
+  zone_id = data.aws_route53_zone.route53_parent_zone[0].zone_id
+  name    = "bastion.danswer.${var.domain_name}"
+  type    = "A"
+  ttl     = "300"
+  records = [aws_eip.bastion_eip.public_ip]
+}
+
 resource "aws_subnet" "bastion_subnet" {
   vpc_id                  = aws_vpc.ecs_anywhere_vpc.id
   cidr_block              = "10.0.2.0/24"
@@ -7,7 +16,6 @@ resource "aws_subnet" "bastion_subnet" {
     Name = "bastion_subnet"
   }
 }
-
 
 resource "aws_security_group" "danswer_bastion_sg" {
   name        = "danswer_bastion_sg"

@@ -21,16 +21,32 @@
       "value": "indexing_model_server"
     },
     {
+      "name": "INDEXING_MODEL_SERVER_PORT",
+      "value": "9000"
+    },
+    {
       "name": "POSTGRES_HOST",
       "value": "relational_db"
     },
     {
+      "name": "POSTGRES_PORT",
+      "value": "5432"
+    },
+    {
       "name": "VESPA_HOST",
-      "value": "index"
+      "value": "vespa_index"
+    },
+    {
+      "name": "VESPA_PORT",
+      "value": "19071"
     },
     {
       "name": "REDIS_HOST",
       "value": "redis"
+    },
+    {
+      "name": "REDIS_PORT",
+      "value": "6379"
     }
   ],
   "secrets": [
@@ -45,6 +61,14 @@
     {
       "name": "DISABLE_MODEL_SERVER",
       "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/DISABLE_MODEL_SERVER"
+    },
+    {
+      "name": "POSTGRES_USER",
+      "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/DANSWER_POSTGRES_USER"
+    },
+    {
+      "name": "POSTGRES_PASSWORD",
+      "valueFrom": "arn:aws:ssm:${aws_region}:${aws_acct_id}:parameter/DANSWER_POSTGRES_PASSWORD"
     }
   ],
   "logConfiguration": {
@@ -54,6 +78,40 @@
       "awslogs-region": "${aws_region}",
       "awslogs-stream-prefix": "api_server"
     }
-  }
+  },
+  "healthCheck": {
+    "command": [
+      "CMD-SHELL",
+      "curl -f http://localhost:8080 || exit 1"
+    ],
+    "interval": 10,
+    "timeout": 2,
+    "retries": 3,
+    "startPeriod": 30
+  },
+  "links": [
+    "relational_db",
+    "redis",
+    "vespa_index",
+    "indexing_model_server"
+  ],
+  "dependsOn": [
+    {
+      "containerName": "relational_db",
+      "condition": "HEALTHY"
+    },
+    {
+      "containerName": "redis",
+      "condition": "HEALTHY"
+    },
+    {
+      "containerName": "vespa_index",
+      "condition": "HEALTHY"
+    },
+    {
+      "containerName": "indexing_model_server",
+      "condition": "HEALTHY"
+    }
+  ]
 }
 

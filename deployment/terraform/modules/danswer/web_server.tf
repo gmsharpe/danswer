@@ -3,10 +3,11 @@ resource "aws_ecs_service" "web_service" {
   cluster         = var.cluster_arn
   task_definition = aws_ecs_task_definition.web_service.arn
   desired_count   = 1
-  launch_type     = "EC2"
+  launch_type     = "EXTERNAL"
 
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
+
 }
 
 resource "aws_ecs_task_definition" "web_service" {
@@ -14,11 +15,12 @@ resource "aws_ecs_task_definition" "web_service" {
   task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
   execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
   network_mode       = "bridge"
-  requires_compatibilities = ["EC2"]
+  requires_compatibilities = ["EXTERNAL"]
 
   placement_constraints {
     type = "memberOf"
-    expression = "attribute:ecs.capability.external !exists"
+    # requires the instance to be of an 'EXTERNAL' launch type
+    expression = "attribute:ecs.capability.external exists"
   }
 
   # Reading the container definition from the file

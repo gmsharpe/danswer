@@ -1,33 +1,44 @@
-[
+{
+  "name": "redis",
+  "image": "redis:7.4-alpine",
+  "cpu": 512,
+  "memory": 1024,
+  "command": [
+    "redis-server"
+  ],
+  "portMappings": [
     {
-      "name": "redis",
-      "image": "redis:7.4-alpine",
-      "cpu": 512,
-      "memory": 512,
-      "command": ["redis-server"],
-      "portMappings": [
-        {
-          "containerPort": 6379,
-          "hostPort": 6379,
-          "protocol": "tcp"
-        }
-      ],
-      "mountPoints": [
-        {
-          "sourceVolume": "redis_data",
-          "containerPath": "/data",
-          "readOnly": false
-        }
-      ],
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "/ecs/hybrid-cluster",
-          "awslogs-region": "${aws_region}",
-          "awslogs-stream-prefix": "redis-cache"
-        }
-      }
+      "containerPort": 6379,
+      "hostPort": 6379,
+      "protocol": "tcp"
     }
-  ]
+  ],
+  "mountPoints": [
+    {
+      "sourceVolume": "redis",
+      "containerPath": "/data",
+      "readOnly": false
+    }
+  ],
+  "logConfiguration": {
+    "logDriver": "awslogs",
+    "options": {
+      "awslogs-group": "/ecs/hybrid-cluster",
+      "awslogs-region": "${aws_region}",
+      "awslogs-stream-prefix": "redis-cache"
+    }
+  },
+  "healthCheck": {
+    "command": [
+      "CMD-SHELL",
+      "redis-cli ping || exit 1"
+    ],
+    "interval": 10,
+    "timeout": 2,
+    "retries": 3,
+    "startPeriod": 30
+  }
+}
+
 
 

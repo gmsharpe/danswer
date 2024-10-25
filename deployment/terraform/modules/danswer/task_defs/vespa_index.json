@@ -1,55 +1,53 @@
 {
-  "family": "vespa-index",
-  "networkMode": "bridge",
-  "cpu": "1024",
-  "memory": "4096",
-  "requiresCompatibilities": ["EC2"],
-  "executionRoleArn": "arn:aws:iam::${aws_acct_id}:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::${aws_acct_id}:role/ecsTaskRole",
-  "containerDefinitions": [
+  "name": "vespa_index",
+  "image": "vespaengine/vespa:8.277.17",
+  "memory": 4096,
+  "essential": true,
+  "environment": [
     {
-      "name": "vespa-index",
-      "image": "vespaengine/vespa:8.277.17",
-      "essential": true,
-      "environment": [
-        {"name": "VESPA_PORT", "value": "19071"}
-      ],
-      "portMappings": [
-        {
-          "containerPort": 19071,
-          "hostPort": 19071,
-          "protocol": "tcp"
-        },
-        {
-          "containerPort": 8081,
-          "hostPort": 8081,
-          "protocol": "tcp"
-        }
-      ],
-      "mountPoints": [
-        {
-          "sourceVolume": "vespa-data",
-          "containerPath": "/opt/vespa/var",
-          "readOnly": false
-        }
-      ],
-      "privileged": true,
-      "logConfiguration": {
-        "logDriver": "awslogs",
-        "options": {
-          "awslogs-group": "/ecs/vespa-index",
-          "awslogs-region": "${aws_region}",
-          "awslogs-stream-prefix": "vespa"
-        }
-      }
+      "name": "VESPA_PORT",
+      "value": "19071"
     }
   ],
-  "volumes": [
+  "portMappings": [
     {
-      "name": "vespa-data",
-      "host": {
-        "sourcePath": "/ecs/vespa-data"
-      }
+      "containerPort": 19071,
+      "hostPort": 19071,
+      "protocol": "tcp"
+    },
+    {
+      "containerPort": 8081,
+      "hostPort": 8081,
+      "protocol": "tcp"
     }
-  ]
+  ],
+  "mountPoints": [
+    {
+      "sourceVolume": "vespa",
+      "containerPath": "/opt/vespa/var",
+      "readOnly": false
+    }
+  ],
+  "user": "root",
+  "privileged": true,
+  "logConfiguration": {
+    "logDriver": "awslogs",
+    "options": {
+      "awslogs-group": "/ecs/hybrid-cluster",
+      "awslogs-region": "${aws_region}",
+      "awslogs-stream-prefix": "vespa-index"
+    }
+  },
+  "healthCheck": {
+    "command": [
+      "CMD-SHELL",
+      "curl -f http://localhost:19071 || exit 1"
+    ],
+    "interval": 10,
+    "timeout": 2,
+    "retries": 3,
+    "startPeriod": 30
+  }
 }
+
+

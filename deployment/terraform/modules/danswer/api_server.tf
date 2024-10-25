@@ -3,17 +3,17 @@ resource "aws_ecs_service" "api_server" {
   cluster         = var.cluster_arn
   task_definition = aws_ecs_task_definition.api_server.arn
   desired_count   = 1
-  launch_type     = "EC2"
+  launch_type     = "EXTERNAL"
 
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
 }
 
 resource "aws_ecs_task_definition" "api_server" {
-  family                   = "api_server"
-  task_role_arn            = aws_iam_role.ecs_task_execution_role.arn
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  network_mode             = "bridge"
+  family             = "api_server"
+  task_role_arn      = aws_iam_role.ecs_task_execution_role.arn
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  network_mode       = "bridge"
   requires_compatibilities = ["EXTERNAL", "EC2"]
 
   # Reading the container definition from the file
@@ -22,19 +22,45 @@ resource "aws_ecs_task_definition" "api_server" {
       aws_region  = data.aws_region.current.name
       aws_acct_id = data.aws_caller_identity.current.account_id
     })),
-    jsondecode(templatefile("${path.module}/task_defs/envoy_sidecar.json", {
-      aws_region       = data.aws_region.current.name
-      aws_acct_id      = data.aws_caller_identity.current.account_id
-      consul_server_ip = "127.0.0.1"
-      extra = "delete_me"
+    jsondecode(templatefile("${path.module}/task_defs/relational_db.json", {
+      aws_region  = data.aws_region.current.name
+      aws_acct_id = data.aws_caller_identity.current.account_id
+    })),
+    jsondecode(templatefile("${path.module}/task_defs/vespa_index.json", {
+      aws_region  = data.aws_region.current.name
+      aws_acct_id = data.aws_caller_identity.current.account_id
+    })),
+    jsondecode(templatefile("${path.module}/task_defs/indexing_model_server.json", {
+      aws_region  = data.aws_region.current.name
+      aws_acct_id = data.aws_caller_identity.current.account_id
+    })),
+    jsondecode(templatefile("${path.module}/task_defs/redis_cache.json", {
+      aws_region  = data.aws_region.current.name
+      aws_acct_id = data.aws_caller_identity.current.account_id
     }))
   ])
 
   volume {
-    name      = "envoy-config"
-    host_path = "/etc/envoy"
+    name      = "vespa"
+#    host_path = "/opt/vespa/var"
+  }
+  volume {
+    name      = "postgres"
+#    host_path = "/var/lib/postgresql/data"
+  }
+  volume {
+    name      = "redis"
+#    host_path = "/var/lib/redis"
   }
 }
+
+
+# jsondecode(templatefile("${path.module}/task_defs/envoy_sidecar.json", {
+#   aws_region       = data.aws_region.current.name
+#   aws_acct_id      = data.aws_caller_identity.current.account_id
+#   consul_server_ip = "127.0.0.1"
+#   extra = "delete_me"
+# }))
 
 # api_server ssm parameters
 #       {
@@ -54,19 +80,19 @@ resource "aws_ssm_parameter" "min_threads_ml_models" {
   name        = "MIN_THREADS_ML_MODELS"
   description = "Minimum number of threads for ML models."
   type        = "String"
-  value = "1"
+  value       = "1"
 }
 
 resource "aws_ssm_parameter" "log_level" {
   name        = "LOG_LEVEL"
   description = "Log level for the application."
   type        = "String"
-  value = "DEBUG"
+  value       = "DEBUG"
 }
 
 resource "aws_ssm_parameter" "disable_model_server" {
   name        = "DISABLE_MODEL_SERVER"
   description = "Disable the model server."
   type        = "String"
-  value = "false"
+  value       = "false"
 }

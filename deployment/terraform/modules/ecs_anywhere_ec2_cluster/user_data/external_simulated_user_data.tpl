@@ -28,7 +28,7 @@ sudo bash ecs-anywhere-install.sh \
   --activation-code "${ssm_activation_code}"
 
 # Extra for Consul & Envoy
-sudo mkdir -p /etc/consul/data
+sudo mkdir -p /opt/vespa/var
 sudo mkdir -p /etc/consul/config
 sudo mkdir -p /etc/envoy
 
@@ -39,41 +39,86 @@ sudo mkdir -p /etc/envoy
 # Write the envoy_bootstrap.json file
 cat <<EOF > /etc/envoy/envoy_bootstrap.json
 {
-  "name": "envoy",
-  "image": "envoyproxy/envoy:v1.18.3",
-  "cpu": 256,
-  "memory": 512,
-  "essential": true,
-  "portMappings": [
-    {
-      "containerPort": 19000,
-      "hostPort": 19000,
-      "protocol": "tcp"
+  "node": {
+    "id": "envoy-sidecar",
+    "cluster": "ecs-anywhere-services"
+  },
+  "dynamic_resources": {
+    "lds_config": {
+      "api_config_source": {
+        "api_type": "GRPC",
+        "transport_api_version": "V3",
+        "grpc_services": [
+          {
+            "envoy_grpc": {
+              "cluster_name": "xds_cluster"
+            }
+          }
+        ]
+      }
+    },
+    "cds_config": {
+      "api_config_source": {
+        "api_type": "GRPC",
+        "transport_api_version": "V3",
+        "grpc_services": [
+          {
+            "envoy_grpc": {
+              "cluster_name": "xds_cluster"
+            }
+          }
+        ]
+      }
+    },
+    "ads_config": {
+      "api_type": "GRPC",
+      "transport_api_version": "V3",
+      "grpc_services": [
+        {
+          "envoy_grpc": {
+            "cluster_name": "xds_cluster"
+          }
+        }
+      ]
     }
-  ],
-  "environment": [
-    {
-      "name": "CONSUL_HTTP_ADDR",
-      "value": "http://${consul_server_ip}:8500"
-    }
-  ],
-  "command": [
-    "envoy",
-    "-c",
-    "/etc/envoy/envoy_bootstrap.json"
-  ],
-  "mountPoints": [
-    {
-      "sourceVolume": "envoy-config",
-      "containerPath": "/etc/envoy"
-    }
-  ],
-  "logConfiguration": {
-    "logDriver": "awslogs",
-    "options": {
-      "awslogs-group": "/ecs/hybrid-cluster",
-      "awslogs-region": "${aws_region}",
-      "awslogs-stream-prefix": "envoy"
+  },
+  "static_resources": {
+    "clusters": [
+      {
+        "name": "xds_cluster",
+        "type": "STRICT_DNS",
+        "connect_timeout": "5s",
+        "dns_lookup_family": "V4_ONLY",
+        "lb_policy": "ROUND_ROBIN",
+        "load_assignment": {
+          "cluster_name": "xds_cluster",
+          "endpoints": [
+            {
+              "lb_endpoints": [
+                {
+                  "endpoint": {
+                    "address": {
+                      "socket_address": {
+                        "address": "${consul_server_ip}",
+                        "port_value": 8502
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "admin": {
+    "access_log_path": "/dev/null",
+    "address": {
+      "socket_address": {
+        "address": "127.0.0.1",
+        "port_value": 19000
+      }
     }
   }
 }

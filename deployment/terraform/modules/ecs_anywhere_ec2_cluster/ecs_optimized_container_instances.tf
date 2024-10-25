@@ -39,3 +39,28 @@ resource "aws_iam_instance_profile" "ecs_cluster_instance_profile" {
   name = "ecs-anywhere-instance-profile"
   role = aws_iam_role.ecs_anywhere_mngmt_role.name
 }
+
+# We can use Cloud Map and Service Discovery to register these instances
+
+resource "aws_service_discovery_private_dns_namespace" "ecs_namespace" {
+  name        = "danswer-services"
+  description = "Private namespace for danswer services running on ECS"
+  vpc         = aws_vpc.ecs_anywhere_vpc.id
+}
+
+resource "aws_service_discovery_service" "front_end_danswer_service" {
+  name        = "front-end-danswer-service"
+  namespace_id = aws_service_discovery_private_dns_namespace.ecs_namespace.id
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.ecs_namespace.id
+    dns_records {
+      type = "A"
+      ttl  = 60
+    }
+  }
+
+  health_check_custom_config {
+    failure_threshold = 1
+  }
+}

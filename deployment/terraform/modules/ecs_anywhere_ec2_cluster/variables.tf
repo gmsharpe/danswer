@@ -20,7 +20,7 @@ variable "domain_name" {
 variable "use_route53_domain" {
   description = "Flag to indicate whether Route 53 domain related resources should be created"
   type        = bool
-  default     = false
+  default     = true
 }
 variable "registration_limit" {
   type    = number
