@@ -1,0 +1,74 @@
+{
+    "name": "consul",
+    "image": "${consul_image}",
+    "memory": 512,
+    "cpu": 256,
+    "essential": true,
+    "portMappings": [
+        {
+            "containerPort": 8300,
+            "hostPort": 8300,
+            "protocol": "tcp"
+        },
+        {
+            "containerPort": 8500,
+            "hostPort": 8500,
+            "protocol": "tcp"
+        },
+        {
+            "containerPort": 8502,
+            "hostPort": 8502,
+            "protocol": "tcp"
+        },
+        {
+            "containerPort": 8501,
+            "hostPort": 8501,
+            "protocol": "tcp"
+        },
+        {
+            "containerPort": 8600,
+            "hostPort": 8600,
+            "protocol": "tcp"
+        },
+        {
+            "containerPort": 8600,
+            "hostPort": 8600,
+            "protocol": "udp"
+        }
+    ],
+    "entryPoint": [
+        "/bin/sh",
+        "-c"
+    ],
+
+    "command": ${consul_server_command},
+    "mountPoints" : [
+        {
+            "sourceVolume": "consul-data",
+            "containerPath": "/consul"
+        }
+    ],
+    "linuxParameters" : {
+        "initProcessEnabled": true
+    },
+    "dependsOn" : ${depends_on},
+    "secrets": ${secrets},
+    "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+            "awslogs-group": "/ecs/hybrid-cluster",
+            "awslogs-region": "${aws_region}",
+            "awslogs-stream-prefix": "ecs"
+        }
+    },
+    "healthCheck": {
+        "command": [
+            "CMD-SHELL",
+            "curl -f http://localhost:8500/v1/status/leader || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 10
+    }
+}

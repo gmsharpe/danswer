@@ -2,6 +2,11 @@ data "aws_ssm_parameter" "amazon_linux_2023" {
   name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64"
 }
 
+# todo - remove
+variable "consul_server_sg_id" {
+  default = "sg-0197e35500f8c9938"
+}
+
 resource "aws_security_group" "ecs_anywhere_sg" {
   name        = "ecs_anywhere_sg"
   description = "Allow Nomad cluster traffic"
@@ -13,6 +18,14 @@ resource "aws_security_group" "ecs_anywhere_sg" {
     protocol  = "tcp"
     self      = true
     security_groups = [aws_security_group.danswer_bastion_sg.id]
+  }
+
+  ingress {
+    from_port = 19000
+    to_port   = 21001
+    protocol  = "tcp"
+    self      = true
+    security_groups = [var.consul_server_sg_id]
   }
 
   ingress {
@@ -31,8 +44,9 @@ resource "aws_security_group" "ecs_anywhere_sg" {
   }
 }
 
+variable "external_launch_type_ec2_container_host_count" { }
 resource "aws_instance" "ecs_anywhere_instance" {
-  count         = 2
+  count         = var.external_launch_type_ec2_container_host_count
   ami           = data.aws_ssm_parameter.amazon_linux_2023.value
   instance_type = var.node_instance_type
   subnet_id     = aws_subnet.ecs_anywhere_subnet.id
