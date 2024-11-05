@@ -10,3 +10,4 @@
 .terraform/
 *.terraform.lock.hcl
 *.tfstate*
+deployment/terraform/deploy_danswer_on_ecs_anywhere/utils/putt_it.ps1
